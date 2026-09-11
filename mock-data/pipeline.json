@@ -1,0 +1,82 @@
+{
+  "cohort": "Launch Special",
+  "slots_total": 5,
+  "slots_filled": 5,
+  "last_updated": "2026-09-09",
+  "clients": [
+    {
+      "id": "veltrix-software",
+      "name": "Veltrix Software Solutions",
+      "industry": "B2B SaaS (project management tools)",
+      "baseline_monthly_meetings": 6,
+      "guarantee_target_monthly_meetings": 12,
+      "monthly_fee_usd": 3200,
+      "engagement_month": 2,
+      "meetings_booked_this_period": 10,
+      "status": "on_track",
+      "guarantee_met": false
+    },
+    {
+      "id": "ashcombe-industrial",
+      "name": "Ashcombe Industrial Supply",
+      "industry": "B2B distribution / manufacturing",
+      "baseline_monthly_meetings": 4,
+      "guarantee_target_monthly_meetings": 8,
+      "monthly_fee_usd": 2800,
+      "engagement_month": 1,
+      "meetings_booked_this_period": 3,
+      "status": "ramping",
+      "guarantee_met": false
+    },
+    {
+      "id": "northgate-financial",
+      "name": "Northgate Financial Advisory",
+      "industry": "B2B financial services",
+      "baseline_monthly_meetings": 5,
+      "guarantee_target_monthly_meetings": 10,
+      "monthly_fee_usd": 3000,
+      "engagement_month": 3,
+      "meetings_booked_this_period": 11,
+      "status": "guarantee_met",
+      "guarantee_met": true,
+      "notes": "In renewal discussion with Client Success for ongoing retainer beyond Launch Special terms. Multi-channel (email + LinkedIn) outperformed email-only outreach."
+    },
+    {
+      "id": "lumen-workspace",
+      "name": "Lumen Workspace Design",
+      "industry": "B2B commercial interiors / design",
+      "baseline_monthly_meetings": 3,
+      "guarantee_target_monthly_meetings": 6,
+      "monthly_fee_usd": 2400,
+      "engagement_month": 1,
+      "meetings_booked_this_period": 2,
+      "status": "ramping",
+      "guarantee_met": false
+    },
+    {
+      "id": "praxis-hr",
+      "name": "Praxis HR Consulting",
+      "industry": "B2B HR / consulting services",
+      "baseline_monthly_meetings": 5,
+      "guarantee_target_monthly_meetings": 10,
+      "monthly_fee_usd": 2900,
+      "engagement_month": 2,
+      "meetings_booked_this_period": 9,
+      "status": "on_track",
+      "guarantee_met": false
+    }
+  ],
+  "summary": {
+    "guarantee_met_count": 1,
+    "on_track_count": 2,
+    "ramping_count": 2,
+    "average_monthly_fee_usd": 2860,
+    "combined_mrr_usd": 14300,
+    "average_baseline_meetings": 4.6,
+    "average_target_meetings": 9.2
+  },
+  "post_launch_pipeline": {
+    "status": "fit_assessment_stage",
+    "notes": "Second cohort inquiries currently being fit-assessed. Expected to move to standard (non-launch-special) guarantee pricing once first cohort results are documented as case studies."
+  }
+}

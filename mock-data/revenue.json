@@ -1,0 +1,123 @@
+{
+  "currency": "USD",
+  "snapshots": [
+    {
+      "snapshot_date": "2026-08-09",
+      "cohort": "Launch Special",
+      "data_quality": "estimated",
+      "note": "Reconstructed from engagement_month in pipeline.json, not actual historical records. Ashcombe and Lumen excluded - they had not yet joined (engagement_month: 1 means Sep is their first month). Replace with real figures if available.",
+      "summary": {
+        "mrr": 9100,
+        "arr_projected": 109200,
+        "active_clients": 3,
+        "average_revenue_per_client": 3033,
+        "at_risk_mrr": 0,
+        "at_risk_clients": 0,
+        "expansion_potential_mrr": 0,
+        "expansion_opportunities": 0
+      },
+      "revenue_by_client": [
+        {
+          "client_id": "veltrix-software",
+          "name": "Veltrix Software Solutions",
+          "monthly_fee_usd": 3200,
+          "status": "ramping",
+          "guarantee_met": false,
+          "revenue_risk": "low",
+          "note": "Was in month 1 of engagement last month"
+        },
+        {
+          "client_id": "northgate-financial",
+          "name": "Northgate Financial Advisory",
+          "monthly_fee_usd": 3000,
+          "status": "on_track",
+          "guarantee_met": false,
+          "revenue_risk": "low",
+          "note": "Was in month 2 of engagement last month"
+        },
+        {
+          "client_id": "praxis-hr",
+          "name": "Praxis HR Consulting",
+          "monthly_fee_usd": 2900,
+          "status": "ramping",
+          "guarantee_met": false,
+          "revenue_risk": "low",
+          "note": "Was in month 1 of engagement last month"
+        }
+      ]
+    },
+    {
+      "snapshot_date": "2026-09-09",
+      "cohort": "Launch Special",
+      "summary": {
+        "mrr": 14300,
+        "arr_projected": 171600,
+        "active_clients": 5,
+        "average_revenue_per_client": 2860,
+        "at_risk_mrr": 5200,
+        "at_risk_clients": 2,
+        "expansion_potential_mrr": 3000,
+        "expansion_opportunities": 1
+      },
+      "revenue_by_client": [
+        {
+          "client_id": "veltrix-software",
+          "name": "Veltrix Software Solutions",
+          "monthly_fee_usd": 3200,
+          "status": "on_track",
+          "guarantee_met": false,
+          "revenue_risk": "low"
+        },
+        {
+          "client_id": "ashcombe-industrial",
+          "name": "Ashcombe Industrial Supply",
+          "monthly_fee_usd": 2800,
+          "status": "ramping",
+          "guarantee_met": false,
+          "revenue_risk": "medium"
+        },
+        {
+          "client_id": "northgate-financial",
+          "name": "Northgate Financial Advisory",
+          "monthly_fee_usd": 3000,
+          "status": "guarantee_met",
+          "guarantee_met": true,
+          "revenue_risk": "none",
+          "revenue_opportunity": "expansion"
+        },
+        {
+          "client_id": "lumen-workspace",
+          "name": "Lumen Workspace Design",
+          "monthly_fee_usd": 2400,
+          "status": "ramping",
+          "guarantee_met": false,
+          "revenue_risk": "medium"
+        },
+        {
+          "client_id": "praxis-hr",
+          "name": "Praxis HR Consulting",
+          "monthly_fee_usd": 2900,
+          "status": "on_track",
+          "guarantee_met": false,
+          "revenue_risk": "low"
+        }
+      ]
+    }
+  ],
+  "comparison": {
+    "enabled": true,
+    "from": "2026-08-09",
+    "to": "2026-09-09",
+    "mrr_change_usd": 5200,
+    "mrr_growth_pct": 57.1,
+    "client_count_change": 2,
+    "new_clients": ["ashcombe-industrial", "lumen-workspace"],
+    "at_risk_mrr_change_usd": 5200,
+    "note": "Comparison based on the reconstructed Aug snapshot (estimated) vs actual Sep snapshot. Treat growth % as directional, not precise, until real Aug data replaces the estimate."
+  },
+  "forecast": {
+    "next_cohort_status": "fit_assessment_stage",
+    "next_cohort_pricing_model": "standard",
+    "note": "Second cohort inquiries currently in fit-assessment. Expected to convert at standard (non-discounted) pricing, above current average of $2,860/client, once first cohort results are documented as case studies."
+  }
+}

@@ -1,0 +1,953 @@
+
+> frontend@0.1.0 dev
+> next dev
+
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.4:3000
+- Environments: .env.local
+✓ Ready in 386ms
+✓ Running next.config.ts took 36ms
+Attention: Next.js now collects completely anonymous telemetry regarding usage.
+This information is used to shape Next.js' roadmap and prioritize features.
+You can learn more, including how to opt-out if you'd not like to participate in this anonymous program, by visiting the following URL:
+https://nextjs.org/telemetry
+
+
+ GET /api/dashboard 200 in 309ms (next.js: 287ms, application-code: 22ms)
+ GET /api/context 200 in 80ms (next.js: 73ms, application-code: 7ms)
+ GET /api/tasks 200 in 82ms (next.js: 79ms, application-code: 3ms)
+ GET / 200 in 2.7s (next.js: 2.5s, application-code: 229ms)
+ GET /company 200 in 287ms (next.js: 250ms, application-code: 37ms)
+ GET /tasks 200 in 146ms (next.js: 122ms, application-code: 24ms)
+ GET /profile 200 in 151ms (next.js: 124ms, application-code: 26ms)
+ POST /api/ask 200 in 3.0s (next.js: 104ms, application-code: 2.9s)
+ GET / 200 in 62ms (next.js: 3ms, application-code: 59ms)
+ GET /api/daily-brief 200 in 4.2s (next.js: 130ms, application-code: 4.1s)
+ GET /api/daily-brief 200 in 5.2s (next.js: 2ms, application-code: 5.2s)
+ GET /company 200 in 20ms (next.js: 5ms, application-code: 15ms)
+ GET /api/context 200 in 13ms (next.js: 3ms, application-code: 10ms)
+ GET /api/context 200 in 7ms (next.js: 1.3ms, application-code: 5ms)
+ GET /company 200 in 95ms (next.js: 16ms, application-code: 79ms)
+ GET /api/context 200 in 21ms (next.js: 5ms, application-code: 16ms)
+ GET /api/context 200 in 14ms (next.js: 6ms, application-code: 8ms)
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/company" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="en"
+                          className="geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__varia..."
+-                         katalonextensionid="ljdobmomdgdljniojadhoplhkpialdid"
+                        >
+                  ...
+ 
+ GET / 200 in 97ms (next.js: 11ms, application-code: 87ms)
+ GET /api/daily-brief 200 in 6.3s (next.js: 24ms, application-code: 6.3s)
+ GET /api/daily-brief 502 in 2.3s (next.js: 5ms, application-code: 2.3s)
+ GET /company 200 in 51ms (next.js: 9ms, application-code: 42ms)
+ GET / 200 in 28ms (next.js: 8ms, application-code: 20ms)
+ GET /company 200 in 26ms (next.js: 1.8ms, application-code: 24ms)
+ GET / 200 in 62ms (next.js: 1.9ms, application-code: 60ms)
+ GET /api/daily-brief 200 in 4.6s (next.js: 1.6ms, application-code: 4.6s)
+ GET / 200 in 128ms (next.js: 4ms, application-code: 124ms)
+ GET /api/daily-brief 200 in 4.4s (next.js: 1.3ms, application-code: 4.4s)
+ GET /api/daily-brief 200 in 5.1s (next.js: 6ms, application-code: 5.1s)
+ GET /api/daily-brief 200 in 5.6s (next.js: 5ms, application-code: 5.6s)
+ POST /api/ask 200 in 3.4s (next.js: 6ms, application-code: 3.4s)
+ POST /api/ask 200 in 4.6s (next.js: 6ms, application-code: 4.5s)
+✓ Compiled in 55ms
+ GET / 200 in 31ms (next.js: 8ms, application-code: 23ms)
+✓ Compiled in 49ms
+✓ Compiled in 349ms
+ GET / 200 in 23ms (next.js: 8ms, application-code: 16ms)
+ GET / 200 in 53ms (next.js: 1.7ms, application-code: 51ms)
+ GET / 200 in 97ms (next.js: 6ms, application-code: 91ms)
+ GET /api/daily-brief 502 in 3.6s (next.js: 7ms, application-code: 3.6s)
+ GET /api/daily-brief 502 in 4.8s (next.js: 5ms, application-code: 4.8s)
+ POST /api/ask 502 in 7.7s (next.js: 6ms, application-code: 7.7s)
+ GET / 200 in 172ms (next.js: 12ms, application-code: 160ms)
+ GET /api/daily-brief 200 in 7.6s (next.js: 6ms, application-code: 7.6s)
+ GET /api/daily-brief 200 in 7.4s (next.js: 5ms, application-code: 7.4s)
+ GET / 200 in 28ms (next.js: 6ms, application-code: 22ms)
+ GET / 200 in 19ms (next.js: 2ms, application-code: 17ms)
+ GET / 200 in 40ms (next.js: 7ms, application-code: 33ms)
+✓ Compiled in 64ms
+ GET /api/daily-brief 200 in 6.0s (next.js: 2.0ms, application-code: 6.0s)
+ GET /api/daily-brief 200 in 5.5s (next.js: 4ms, application-code: 5.5s)
+ GET / 200 in 23ms (next.js: 5ms, application-code: 18ms)
+✓ Compiled in 73ms
+✓ Compiled in 48ms
+ GET / 200 in 55ms (next.js: 10ms, application-code: 44ms)
+ GET / 200 in 28ms (next.js: 6ms, application-code: 22ms)
+✓ Compiled in 73ms
+ GET / 200 in 44ms (next.js: 2ms, application-code: 41ms)
+ POST /api/ask 200 in 12.0s (next.js: 4ms, application-code: 12.0s)
+ GET / 200 in 67ms (next.js: 6ms, application-code: 60ms)
+ GET /api/daily-brief 200 in 2.4s (next.js: 1.8ms, application-code: 2.4s)
+ GET / 200 in 77ms (next.js: 9ms, application-code: 68ms)
+ GET /api/daily-brief 200 in 16.0s (next.js: 6ms, application-code: 16.0s)
+ GET /api/daily-brief 200 in 12.3s (next.js: 3ms, application-code: 12.3s)
+ POST /api/ask 200 in 8.5s (next.js: 5ms, application-code: 8.5s)
+ GET / 200 in 26ms (next.js: 7ms, application-code: 19ms)
+ GET / 200 in 34ms (next.js: 6ms, application-code: 28ms)
+ GET / 200 in 29ms (next.js: 1.7ms, application-code: 27ms)
+ POST /api/ask 200 in 21.5s (next.js: 2ms, application-code: 21.5s)
+ POST /api/ask 200 in 6.4s (next.js: 7ms, application-code: 6.4s)
+ GET /tasks 200 in 123ms (next.js: 38ms, application-code: 85ms)
+ GET /api/tasks 200 in 24ms (next.js: 12ms, application-code: 12ms)
+ GET /api/tasks 200 in 18ms (next.js: 5ms, application-code: 13ms)
+ GET / 200 in 36ms (next.js: 7ms, application-code: 29ms)
+ GET /tasks 200 in 130ms (next.js: 9ms, application-code: 120ms)
+ GET /api/tasks 200 in 14ms (next.js: 4ms, application-code: 9ms)
+ GET /api/tasks 200 in 11ms (next.js: 4ms, application-code: 7ms)
+ GET / 200 in 67ms (next.js: 6ms, application-code: 61ms)
+ GET /profile 200 in 90ms (next.js: 69ms, application-code: 22ms)
+ GET / 200 in 63ms (next.js: 10ms, application-code: 53ms)
+ POST /api/ask 200 in 10.9s (next.js: 7ms, application-code: 10.9s)
+ GET /company 200 in 82ms (next.js: 46ms, application-code: 36ms)
+ GET /api/context 200 in 18ms (next.js: 7ms, application-code: 11ms)
+ GET /api/context 200 in 12ms (next.js: 3ms, application-code: 9ms)
+ GET / 200 in 61ms (next.js: 10ms, application-code: 51ms)
+ GET / 200 in 139ms (next.js: 14ms, application-code: 126ms)
+ POST /api/ask 200 in 3.3s (next.js: 4ms, application-code: 3.3s)
+ GET / 200 in 73ms (next.js: 10ms, application-code: 63ms)
+ GET /company 200 in 56ms (next.js: 11ms, application-code: 44ms)
+ GET /api/context 200 in 18ms (next.js: 7ms, application-code: 11ms)
+ GET /api/context 200 in 11ms (next.js: 4ms, application-code: 7ms)
+ GET /tasks 200 in 36ms (next.js: 11ms, application-code: 25ms)
+ GET /api/tasks 200 in 15ms (next.js: 6ms, application-code: 10ms)
+ GET /api/tasks 200 in 11ms (next.js: 3ms, application-code: 8ms)
+ GET / 200 in 55ms (next.js: 5ms, application-code: 50ms)
+ POST /api/ask 200 in 4.9s (next.js: 5ms, application-code: 4.9s)
+ POST /api/ask 200 in 4.9s (next.js: 4ms, application-code: 4.9s)
+ GET /tasks 200 in 59ms (next.js: 15ms, application-code: 43ms)
+ GET /api/tasks 200 in 11ms (next.js: 5ms, application-code: 6ms)
+ GET /api/tasks 200 in 7ms (next.js: 2ms, application-code: 5ms)
+ GET /company 200 in 55ms (next.js: 7ms, application-code: 48ms)
+ GET /api/context 200 in 14ms (next.js: 6ms, application-code: 8ms)
+ GET /api/context 200 in 9ms (next.js: 3ms, application-code: 6ms)
+ GET / 200 in 76ms (next.js: 8ms, application-code: 68ms)
+ GET / 200 in 19ms (next.js: 2ms, application-code: 17ms)
+ GET / 200 in 21ms (next.js: 5ms, application-code: 16ms)
+✓ Compiled in 22ms
+ GET / 200 in 23ms (next.js: 6ms, application-code: 17ms)
+✓ Compiled in 24ms
+ GET / 200 in 109ms (next.js: 9ms, application-code: 101ms)
+ GET /company 200 in 67ms (next.js: 18ms, application-code: 49ms)
+ GET /api/context 200 in 17ms (next.js: 4ms, application-code: 13ms)
+ GET /api/context 200 in 16ms (next.js: 5ms, application-code: 11ms)
+ GET /tasks 200 in 63ms (next.js: 23ms, application-code: 40ms)
+ GET /api/tasks 200 in 19ms (next.js: 6ms, application-code: 13ms)
+ GET /api/tasks 200 in 21ms (next.js: 7ms, application-code: 14ms)
+ GET / 200 in 40ms (next.js: 7ms, application-code: 33ms)
+ POST /api/ask 200 in 4.2s (next.js: 13ms, application-code: 4.2s)
+ POST /api/ask 200 in 4.1s (next.js: 5ms, application-code: 4.0s)
+✓ Compiled in 510ms
+ GET / 200 in 203ms (next.js: 110ms, application-code: 93ms)
+ GET / 200 in 62ms (next.js: 4ms, application-code: 58ms)
+ GET / 200 in 71ms (next.js: 14ms, application-code: 57ms)
+ GET / 200 in 59ms (next.js: 2ms, application-code: 57ms)
+ GET / 200 in 56ms (next.js: 2ms, application-code: 53ms)
+ GET / 200 in 59ms (next.js: 3ms, application-code: 56ms)
+ GET / 200 in 39ms (next.js: 2ms, application-code: 37ms)
+ GET / 200 in 59ms (next.js: 1.9ms, application-code: 57ms)
+ GET / 200 in 56ms (next.js: 3ms, application-code: 52ms)
+ GET / 200 in 41ms (next.js: 1.9ms, application-code: 39ms)
+ GET / 200 in 36ms (next.js: 3ms, application-code: 34ms)
+ GET / 200 in 57ms (next.js: 3ms, application-code: 54ms)
+ GET / 200 in 60ms (next.js: 2ms, application-code: 57ms)
+ GET / 200 in 39ms (next.js: 2ms, application-code: 37ms)
+ GET / 200 in 19ms (next.js: 3ms, application-code: 17ms)
+ GET / 200 in 17ms (next.js: 2.0ms, application-code: 15ms)
+ GET / 200 in 16ms (next.js: 1.8ms, application-code: 14ms)
+ GET / 200 in 38ms (next.js: 2ms, application-code: 36ms)
+ GET / 200 in 34ms (next.js: 2.0ms, application-code: 32ms)
+ GET / 200 in 17ms (next.js: 1.8ms, application-code: 15ms)
+ GET / 200 in 54ms (next.js: 1.8ms, application-code: 52ms)
+ GET / 200 in 40ms (next.js: 2ms, application-code: 37ms)
+ GET / 200 in 44ms (next.js: 2.0ms, application-code: 42ms)
+ GET / 200 in 28ms (next.js: 2ms, application-code: 26ms)
+ GET / 200 in 585ms (next.js: 5ms, application-code: 579ms)
+ GET /ceo-dashboard 200 in 787ms (next.js: 686ms, application-code: 101ms)
+ GET /ceo-dashboard 200 in 107ms (next.js: 18ms, application-code: 89ms)
+ GET /company 200 in 91ms (next.js: 42ms, application-code: 49ms)
+ GET /api/context 200 in 124ms (next.js: 100ms, application-code: 24ms)
+ GET /api/context 200 in 10ms (next.js: 3ms, application-code: 7ms)
+ GET /tasks 200 in 68ms (next.js: 29ms, application-code: 39ms)
+ GET /api/tasks 200 in 74ms (next.js: 67ms, application-code: 7ms)
+ GET /api/tasks 200 in 8ms (next.js: 3ms, application-code: 5ms)
+ GET / 200 in 80ms (next.js: 3ms, application-code: 77ms)
+ GET /api/tasks 200 in 16ms (next.js: 6ms, application-code: 10ms)
+ GET /api/tasks 200 in 9ms (next.js: 4ms, application-code: 6ms)
+ GET /api/context 200 in 22ms (next.js: 6ms, application-code: 17ms)
+ GET /api/context 200 in 19ms (next.js: 7ms, application-code: 12ms)
+ GET /ceo-dashboard 200 in 24ms (next.js: 9ms, application-code: 15ms)
+✓ Compiled in 98ms
+ GET / 200 in 35ms (next.js: 12ms, application-code: 23ms)
+ GET /ceo-dashboard 200 in 20ms (next.js: 5ms, application-code: 14ms)
+ GET / 200 in 51ms (next.js: 7ms, application-code: 44ms)
+✓ Compiled in 88ms
+✓ Compiled in 33ms
+ GET /ceo-dashboard 200 in 49ms (next.js: 33ms, application-code: 16ms)
+ GET / 200 in 51ms (next.js: 10ms, application-code: 40ms)
+ GET /ceo-dashboard 200 in 19ms (next.js: 6ms, application-code: 12ms)
+ GET / 200 in 45ms (next.js: 6ms, application-code: 38ms)
+✓ Compiled in 57ms
+ GET / 200 in 33ms (next.js: 1.8ms, application-code: 31ms)
+ GET /ceo-dashboard 200 in 28ms (next.js: 1.8ms, application-code: 26ms)
+ GET /ceo-dashboard 200 in 94ms (next.js: 7ms, application-code: 87ms)
+ POST /api/ask 200 in 4.1s (next.js: 95ms, application-code: 4.0s)
+ POST /api/ask 200 in 5.3s (next.js: 5ms, application-code: 5.3s)
+ POST /api/ask 200 in 4.3s (next.js: 5ms, application-code: 4.3s)
+ POST /api/ask 200 in 3.8s (next.js: 6ms, application-code: 3.8s)
+ POST /api/ask 200 in 5.1s (next.js: 4ms, application-code: 5.1s)
+ POST /api/ask 200 in 4.1s (next.js: 5ms, application-code: 4.1s)
+ POST /api/ask 200 in 6.6s (next.js: 4ms, application-code: 6.6s)
+✓ Compiled in 271ms
+ GET /ceo-dashboard 200 in 18ms (next.js: 5ms, application-code: 13ms)
+ GET / 200 in 53ms (next.js: 13ms, application-code: 40ms)
+✓ Compiled in 38ms
+⨯ ReferenceError: Sidebar is not defined
+    at RootLayout (app\layout.tsx:30:12)
+  28 |       <body className="h-full bg-slate-50 text-slate-900" suppressHydrationWarning>
+  29 |         <div className="flex h-screen w-full overflow-hidden">
+> 30 |           <Sidebar />
+     |            ^
+  31 |           <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+  32 |           <div className="w-[420px] shrink-0 h-full hidden lg:block">
+  33 |             <AskFriday /> {
+  digest: '2731253431'
+}
+⨯ ReferenceError: Sidebar is not defined
+    at RootLayout (app\layout.tsx:30:12)
+  28 |       <body className="h-full bg-slate-50 text-slate-900" suppressHydrationWarning>
+  29 |         <div className="flex h-screen w-full overflow-hidden">
+> 30 |           <Sidebar />
+     |            ^
+  31 |           <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+  32 |           <div className="w-[420px] shrink-0 h-full hidden lg:block">
+  33 |             <AskFriday /> {
+  digest: '2731253431'
+}
+ GET /ceo-dashboard 200 in 21ms (next.js: 6ms, application-code: 16ms)
+ GET / 200 in 62ms (next.js: 7ms, application-code: 55ms)
+✓ Compiled in 255ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+ GET /ceo-dashboard 200 in 102ms (next.js: 8ms, application-code: 94ms)
+ GET / 200 in 92ms (next.js: 56ms, application-code: 36ms)
+ GET / 200 in 45ms (next.js: 7ms, application-code: 38ms)
+ GET / 200 in 35ms (next.js: 1.8ms, application-code: 33ms)
+ GET / 200 in 29ms (next.js: 3ms, application-code: 26ms)
+✓ Compiled in 231ms
+ GET /ceo-dashboard 200 in 23ms (next.js: 10ms, application-code: 12ms)
+ GET / 200 in 37ms (next.js: 14ms, application-code: 24ms)
+ GET / 200 in 24ms (next.js: 5ms, application-code: 19ms)
+✓ Compiled in 124ms
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⨯ ReferenceError: ChevronLeft is not defined
+    at AppShell (components\AppShell.tsx:74:54)
+  72 |           className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-8 w-6 rounded-md bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600"
+  73 |         >
+> 74 |           {maximized ? <ChevronRight size={14} /> : <ChevronLeft size={14} />}
+     |                                                      ^
+  75 |         </button>
+  76 |         <AskFriday />
+  77 |       </div> {
+  digest: '4214546545'
+}
+ GET /ceo-dashboard 500 in 111ms (next.js: 7ms, application-code: 104ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+✓ Compiled in 38ms
+⨯ ReferenceError: toggleMaximize is not defined
+    at AppShell (components\AppShell.tsx:64:20)
+  62 |       >
+  63 |         <button
+> 64 |           onClick={toggleMaximize}
+     |                    ^
+  65 |           aria-label={maximized ? "Restore panel size" : "Maximize panel"}
+  66 |           className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-8 w-6 rounded-md bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600"
+  67 |         > {
+  digest: '954792405'
+}
+⨯ ReferenceError: toggleMaximize is not defined
+    at AppShell (components\AppShell.tsx:64:20)
+  62 |       >
+  63 |         <button
+> 64 |           onClick={toggleMaximize}
+     |                    ^
+  65 |           aria-label={maximized ? "Restore panel size" : "Maximize panel"}
+  66 |           className="absolute -left-3 top-1/2 -translate-y-1/2 z-10 h-8 w-6 rounded-md bg-white border border-slate-200 shadow-sm flex items-center justify-center text-slate-400 hover:text-slate-600"
+  67 |         > {
+  digest: '954792405'
+}
+ GET /ceo-dashboard 500 in 90ms (next.js: 5ms, application-code: 85ms)
+ GET / 500 in 87ms (next.js: 32ms, application-code: 55ms)
+ GET /ceo-dashboard 200 in 124ms (next.js: 10ms, application-code: 114ms)
+ GET / 200 in 58ms (next.js: 9ms, application-code: 50ms)
+ GET / 200 in 33ms (next.js: 1.7ms, application-code: 32ms)
+ GET / 200 in 32ms (next.js: 1.8ms, application-code: 30ms)
+ GET / 200 in 27ms (next.js: 1.7ms, application-code: 26ms)
+ GET / 200 in 69ms (next.js: 8ms, application-code: 61ms)
+ GET /profile 200 in 102ms (next.js: 57ms, application-code: 45ms)
+ POST /api/ask 200 in 3.1s (next.js: 5ms, application-code: 3.1s)
+ GET /ceo-dashboard 200 in 46ms (next.js: 11ms, application-code: 36ms)
+ GET /ceo-dashboard 200 in 29ms (next.js: 4ms, application-code: 26ms)
+✓ Compiled in 74ms
+ GET /ceo-dashboard 200 in 24ms (next.js: 5ms, application-code: 19ms)
+ GET / 200 in 113ms (next.js: 17ms, application-code: 96ms)
+ GET / 200 in 34ms (next.js: 2ms, application-code: 32ms)
+ GET / 200 in 30ms (next.js: 2ms, application-code: 28ms)
+ GET / 200 in 68ms (next.js: 32ms, application-code: 36ms)
+ GET / 200 in 25ms (next.js: 4ms, application-code: 21ms)
+ GET / 200 in 27ms (next.js: 10ms, application-code: 17ms)
+ GET / 200 in 20ms (next.js: 6ms, application-code: 14ms)
+✓ Compiled in 72ms
+ GET / 200 in 28ms (next.js: 8ms, application-code: 20ms)
+ GET / 200 in 82ms (next.js: 2ms, application-code: 80ms)
+ GET / 200 in 153ms (next.js: 9ms, application-code: 143ms)
+ GET / 200 in 107ms (next.js: 5ms, application-code: 102ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.4:3000
+- Environments: .env.local
+✓ Ready in 652ms
+✓ Running next.config.ts took 110ms
+
+ GET / 200 in 993ms (next.js: 672ms, application-code: 321ms)
+✓ Compiled in 87ms
+ GET / 200 in 37ms (next.js: 16ms, application-code: 21ms)
+ GET / 200 in 25ms (next.js: 7ms, application-code: 18ms)
+✓ Compiled in 80ms
+ GET / 200 in 30ms (next.js: 9ms, application-code: 21ms)
+✓ Compiled in 55ms
+ GET / 200 in 38ms (next.js: 10ms, application-code: 28ms)
+✓ Compiled in 215ms
+ GET / 200 in 33ms (next.js: 8ms, application-code: 25ms)
+✓ Compiled in 100ms
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.4:3000
+- Environments: .env.local
+✓ Ready in 490ms
+✓ Running next.config.ts took 41ms
+
+ GET / 200 in 575ms (next.js: 366ms, application-code: 209ms)
+⚠ Found a change in next.config.ts. Restarting the server to apply the changes...
+▲ Next.js 16.3.4 (Turbopack)
+- Local:         http://localhost:3000
+- Network:       http://192.168.1.4:3000
+- Environments: .env.local
+✓ Ready in 352ms
+✓ Running next.config.ts took 39ms
+
+[browser] A tree hydrated but some attributes of the server rendered HTML didn't match the client properties. This won't be patched up. This can happen if a SSR-ed Client Component used:
+
+- A server/client branch `if (typeof window !== 'undefined')`.
+- Variable input such as `Date.now()` or `Math.random()` which changes each time it's called.
+- Date formatting in a user's locale which doesn't match the server.
+- External changing data without sending a snapshot of it along with the HTML.
+- Invalid HTML tag nesting.
+
+It can also happen if the client has a browser extension installed which messes with the HTML before React loaded.
+
+https://react.dev/link/hydration-mismatch
+
+  ...
+    <HotReload globalError={[...]} webSocket={WebSocket} staticIndicatorState={{pathname:null, ...}}>
+      <AppDevOverlayErrorBoundary globalError={[...]}>
+        <ReplaySsrOnlyErrors>
+        <DevRootHTTPAccessFallbackBoundary>
+          <HTTPAccessFallbackBoundary notFound={<NotAllowedRootHTTPFallbackError>}>
+            <HTTPAccessFallbackErrorBoundary pathname="/" notFound={<NotAllowedRootHTTPFallbackError>} ...>
+              <RedirectBoundary>
+                <RedirectErrorBoundary router={{...}}>
+                  <Head>
+                  <__next_root_layout_boundary__>
+                    <SegmentViewNode type="layout" pagePath="layout.tsx">
+                      <SegmentTrieNode>
+                      <link>
+                      <script>
+                      <RootLayout>
+                        <html
+                          lang="en"
+                          className="geist_a71539c9-module__T19VSG__variable geist_mono_8d43a2aa-module__8Li5zG__varia..."
+-                         katalonextensionid="ljdobmomdgdljniojadhoplhkpialdid"
+                        >
+                  ...
+ 
+ GET / 200 in 681ms (next.js: 369ms, application-code: 313ms)
+ GET / 200 in 32ms (next.js: 3ms, application-code: 28ms)
+ GET / 200 in 37ms (next.js: 6ms, application-code: 31ms)
+ GET / 200 in 39ms (next.js: 3ms, application-code: 35ms)
+ POST /api/ask 200 in 3.9s (next.js: 142ms, application-code: 3.7s)
+ POST /api/ask 200 in 3.4s (next.js: 3ms, application-code: 3.4s)
+ GET / 200 in 37ms (next.js: 10ms, application-code: 27ms)
+⨯ ReferenceError: TODAY is not defined
+    at getDashboardData (lib\data.ts:293:12)
+    at DashboardPage (app\page.tsx:8:32)
+  291 |
+  292 |   return {
+> 293 |     today: TODAY,
+      |            ^
+  294 |     weekStart: calRaw.calendar.week_start,
+  295 |     weekEnd: calRaw.calendar.week_end,
+  296 |     revenue: { {
+  digest: '2205084412'
+}
+ GET / 200 in 44ms (next.js: 8ms, application-code: 36ms)
+⨯ ReferenceError: TODAY is not defined
+    at getDashboardData (lib\data.ts:297:12)
+    at DashboardPage (app\page.tsx:8:32)
+  295 |
+  296 |   return {
+> 297 |     today: TODAY,
+      |            ^
+  298 |     weekStart: calRaw.calendar.week_start,
+  299 |     weekEnd: calRaw.calendar.week_end,
+  300 |     revenue: { {
+  digest: '1149204734'
+}
+ GET / 500 in 88ms (next.js: 9ms, application-code: 79ms)
+ GET / 200 in 82ms (next.js: 11ms, application-code: 70ms)
+ GET / 200 in 35ms (next.js: 9ms, application-code: 25ms)
+✓ Compiled in 100ms
+ GET / 200 in 25ms (next.js: 5ms, application-code: 20ms)
+✓ Compiled in 68ms
+ GET / 200 in 27ms (next.js: 7ms, application-code: 20ms)
+✓ Compiled in 40ms
+ GET / 200 in 32ms (next.js: 13ms, application-code: 19ms)
+ GET / 200 in 17ms (next.js: 3ms, application-code: 15ms)
+ GET / 200 in 26ms (next.js: 7ms, application-code: 18ms)
+ GET / 200 in 33ms (next.js: 3ms, application-code: 30ms)
+ GET /api/dashboard 200 in 112ms (next.js: 104ms, application-code: 8ms)
+ GET / 200 in 35ms (next.js: 2ms, application-code: 33ms)
+ GET / 200 in 32ms (next.js: 10ms, application-code: 22ms)
+ GET /api/dashboard 200 in 14ms (next.js: 6ms, application-code: 8ms)
+ GET / 200 in 114ms (next.js: 8ms, application-code: 106ms)
+ POST /api/ask 200 in 2.5s (next.js: 6ms, application-code: 2.5s)
+ POST /api/ask 200 in 2.8s (next.js: 11ms, application-code: 2.8s)
+ POST /api/ask 200 in 3.0s (next.js: 5ms, application-code: 3.0s)
+ GET / 200 in 22ms (next.js: 8ms, application-code: 14ms)
+✓ Compiled in 43ms
+ GET / 200 in 43ms (next.js: 3ms, application-code: 40ms)
+ GET / 200 in 33ms (next.js: 10ms, application-code: 23ms)
+ GET / 200 in 26ms (next.js: 7ms, application-code: 19ms)
+ GET / 200 in 28ms (next.js: 11ms, application-code: 17ms)
+✓ Compiled in 83ms
+ GET / 200 in 27ms (next.js: 8ms, application-code: 19ms)
+✓ Compiled in 76ms
+ GET / 200 in 21ms (next.js: 6ms, application-code: 14ms)
+✓ Compiled in 127ms
+ GET /api/dashboard 200 in 17ms (next.js: 8ms, application-code: 9ms)
+ GET / 200 in 39ms (next.js: 2ms, application-code: 37ms)
+ GET / 200 in 140ms (next.js: 3ms, application-code: 137ms)
+ POST /api/ask 200 in 9.1s (next.js: 6ms, application-code: 9.1s)
+ POST /api/ask 200 in 5.9s (next.js: 6ms, application-code: 5.8s)
+ POST /api/ask 200 in 5.9s (next.js: 5ms, application-code: 5.9s)
+ GET / 200 in 34ms (next.js: 9ms, application-code: 25ms)
+ GET / 200 in 30ms (next.js: 7ms, application-code: 23ms)
+✓ Compiled in 44ms
+ GET / 200 in 29ms (next.js: 8ms, application-code: 21ms)
+ GET / 200 in 38ms (next.js: 8ms, application-code: 30ms)
+✓ Compiled in 43ms
+✓ Compiled in 67ms
+ GET / 200 in 38ms (next.js: 12ms, application-code: 26ms)
+⚠ Fast Refresh had to perform a full reload due to a runtime error.
+✓ Compiled in 187ms
+ GET / 200 in 127ms (next.js: 9ms, application-code: 118ms)
+ GET / 200 in 42ms (next.js: 7ms, application-code: 34ms)
+ GET / 200 in 33ms (next.js: 2ms, application-code: 31ms)
+ GET / 200 in 32ms (next.js: 2ms, application-code: 30ms)
+ GET /tasks 200 in 190ms (next.js: 143ms, application-code: 46ms)
+ GET /api/tasks 200 in 117ms (next.js: 108ms, application-code: 9ms)
+ GET /api/tasks 200 in 22ms (next.js: 8ms, application-code: 14ms)
+ GET /company 200 in 128ms (next.js: 98ms, application-code: 30ms)
+ GET /api/context 200 in 85ms (next.js: 73ms, application-code: 12ms)
+ GET /api/context 200 in 17ms (next.js: 5ms, application-code: 12ms)
+ GET / 200 in 70ms (next.js: 11ms, application-code: 59ms)
+ POST /api/ask 200 in 12.0s (next.js: 9ms, application-code: 12.0s)
+ GET / 200 in 148ms (next.js: 81ms, application-code: 67ms)
+ GET / 200 in 50ms (next.js: 4ms, application-code: 46ms)
+ GET / 200 in 35ms (next.js: 4ms, application-code: 31ms)
+ GET / 200 in 17ms (next.js: 3ms, application-code: 14ms)
+ GET / 200 in 36ms (next.js: 2ms, application-code: 34ms)
+ GET / 200 in 34ms (next.js: 3ms, application-code: 31ms)
+ GET / 200 in 40ms (next.js: 3ms, application-code: 37ms)
+ GET / 200 in 41ms (next.js: 3ms, application-code: 38ms)
+ GET / 200 in 35ms (next.js: 3ms, application-code: 32ms)
+ GET / 200 in 38ms (next.js: 3ms, application-code: 36ms)
+ GET / 200 in 49ms (next.js: 2ms, application-code: 47ms)
+ GET / 200 in 32ms (next.js: 4ms, application-code: 29ms)
+ GET / 200 in 34ms (next.js: 3ms, application-code: 31ms)
+ GET / 200 in 35ms (next.js: 3ms, application-code: 32ms)
+ GET / 200 in 33ms (next.js: 3ms, application-code: 30ms)
+ GET / 200 in 38ms (next.js: 2ms, application-code: 35ms)
+ GET / 200 in 38ms (next.js: 2ms, application-code: 35ms)
+ GET / 200 in 33ms (next.js: 3ms, application-code: 30ms)
+ GET / 200 in 20ms (next.js: 3ms, application-code: 17ms)
+ GET / 200 in 37ms (next.js: 3ms, application-code: 34ms)
+ GET / 200 in 48ms (next.js: 4ms, application-code: 45ms)
+ GET / 200 in 77ms (next.js: 3ms, application-code: 74ms)
+ GET / 200 in 90ms (next.js: 4ms, application-code: 86ms)
+ GET / 200 in 72ms (next.js: 10ms, application-code: 62ms)
+ GET / 200 in 52ms (next.js: 5ms, application-code: 47ms)
+ GET / 200 in 27ms (next.js: 3ms, application-code: 23ms)
+✓ Compiled in 395ms
+ GET / 200 in 47ms (next.js: 7ms, application-code: 39ms)
+ POST /api/speak 404 in 477ms (next.js: 432ms, application-code: 44ms)
+ POST /api/speak 503 in 13ms (next.js: 4ms, application-code: 9ms)
+ GET / 200 in 257ms (next.js: 8ms, application-code: 249ms)
+ GET / 200 in 117ms (next.js: 5ms, application-code: 112ms)
+ POST /api/ask 200 in 8.0s (next.js: 137ms, application-code: 7.9s)
+ POST /api/speak 503 in 31ms (next.js: 7ms, application-code: 24ms)
+ POST /api/speak 200 in 986ms (next.js: 3ms, application-code: 982ms)
+ GET / 200 in 131ms (next.js: 10ms, application-code: 120ms)
+ POST /api/ask 200 in 6.0s (next.js: 8ms, application-code: 5.9s)
+ POST /api/speak 200 in 2.5s (next.js: 6ms, application-code: 2.4s)
+ POST /api/ask 200 in 6.9s (next.js: 9ms, application-code: 6.9s)
+ POST /api/speak 200 in 3.7s (next.js: 6ms, application-code: 3.7s)
+✓ Compiled in 147ms
+ GET / 200 in 55ms (next.js: 18ms, application-code: 37ms)
+ GET / 200 in 33ms (next.js: 9ms, application-code: 24ms)
+✓ Compiled in 69ms
+ GET / 200 in 33ms (next.js: 7ms, application-code: 26ms)
+✓ Compiled in 46ms
+✓ Compiled in 130ms
+ GET / 200 in 35ms (next.js: 8ms, application-code: 27ms)
+ GET / 200 in 33ms (next.js: 8ms, application-code: 25ms)
+✓ Compiled in 108ms
+ GET / 200 in 27ms (next.js: 7ms, application-code: 20ms)
+✓ Compiled in 42ms
+ GET / 200 in 31ms (next.js: 10ms, application-code: 22ms)
+✓ Compiled in 65ms
+ POST /api/speak 200 in 1010ms (next.js: 5ms, application-code: 1005ms)
+[browser] ./components/AskFriday.tsx:425:7
+Error: Expected a semicolon
+  423 |       }
+  424 |       // AbortError = user hit Stop; stop() already flushed the text.
+> 425 |     } catch (err) {
+      |       ^^^^^
+  426 |       if ((err as Error)?.name !== "AbortError") {
+  427 |         state.done = true;
+  428 |         updateLastFriday("Couldn't reach the Friday backend.");
+
+Parsing ecmascript source code failed
+
+Import traces:
+  Client Component Browser:
+    ./components/AskFriday.tsx [Client Component Browser]
+    ./components/AppShell.tsx [Client Component Browser]
+    ./components/AppShell.tsx [Server Component]
+    ./app/layout.tsx [Server Component]
+
+  Client Component SSR:
+    ./components/AskFriday.tsx [Client Component SSR]
+    ./components/AppShell.tsx [Client Component SSR]
+    ./components/AppShell.tsx [Server Component]
+    ./app/layout.tsx [Server Component] 
+ POST /api/ask 200 in 3.9s (next.js: 8ms, application-code: 3.9s)
+ POST /api/speak 200 in 2.2s (next.js: 8ms, application-code: 2.2s)
+ POST /api/speak 200 in 1693ms (next.js: 9ms, application-code: 1684ms)
+ POST /api/speak 200 in 1836ms (next.js: 11ms, application-code: 1825ms)
+ POST /api/speak 200 in 2.4s (next.js: 9ms, application-code: 2.4s)
+ POST /api/ask 200 in 2.2s (next.js: 10ms, application-code: 2.2s)
+ POST /api/speak 200 in 1972ms (next.js: 8ms, application-code: 1964ms)
+ POST /api/ask 200 in 3.3s (next.js: 7ms, application-code: 3.3s)
+ POST /api/speak 200 in 2.5s (next.js: 7ms, application-code: 2.5s)
+ POST /api/speak 200 in 2.1s (next.js: 7ms, application-code: 2.1s)
+ GET / 200 in 203ms (next.js: 11ms, application-code: 192ms)
+ POST /api/ask 200 in 3.7s (next.js: 9ms, application-code: 3.7s)
+ POST /api/speak 200 in 2.3s (next.js: 11ms, application-code: 2.3s)
+ POST /api/speak 200 in 1602ms (next.js: 8ms, application-code: 1593ms)
+ POST /api/ask 200 in 4.6s (next.js: 9ms, application-code: 4.6s)
+ POST /api/speak 200 in 2.4s (next.js: 4ms, application-code: 2.4s)
+ POST /api/speak 200 in 1758ms (next.js: 5ms, application-code: 1753ms)
+ POST /api/speak 200 in 1914ms (next.js: 10ms, application-code: 1904ms)
+ POST /api/speak 200 in 1717ms (next.js: 9ms, application-code: 1708ms)
+ POST /api/speak 200 in 1635ms (next.js: 14ms, application-code: 1622ms)
+ POST /api/ask 200 in 3.6s (next.js: 8ms, application-code: 3.6s)
+ POST /api/speak 200 in 2.7s (next.js: 7ms, application-code: 2.7s)
+ POST /api/speak 200 in 1750ms (next.js: 7ms, application-code: 1744ms)
+ POST /api/speak 200 in 1916ms (next.js: 10ms, application-code: 1907ms)
+ POST /api/speak 200 in 1852ms (next.js: 10ms, application-code: 1842ms)
+ POST /api/speak 200 in 2.1s (next.js: 9ms, application-code: 2.1s)
+ POST /api/speak 200 in 1880ms (next.js: 10ms, application-code: 1870ms)
+ POST /api/speak 200 in 1833ms (next.js: 11ms, application-code: 1822ms)
+ POST /api/speak 200 in 1804ms (next.js: 9ms, application-code: 1794ms)
+ POST /api/ask 200 in 18.2s (next.js: 7ms, application-code: 18.2s)
+ POST /api/speak 200 in 2.3s (next.js: 4ms, application-code: 2.3s)
+ POST /api/speak 200 in 2.0s (next.js: 8ms, application-code: 2.0s)
+ GET / 200 in 174ms (next.js: 13ms, application-code: 161ms)
+ POST /api/ask 200 in 3.7s (next.js: 9ms, application-code: 3.7s)
+ POST /api/speak 200 in 2.9s (next.js: 7ms, application-code: 2.9s)
+ POST /api/speak 200 in 1760ms (next.js: 9ms, application-code: 1751ms)
+ POST /api/speak 200 in 1855ms (next.js: 9ms, application-code: 1846ms)
+ POST /api/ask 200 in 4.5s (next.js: 10ms, application-code: 4.5s)
+ POST /api/speak 200 in 2.8s (next.js: 8ms, application-code: 2.8s)
+ POST /api/speak 200 in 2.3s (next.js: 10ms, application-code: 2.3s)
+ POST /api/speak 200 in 2.2s (next.js: 12ms, application-code: 2.2s)
+ GET / 200 in 108ms (next.js: 10ms, application-code: 98ms)
+ POST /api/ask 200 in 7.5s (next.js: 7ms, application-code: 7.5s)
+ POST /api/speak 200 in 1390ms (next.js: 4ms, application-code: 1387ms)
+ POST /api/speak 200 in 1064ms (next.js: 2ms, application-code: 1061ms)
+ POST /api/speak 200 in 1291ms (next.js: 5ms, application-code: 1285ms)
+ POST /api/ask 200 in 2.6s (next.js: 5ms, application-code: 2.6s)
+ POST /api/speak 200 in 1453ms (next.js: 3ms, application-code: 1450ms)
+ POST /api/speak 200 in 1335ms (next.js: 3ms, application-code: 1331ms)
+ POST /api/speak 200 in 1861ms (next.js: 5ms, application-code: 1856ms)
+ GET / 200 in 115ms (next.js: 2ms, application-code: 113ms)
+ POST /api/ask 200 in 3.2s (next.js: 4ms, application-code: 3.2s)
+ GET / 200 in 146ms (next.js: 11ms, application-code: 135ms)
+ POST /api/ask 200 in 9.0s (next.js: 3ms, application-code: 9.0s)
+ POST /api/ask 200 in 13.7s (next.js: 6ms, application-code: 13.7s)
+ POST /api/speak 200 in 1610ms (next.js: 1.9ms, application-code: 1609ms)
+ POST /api/speak 200 in 1368ms (next.js: 1.9ms, application-code: 1366ms)
+ POST /api/speak 200 in 1251ms (next.js: 9ms, application-code: 1242ms)
+ POST /api/speak 200 in 1296ms (next.js: 5ms, application-code: 1292ms)
+ POST /api/speak 200 in 1229ms (next.js: 5ms, application-code: 1224ms)
+ POST /api/ask 200 in 3.6s (next.js: 6ms, application-code: 3.6s)
+ POST /api/speak 200 in 1739ms (next.js: 7ms, application-code: 1732ms)
+ POST /api/speak 200 in 1364ms (next.js: 7ms, application-code: 1357ms)
+ POST /api/speak 200 in 1414ms (next.js: 6ms, application-code: 1408ms)
+ GET / 200 in 97ms (next.js: 5ms, application-code: 92ms)
+ POST /api/ask 200 in 20.3s (next.js: 4ms, application-code: 20.3s)
+ POST /api/speak 200 in 1775ms (next.js: 6ms, application-code: 1769ms)
+ POST /api/ask 200 in 3.4s (next.js: 6ms, application-code: 3.4s)
+ POST /api/speak 502 in 21.5s (next.js: 4ms, application-code: 21.5s)
+ POST /api/ask 200 in 3.7s (next.js: 4ms, application-code: 3.7s)
+ POST /api/speak 200 in 1565ms (next.js: 4ms, application-code: 1561ms)
+ POST /api/speak 200 in 1244ms (next.js: 1.9ms, application-code: 1242ms)
+ POST /api/speak 200 in 1366ms (next.js: 5ms, application-code: 1361ms)
+✓ Compiled in 52ms
+ GET / 200 in 20ms (next.js: 7ms, application-code: 13ms)
+ GET / 200 in 22ms (next.js: 7ms, application-code: 15ms)
+✓ Compiled in 54ms
+ GET / 200 in 22ms (next.js: 8ms, application-code: 14ms)
+✓ Compiled in 40ms
+ GET / 200 in 20ms (next.js: 4ms, application-code: 16ms)
+✓ Compiled in 32ms
+ GET / 200 in 32ms (next.js: 4ms, application-code: 28ms)
+✓ Compiled in 31ms
+ GET / 200 in 20ms (next.js: 6ms, application-code: 14ms)
+✓ Compiled in 27ms
+ GET / 200 in 20ms (next.js: 4ms, application-code: 15ms)
+✓ Compiled in 44ms
+ GET / 200 in 36ms (next.js: 4ms, application-code: 32ms)
+ GET / 200 in 74ms (next.js: 5ms, application-code: 69ms)
+ POST /api/ask 200 in 3.9s (next.js: 6ms, application-code: 3.9s)
+ POST /api/ask 200 in 2.5s (next.js: 7ms, application-code: 2.5s)
+ POST /api/speak 200 in 1422ms (next.js: 3ms, application-code: 1419ms)
+ POST /api/speak 200 in 1233ms (next.js: 4ms, application-code: 1229ms)
+ POST /api/speak 200 in 1262ms (next.js: 5ms, application-code: 1256ms)
+ POST /api/speak 200 in 1450ms (next.js: 3ms, application-code: 1446ms)
+ POST /api/ask 200 in 3.1s (next.js: 6ms, application-code: 3.1s)
+ POST /api/speak 200 in 1308ms (next.js: 3ms, application-code: 1305ms)
+ POST /api/speak 200 in 1389ms (next.js: 5ms, application-code: 1384ms)
+ POST /api/speak 200 in 1319ms (next.js: 4ms, application-code: 1315ms)
+ POST /api/speak 200 in 1181ms (next.js: 2ms, application-code: 1179ms)
+ POST /api/speak 200 in 1463ms (next.js: 4ms, application-code: 1459ms)
+ POST /api/ask 200 in 8.6s (next.js: 5ms, application-code: 8.6s)
+ POST /api/speak 200 in 1563ms (next.js: 1.9ms, application-code: 1561ms)
+ POST /api/speak 200 in 1371ms (next.js: 7ms, application-code: 1365ms)
+ POST /api/speak 200 in 1755ms (next.js: 6ms, application-code: 1749ms)
+ GET / 200 in 1157ms (next.js: 793ms, application-code: 364ms)
+ GET / 200 in 26ms (next.js: 6ms, application-code: 20ms)
+ GET / 200 in 32ms (next.js: 5ms, application-code: 27ms)
+ GET / 200 in 64ms (next.js: 4ms, application-code: 60ms)
+ GET / 200 in 35ms (next.js: 8ms, application-code: 27ms)
+ GET / 200 in 24ms (next.js: 5ms, application-code: 19ms)
+ GET / 200 in 30ms (next.js: 3ms, application-code: 27ms)
+ GET / 200 in 24ms (next.js: 3ms, application-code: 20ms)
+ GET / 200 in 20ms (next.js: 3ms, application-code: 17ms)
+ GET / 200 in 26ms (next.js: 5ms, application-code: 21ms)
+ GET / 200 in 26ms (next.js: 4ms, application-code: 22ms)
+ GET / 200 in 24ms (next.js: 5ms, application-code: 19ms)
+ GET / 200 in 45ms (next.js: 3ms, application-code: 43ms)
+ GET / 200 in 22ms (next.js: 3ms, application-code: 19ms)
+ GET / 200 in 50ms (next.js: 3ms, application-code: 47ms)
+ GET / 200 in 46ms (next.js: 4ms, application-code: 42ms)
+ GET / 200 in 48ms (next.js: 3ms, application-code: 45ms)
+ GET / 200 in 54ms (next.js: 4ms, application-code: 50ms)
+ GET / 200 in 54ms (next.js: 4ms, application-code: 50ms)
+ GET / 200 in 27ms (next.js: 5ms, application-code: 23ms)
+ GET / 200 in 27ms (next.js: 5ms, application-code: 22ms)
+ GET / 200 in 28ms (next.js: 4ms, application-code: 24ms)
+ GET / 200 in 37ms (next.js: 4ms, application-code: 33ms)
+ GET / 200 in 79ms (next.js: 4ms, application-code: 75ms)
+ GET / 200 in 36ms (next.js: 5ms, application-code: 31ms)
+ GET / 200 in 33ms (next.js: 4ms, application-code: 29ms)
+✓ Compiled in 267ms
+ GET / 200 in 75ms (next.js: 39ms, application-code: 36ms)
+✓ Compiled in 80ms
+ GET / 200 in 66ms (next.js: 9ms, application-code: 57ms)
+ GET / 200 in 28ms (next.js: 9ms, application-code: 19ms)
+✓ Compiled in 52ms
+ GET / 200 in 27ms (next.js: 5ms, application-code: 22ms)
+✓ Compiled in 56ms
+ GET / 200 in 30ms (next.js: 8ms, application-code: 22ms)
+✓ Compiled in 56ms
+ GET / 200 in 24ms (next.js: 5ms, application-code: 19ms)
+✓ Compiled in 56ms
+[browser] The final argument passed to useEffect changed size between renders. The order and size of this array must remain constant.
+
+Previous: []
+Incoming: [false] 
+    at AskFriday (components/AskFriday.tsx:91:12)
+    at Set.forEach (<anonymous>)
+  89 |   // see the current setting, not the value captured when that send() started.
+  90 |   const voiceOutRef = useRef(false);
+> 91 |   useEffect(() => {
+     |            ^
+  92 |     voiceOutRef.current = voiceOut;
+  93 |   }, [voiceOut]);
+  94 |   const busy = loading || streaming; (components/AskFriday.tsx:91:12)
+ GET / 200 in 529ms (next.js: 303ms, application-code: 225ms)
+ GET / 200 in 55ms (next.js: 8ms, application-code: 47ms)
+ GET / 200 in 18ms (next.js: 3ms, application-code: 15ms)
+ GET / 200 in 19ms (next.js: 4ms, application-code: 15ms)
+ GET / 200 in 18ms (next.js: 3ms, application-code: 16ms)
+ GET / 200 in 17ms (next.js: 4ms, application-code: 14ms)
+ GET / 200 in 30ms (next.js: 3ms, application-code: 27ms)
+ GET / 200 in 15ms (next.js: 1.8ms, application-code: 13ms)
+ GET / 200 in 16ms (next.js: 3ms, application-code: 14ms)
+ GET / 200 in 16ms (next.js: 2ms, application-code: 14ms)
+ GET / 200 in 33ms (next.js: 3ms, application-code: 31ms)
+ GET / 200 in 15ms (next.js: 2ms, application-code: 12ms)
+ GET / 200 in 16ms (next.js: 2ms, application-code: 14ms)
+ GET / 200 in 13ms (next.js: 1.8ms, application-code: 11ms)
+ GET / 200 in 31ms (next.js: 1.8ms, application-code: 30ms)
+ GET / 200 in 15ms (next.js: 2ms, application-code: 13ms)
+ GET / 200 in 13ms (next.js: 1.9ms, application-code: 11ms)
+ GET / 200 in 13ms (next.js: 1.8ms, application-code: 11ms)
+ GET / 200 in 30ms (next.js: 1.6ms, application-code: 28ms)
+ GET / 200 in 13ms (next.js: 1.9ms, application-code: 12ms)
+ GET / 200 in 13ms (next.js: 1.7ms, application-code: 11ms)
+ GET / 200 in 15ms (next.js: 1.6ms, application-code: 14ms)
+ GET / 200 in 31ms (next.js: 3ms, application-code: 28ms)
+ GET / 200 in 16ms (next.js: 3ms, application-code: 13ms)
+ GET / 200 in 14ms (next.js: 1.6ms, application-code: 12ms)
+ GET / 200 in 17ms (next.js: 4ms, application-code: 12ms)
+ GET / 200 in 23ms (next.js: 6ms, application-code: 17ms)
+✓ Compiled in 672ms
+ GET / 200 in 17ms (next.js: 4ms, application-code: 13ms)
+✓ Compiled in 396ms
+ GET /api/highlight-index 200 in 233ms (next.js: 209ms, application-code: 23ms)
+ GET /api/highlight-index 200 in 10ms (next.js: 2.0ms, application-code: 8ms)
+ GET / 200 in 27ms (next.js: 8ms, application-code: 19ms)
+✓ Compiled in 80ms
+ GET / 200 in 19ms (next.js: 5ms, application-code: 14ms)
+✓ Compiled in 78ms
+✓ Compiled in 36ms
+ GET / 200 in 41ms (next.js: 6ms, application-code: 35ms)
+ GET / 200 in 20ms (next.js: 5ms, application-code: 15ms)
+✓ Compiled in 34ms
+ GET / 200 in 22ms (next.js: 5ms, application-code: 17ms)
+✓ Compiled in 52ms
+✓ Compiled in 65ms
+ GET / 200 in 50ms (next.js: 17ms, application-code: 33ms)
+ GET / 200 in 33ms (next.js: 6ms, application-code: 26ms)
+✓ Compiled in 67ms
+ GET / 200 in 27ms (next.js: 7ms, application-code: 20ms)
+✓ Compiled in 35ms
+ GET / 200 in 24ms (next.js: 5ms, application-code: 19ms)
+✓ Compiled in 40ms
+ GET / 200 in 26ms (next.js: 7ms, application-code: 19ms)
+✓ Compiled in 36ms
+ GET / 200 in 23ms (next.js: 5ms, application-code: 19ms)
+✓ Compiled in 31ms
+ GET / 200 in 29ms (next.js: 7ms, application-code: 22ms)
+✓ Compiled in 36ms
+ GET / 200 in 21ms (next.js: 6ms, application-code: 16ms)
+✓ Compiled in 41ms
+✓ Compiled in 67ms
+ GET / 200 in 23ms (next.js: 5ms, application-code: 18ms)
+ GET / 200 in 20ms (next.js: 6ms, application-code: 15ms)
+✓ Compiled in 29ms
+ GET / 200 in 23ms (next.js: 4ms, application-code: 18ms)
+✓ Compiled in 33ms
+✓ Compiled in 26ms
+ GET / 200 in 26ms (next.js: 6ms, application-code: 19ms)
+ GET / 200 in 17ms (next.js: 5ms, application-code: 12ms)
+✓ Compiled in 39ms
+ GET / 200 in 30ms (next.js: 9ms, application-code: 21ms)
+✓ Compiled in 49ms
+ GET / 200 in 20ms (next.js: 4ms, application-code: 16ms)
+✓ Compiled in 25ms
+ GET /api/highlight-index 200 in 10ms (next.js: 2ms, application-code: 7ms)
+ GET / 200 in 299ms (next.js: 6ms, application-code: 292ms)
+ GET / 200 in 160ms (next.js: 8ms, application-code: 151ms)
+ GET /api/highlight-index 200 in 17ms (next.js: 4ms, application-code: 13ms)
+ GET /api/highlight-index 200 in 14ms (next.js: 4ms, application-code: 10ms)
+ POST /api/ask 200 in 2.3s (next.js: 80ms, application-code: 2.2s)
+ POST /api/ask 200 in 1825ms (next.js: 3ms, application-code: 1822ms)
+ POST /api/ask 200 in 1531ms (next.js: 4ms, application-code: 1526ms)
+ GET /company 200 in 67ms (next.js: 30ms, application-code: 37ms)
+ GET /api/context 200 in 83ms (next.js: 68ms, application-code: 15ms)
+ GET /api/context 200 in 11ms (next.js: 3ms, application-code: 8ms)
+ GET /tasks 200 in 57ms (next.js: 27ms, application-code: 30ms)
+ GET /api/tasks 200 in 101ms (next.js: 94ms, application-code: 8ms)
+ GET /api/tasks 200 in 9ms (next.js: 3ms, application-code: 6ms)
+ POST /api/ask 200 in 2.5s (next.js: 4ms, application-code: 2.5s)
+ GET /company 200 in 83ms (next.js: 33ms, application-code: 50ms)
+ GET /api/context 200 in 21ms (next.js: 6ms, application-code: 15ms)
+ GET /api/context 200 in 13ms (next.js: 3ms, application-code: 10ms)
+ GET / 200 in 61ms (next.js: 10ms, application-code: 50ms)
+ POST /api/ask 200 in 4.5s (next.js: 4ms, application-code: 4.5s)
+ GET / 200 in 113ms (next.js: 5ms, application-code: 108ms)
+ GET /api/highlight-index 200 in 35ms (next.js: 13ms, application-code: 22ms)
+ GET /api/highlight-index 200 in 20ms (next.js: 5ms, application-code: 16ms)
+ POST /api/ask 200 in 2.6s (next.js: 5ms, application-code: 2.6s)
+ POST /api/ask 200 in 2.8s (next.js: 3ms, application-code: 2.8s)
+ GET / 200 in 95ms (next.js: 15ms, application-code: 81ms)
+ GET /api/highlight-index 200 in 23ms (next.js: 6ms, application-code: 17ms)
+ GET /api/highlight-index 200 in 22ms (next.js: 6ms, application-code: 16ms)
+ POST /api/ask 200 in 2.8s (next.js: 3ms, application-code: 2.8s)
+ GET / 200 in 121ms (next.js: 5ms, application-code: 116ms)
+ GET /api/highlight-index 200 in 25ms (next.js: 6ms, application-code: 19ms)
+ GET /api/highlight-index 200 in 16ms (next.js: 5ms, application-code: 11ms)
+ POST /api/ask 200 in 1981ms (next.js: 5ms, application-code: 1976ms)
+ POST /api/ask 200 in 2.5s (next.js: 4ms, application-code: 2.5s)
+ POST /api/ask 200 in 2.4s (next.js: 12ms, application-code: 2.4s)
+ POST /api/ask 200 in 3.8s (next.js: 4ms, application-code: 3.8s)
+ POST /api/ask 200 in 1634ms (next.js: 11ms, application-code: 1624ms)
+ POST /api/ask 200 in 2.7s (next.js: 10ms, application-code: 2.7s)
+ POST /api/ask 200 in 2.7s (next.js: 4ms, application-code: 2.7s)
+ GET / 200 in 31ms (next.js: 10ms, application-code: 22ms)
+✓ Compiled in 977ms
+ GET / 200 in 20ms (next.js: 7ms, application-code: 13ms)
+✓ Compiled in 242ms
+ GET / 200 in 19ms (next.js: 5ms, application-code: 13ms)
+✓ Compiled in 37ms
+ GET / 200 in 18ms (next.js: 5ms, application-code: 12ms)
+✓ Compiled in 77ms
+ GET / 200 in 18ms (next.js: 4ms, application-code: 13ms)
+✓ Compiled in 46ms
+ GET / 200 in 18ms (next.js: 4ms, application-code: 14ms)
+✓ Compiled in 33ms
+ GET / 200 in 18ms (next.js: 4ms, application-code: 14ms)
+✓ Compiled in 42ms
+✓ Compiled in 29ms
+ GET / 200 in 43ms (next.js: 12ms, application-code: 31ms)
+ GET / 200 in 33ms (next.js: 6ms, application-code: 27ms)
+✓ Compiled in 40ms
+ GET / 200 in 19ms (next.js: 5ms, application-code: 14ms)
+✓ Compiled in 35ms
+ GET / 200 in 25ms (next.js: 7ms, application-code: 18ms)
+✓ Compiled in 30ms
+ GET / 200 in 20ms (next.js: 5ms, application-code: 15ms)
+✓ Compiled in 28ms
+ GET / 200 in 20ms (next.js: 6ms, application-code: 14ms)
+✓ Compiled in 26ms
+ GET / 200 in 22ms (next.js: 7ms, application-code: 15ms)
+✓ Compiled in 36ms
+ GET /api/highlight-index 200 in 7ms (next.js: 2ms, application-code: 5ms)
+ GET / 200 in 23ms (next.js: 6ms, application-code: 17ms)
+✓ Compiled in 39ms
+ GET /api/highlight-index 200 in 5ms (next.js: 1.2ms, application-code: 4ms)
+ GET /api/highlight-index 200 in 7ms (next.js: 1.3ms, application-code: 6ms)
+ GET / 200 in 219ms (next.js: 35ms, application-code: 184ms)
+ GET /api/highlight-index 200 in 32ms (next.js: 5ms, application-code: 27ms)
+ GET /api/highlight-index 200 in 31ms (next.js: 7ms, application-code: 24ms)
+ POST /api/ask 200 in 2.4s (next.js: 13ms, application-code: 2.4s)
+ POST /api/ask 200 in 1671ms (next.js: 6ms, application-code: 1664ms)
+ POST /api/ask 200 in 1519ms (next.js: 5ms, application-code: 1514ms)
+ GET /tasks 200 in 159ms (next.js: 107ms, application-code: 52ms)
+ GET /api/tasks 200 in 52ms (next.js: 33ms, application-code: 19ms)
+ GET /api/tasks 200 in 19ms (next.js: 6ms, application-code: 13ms)
+ GET / 200 in 61ms (next.js: 4ms, application-code: 57ms)
+ POST /api/ask 200 in 3.8s (next.js: 12ms, application-code: 3.8s)
+ GET /tasks 200 in 106ms (next.js: 7ms, application-code: 99ms)
+ GET /api/tasks 200 in 25ms (next.js: 5ms, application-code: 20ms)
+ GET /api/tasks 200 in 15ms (next.js: 5ms, application-code: 10ms)
+ GET / 200 in 90ms (next.js: 27ms, application-code: 63ms)
+ POST /api/ask 200 in 4.3s (next.js: 14ms, application-code: 4.3s)
+ GET /tasks 200 in 54ms (next.js: 9ms, application-code: 45ms)
+ GET /api/tasks 200 in 17ms (next.js: 6ms, application-code: 10ms)
+ GET /api/tasks 200 in 19ms (next.js: 8ms, application-code: 11ms)
+ GET /api/highlight-index 200 in 6ms (next.js: 2.0ms, application-code: 4ms)
+ GET /tasks 200 in 20ms (next.js: 7ms, application-code: 12ms)
+ GET /api/tasks 200 in 6ms (next.js: 1.4ms, application-code: 4ms)
+ GET /api/tasks 200 in 4ms (next.js: 1.2ms, application-code: 2ms)
+✓ Compiled in 182ms
+ GET /api/highlight-index 200 in 10ms (next.js: 7ms, application-code: 4ms)
+ GET /api/highlight-index 200 in 23ms (next.js: 6ms, application-code: 16ms)
+ GET /tasks 200 in 102ms (next.js: 19ms, application-code: 83ms)
+ GET /api/highlight-index 200 in 18ms (next.js: 7ms, application-code: 12ms)
+ GET /api/tasks 200 in 31ms (next.js: 23ms, application-code: 8ms)
+ GET /api/highlight-index 200 in 17ms (next.js: 6ms, application-code: 11ms)
+ GET /api/tasks 200 in 32ms (next.js: 24ms, application-code: 7ms)
+ GET / 200 in 37ms (next.js: 9ms, application-code: 27ms)
+ POST /api/ask 200 in 4.2s (next.js: 7ms, application-code: 4.2s)
+ POST /api/ask 200 in 4.0s (next.js: 5ms, application-code: 4.0s)
+ GET / 200 in 430ms (next.js: 75ms, application-code: 355ms)
+ GET /api/highlight-index 200 in 34ms (next.js: 8ms, application-code: 26ms)
+ GET /api/highlight-index 200 in 21ms (next.js: 5ms, application-code: 17ms)
+ POST /api/ask 200 in 5.3s (next.js: 7ms, application-code: 5.3s)
+ GET /api/highlight-index 200 in 9ms (next.js: 3ms, application-code: 7ms)
+ POST /api/ask 200 in 2.9s (next.js: 5ms, application-code: 2.9s)
+ POST /api/ask 200 in 2.7s (next.js: 5ms, application-code: 2.7s)
+ POST /api/ask 200 in 2.2s (next.js: 5ms, application-code: 2.2s)
+✓ Compiled in 442ms
+ GET / 200 in 202ms (next.js: 80ms, application-code: 122ms)
+ GET / 200 in 28ms (next.js: 10ms, application-code: 18ms)
+✓ Compiled in 175ms
+ GET / 200 in 23ms (next.js: 7ms, application-code: 16ms)
+✓ Compiled in 84ms
+✓ Compiled in 148ms
+ GET / 200 in 510ms (next.js: 493ms, application-code: 17ms)
+ GET / 200 in 26ms (next.js: 6ms, application-code: 19ms)
+✓ Compiled in 98ms
+ GET / 200 in 20ms (next.js: 5ms, application-code: 15ms)
+✓ Compiled in 73ms
+ GET / 200 in 15ms (next.js: 4ms, application-code: 12ms)
+✓ Compiled in 63ms
+ GET / 200 in 16ms (next.js: 4ms, application-code: 12ms)
+✓ Compiled in 77ms
+ GET / 200 in 17ms (next.js: 2ms, application-code: 15ms)
+ GET / 200 in 22ms (next.js: 4ms, application-code: 18ms)
+✓ Compiled in 148ms
+ GET / 200 in 24ms (next.js: 7ms, application-code: 17ms)
+✓ Compiled in 35ms
+ GET /api/highlight-index 200 in 17ms (next.js: 9ms, application-code: 8ms)
+ GET /api/highlight-index 200 in 9ms (next.js: 4ms, application-code: 5ms)
+ GET /api/highlight-index 200 in 6ms (next.js: 1.6ms, application-code: 4ms)
+ GET / 200 in 25ms (next.js: 6ms, application-code: 19ms)
+✓ Compiled in 30ms
+ GET / 200 in 24ms (next.js: 4ms, application-code: 20ms)
+ GET / 200 in 26ms (next.js: 7ms, application-code: 19ms)
+✓ Compiled in 58ms
+ GET /api/highlight-index 200 in 9ms (next.js: 3ms, application-code: 6ms)
+ POST /api/ask 200 in 7.4s (next.js: 47ms, application-code: 7.3s)
+ GET / 200 in 151ms (next.js: 6ms, application-code: 145ms)
+ GET /api/highlight-index 200 in 33ms (next.js: 9ms, application-code: 25ms)
+ GET /api/highlight-index 200 in 26ms (next.js: 4ms, application-code: 23ms)

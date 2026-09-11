@@ -1,0 +1,19 @@
+{
+  "note": "Mock data for a future expense/billing connector (e.g. QuickBooks, company card feed). Not part of the original context set — added to support the 'Today's Spend' dashboard card. Dummy data only.",
+  "currency": "USD",
+  "date": "2026-09-09",
+  "entries": [
+    {
+      "id": "spend-001",
+      "category": "Sales & Marketing",
+      "label": "Outreach tooling",
+      "amount_usd": 420
+    },
+    {
+      "id": "spend-002",
+      "category": "Marketing",
+      "label": "Ad spend (Lumen campaign)",
+      "amount_usd": 180
+    }
+  ]
+}

@@ -1,0 +1,4 @@
+{
+  "anchor": "2026-09-10",
+  "note": "ANCHOR date for the frozen mock dataset (not 'today' anymore). The app now runs on the real system clock: backend/app/config.py and frontend/lib/paths.ts each read the real current date & time. This anchor is the date the mock-data files (calendar.json, tasks.json, revenue.json, spend.json) were authored around; both sides compute shift_days = real_today - anchor and slide every YYYY-MM-DD in the mock data forward by that many days, so 'this week' / 'overdue' / 'upcoming' stay correct as real time moves. Delete this shifting logic once real connectors replace the mock-data files. Optional env var FRIDAY_TZ pins the timezone for both sides; unset = server local time."
+}
