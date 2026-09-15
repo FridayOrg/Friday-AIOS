@@ -124,17 +124,26 @@ export function matchTarget(text: string, entities: HighlightEntity[], today?: s
 
   const namePool = resolveCalendarDuplicates(text, entities, today);
   const named = namePool.filter((e) => e.label.length >= 3 && lower.includes(e.label.toLowerCase()));
-  const scopedNamed = topicSections.length ? named.filter((e) => topicSections.includes(e.section)) : named;
-  if (scopedNamed.length) {
+  if (named.length) {
     // A task's full title often contains a shorter client name that separately exists
     // as its own financial/pipeline entity (e.g. a task titled "Northgate Financial
     // Advisory — approve renewal terms..." contains the financial entity's label
-    // "Northgate Financial Advisory"). The longest matching label is the more specific
-    // signal — picking array order instead (as this used to) meant whichever section
-    // happened to be built first in the entity list always won ties, regardless of
-    // which match was actually more precise.
-    const best = scopedNamed.reduce((a, b) => (b.label.length > a.label.length ? b : a));
-    const ids = scopedNamed.filter((e) => e.section === best.section).map((e) => e.id);
+    // "Northgate Financial Advisory", and the word "Financial" inside that same title
+    // can also false-positive-match the financial topic keyword). The longest matching
+    // label is the more specific signal, so it must win outright rather than being
+    // pre-filtered out by topicSections first — a client's own name can accidentally
+    // contain a different section's keyword (as above), which would otherwise scope
+    // away the correct, longer, more specific match. topicSections is only consulted
+    // below to break a genuine tie between equally-long labels from different sections
+    // (e.g. a short client name that legitimately exists in two sections at once).
+    const maxLen = Math.max(...named.map((e) => e.label.length));
+    const longest = named.filter((e) => e.label.length === maxLen);
+    const tiedSections = new Set(longest.map((e) => e.section));
+    const best =
+      tiedSections.size === 1
+        ? longest[0]
+        : (topicSections.length ? longest.filter((e) => topicSections.includes(e.section)) : [])[0] ?? longest[0];
+    const ids = named.filter((e) => e.section === best.section).map((e) => e.id);
     return { section: best.section, itemIds: ids };
   }
 
