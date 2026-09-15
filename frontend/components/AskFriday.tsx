@@ -1,7 +1,7 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
-import { Send, Square, Sparkles, Mic, Volume2, VolumeX } from "lucide-react";
+import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X } from "lucide-react";
 import Markdown from "./Markdown";
 import { useHighlight } from "@/lib/highlight-context";
 
@@ -39,7 +39,7 @@ function now() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-export default function AskFriday() {
+export default function AskFriday({ onClose }: { onClose?: () => void }) {
   const { highlightFromText } = useHighlight();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false); // waiting for the first chunk
@@ -612,19 +612,30 @@ export default function AskFriday() {
             <Sparkles size={18} />
             ASK FRIDAY
           </div>
-          <button
-            onClick={toggleVoiceOut}
-            aria-pressed={voiceOut}
-            aria-label={voiceOut ? "Turn off spoken replies" : "Turn on spoken replies"}
-            title={voiceOut ? "Spoken replies on" : "Spoken replies off"}
-            className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
-              voiceOut
-                ? "bg-blue-100 text-blue-700"
-                : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
-            } ${speaking ? "animate-pulse" : ""}`}
-          >
-            {voiceOut ? <Volume2 size={16} /> : <VolumeX size={16} />}
-          </button>
+          <div className="flex items-center gap-1">
+            <button
+              onClick={toggleVoiceOut}
+              aria-pressed={voiceOut}
+              aria-label={voiceOut ? "Turn off spoken replies" : "Turn on spoken replies"}
+              title={voiceOut ? "Spoken replies on" : "Spoken replies off"}
+              className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
+                voiceOut
+                  ? "bg-blue-100 text-blue-700"
+                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+              } ${speaking ? "animate-pulse" : ""}`}
+            >
+              {voiceOut ? <Volume2 size={16} /> : <VolumeX size={16} />}
+            </button>
+            {onClose && (
+              <button
+                onClick={onClose}
+                aria-label="Close chat"
+                className="lg:hidden h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+              >
+                <X size={16} />
+              </button>
+            )}
+          </div>
         </div>
         <div className="text-sm text-slate-400 mt-0.5">
           Your Business Advisor — always here.
