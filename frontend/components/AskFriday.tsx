@@ -379,7 +379,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       if (err === "aborted") return; // our own abort() — onend will clean up
       if (err === "not-allowed" || err === "service-not-allowed") {
         abortMicRef.current = true;
-        setVoiceNote("Microphone access is blocked — enable it in the browser and try again.");
+        setVoiceNote("Microphone access is blocked. Enable it in the browser and try again.");
         return;
       }
       // "no-speech" with nothing captured → quiet stop; anything else → send what we have
@@ -638,7 +638,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           </div>
         </div>
         <div className="text-sm text-slate-400 mt-0.5">
-          Your Business Advisor — always here.
+          Your Business Advisor, always here.
           {voiceOut && <span className="text-[10px] text-slate-300"> · Voice by ElevenLabs</span>}
         </div>
       </div>
@@ -647,7 +647,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         {messages.length === 0 && (
           <div className="flex flex-col gap-3 mt-2">
             <p className="text-sm text-slate-500">
-              Ask me anything about the business — I won&rsquo;t volunteer a briefing
+              Ask me anything about the business. I won&rsquo;t volunteer a briefing
               until you do. A few things you could start with:
             </p>
             {SAMPLE_QUESTIONS.map((q) => (
@@ -665,15 +665,18 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         {messages.map((m, i) => (
           <div key={i} className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-sm">
-              <div
-                className={`h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold ${
-                  m.role === "user"
-                    ? "bg-slate-200 text-slate-600"
-                    : "bg-blue-100 text-blue-700"
-                }`}
-              >
-                {m.role === "user" ? "Y" : <Sparkles size={14} />}
-              </div>
+              {m.role === "user" ? (
+                <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold bg-slate-200 text-slate-600">
+                  Y
+                </div>
+              ) : (
+                // eslint-disable-next-line @next/next/no-img-element
+                <img
+                  src="/friday-mark.png"
+                  alt="Friday"
+                  className="h-7 w-7 rounded-full object-cover bg-blue-100"
+                />
+              )}
               <span className="font-medium text-slate-800">
                 {m.role === "user" ? "You" : "Friday"}
               </span>

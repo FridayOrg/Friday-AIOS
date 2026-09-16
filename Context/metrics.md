@@ -1,4 +1,4 @@
-# BookMySales.ai — Metrics
+# BookMySales.ai: Metrics
 
 ## 1. Overview
 
@@ -11,7 +11,7 @@ This document tracks BookMySales.ai's company-wide metrics, rolling up the indiv
 | Guarantee fulfillment rate | 20% fully met (1 of 5), 80% on track or ramping | Early-stage cohort; most clients still mid-term |
 | Average time-to-first-meeting | 9 days from campaign launch to first booked meeting | Tracked per client, reported weekly |
 | Meeting-to-opportunity conversion | 73% of booked meetings progress to a qualified sales opportunity | Distinguishes "booked" from genuinely "qualified" |
-| Client retention past guarantee period | 1 of 1 eligible clients (Northgate) currently in renewal discussion | Too early for a stable percentage — first data point pending |
+| Client retention past guarantee period | 1 of 1 eligible clients (Northgate) currently in renewal discussion | Too early for a stable percentage; first data point pending |
 
 ## 3. Market Context Metrics (Referenced in Company Positioning)
 
@@ -44,7 +44,7 @@ Consistent with the company's "outcomes over activity" value, these metrics are 
 
 1. Is the guarantee actually achievable and repeatable across different industries? (fulfillment rate)
 2. Are booked meetings translating into real pipeline, not just calendar volume? (meeting-to-opportunity conversion)
-3. Does the model hold up once the guarantee period ends? (post-guarantee retention — the key open question for the launch cohort)
+3. Does the model hold up once the guarantee period ends? (post-guarantee retention: the key open question for the launch cohort)
 
 ---
 

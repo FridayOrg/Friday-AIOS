@@ -14,7 +14,7 @@ const geistMono = Geist_Mono({
 });
 
 export const metadata: Metadata = {
-  title: "Friday — Chief of Staff",
+  title: "Friday: Chief of Staff",
   description: "AI Chief of Staff for founder-led SMBs",
 };
 

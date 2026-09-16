@@ -625,7 +625,7 @@ function FinancialContent({ revenue, glow }: { revenue: DashboardData["revenue"]
         </ResponsiveContainer>
       </div>
       <p className="text-[11px] mb-3" style={{ color: C.faint }}>
-        {revenue.sparkline.length} recorded MRR snapshot{revenue.sparkline.length === 1 ? "" : "s"} — trend fills in as more accrue.
+        {revenue.sparkline.length} recorded MRR snapshot{revenue.sparkline.length === 1 ? "" : "s"}, trend fills in as more accrue.
       </p>
       <div className="space-y-2.5">
         {revenue.byClient.map((c) => {
@@ -781,7 +781,7 @@ function CalendarContent({
             </div>
             <div className="flex-1 space-y-1.5 pb-1">
               {day.meetings.length === 0 && (
-                <div className="text-xs" style={{ color: C.faint }}>—</div>
+                <div className="text-xs" style={{ color: C.faint }}>No meetings</div>
               )}
               {day.meetings.map((m, i) => {
                 const pStyle = priorityOf(m.priority);
@@ -854,7 +854,7 @@ function SpendContent({ spend }: { spend: DashboardData["spend"] }) {
         ))}
       </div>
       <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
-        Spend tracking is mock data for a future billing connector — replace with real figures once QuickBooks or a card feed is connected.
+        Spend tracking is mock data for a future billing connector. Replace with real figures once QuickBooks or a card feed is connected.
       </p>
     </div>
   );

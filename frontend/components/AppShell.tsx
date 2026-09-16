@@ -1,7 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Menu, MessageCircle, User } from "lucide-react";
+import { Menu, User } from "lucide-react";
 import Sidebar from "./Sidebar";
 import AskFriday from "./AskFriday";
 import { HighlightProvider } from "@/lib/highlight-context";
@@ -121,9 +121,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMobileChatOpen(true)}
             aria-label="Talk to Friday"
             title="Talk to Friday"
-            className="lg:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-blue-600 text-white shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors"
+            className="lg:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-blue-600 shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors overflow-hidden"
           >
-            <MessageCircle size={24} />
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/friday-mark.png" alt="Friday" className="h-full w-full object-cover" />
           </button>
         )}
 

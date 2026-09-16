@@ -18,6 +18,16 @@ from .config import GEMINI_API_KEY, GEMINI_CLASSIFIER_API_KEY, MODEL
 MAX_RETRIES = 3
 RETRY_DELAY_SECONDS = 4
 
+# Gemini keeps reaching for an em dash in "**Title** — description" style headers even
+# with an explicit system-prompt rule against it (observed repeatedly in testing) — a
+# deterministic cleanup here is the reliable fix rather than relying on instruction-
+# following alone. Colon reads naturally for the dominant pattern actually seen.
+_EM_DASH_RE = re.compile(r"\s*—\s*")
+
+
+def _strip_em_dash(text: str) -> str:
+    return _EM_DASH_RE.sub(": ", text)
+
 
 @lru_cache(maxsize=1)
 def get_client() -> genai.Client:
@@ -79,7 +89,7 @@ def ask_friday(system_prompt: str, question: str, history: list[dict] | None = N
                     temperature=0.3,
                 ),
             )
-            return response.text
+            return _strip_em_dash(response.text)
         except ServerError as e:
             last_error = e
             if attempt < MAX_RETRIES - 1:
@@ -115,7 +125,7 @@ def ask_friday_stream(system_prompt: str, question: str, history: list[dict] | N
             for chunk in stream:
                 if chunk.text:
                     yielded_any = True
-                    yield chunk.text
+                    yield _strip_em_dash(chunk.text)
             return
         except ServerError as e:
             last_error = e
