@@ -118,9 +118,8 @@ export default function Sidebar({ collapsed, onToggle, mobile, onClose }: Sideba
     // no logout.
     return (
       <aside className="w-16 shrink-0 border-r border-slate-200 bg-white flex flex-col items-center h-full py-6 gap-1">
-        <div className="text-xl font-bold text-slate-900 mb-4">
-          f<span className="text-blue-600">.</span>
-        </div>
+        {/* eslint-disable-next-line @next/next/no-img-element */}
+        <img src="/friday-mark.png" alt="Friday" className="h-8 w-8 rounded-lg object-cover mb-4" />
         <button
           onClick={onToggle}
           aria-label="Expand sidebar"
