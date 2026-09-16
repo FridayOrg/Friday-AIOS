@@ -13,14 +13,19 @@ export default function CompanyPage() {
   const [files, setFiles] = useState<ContextFile[]>([]);
   const [activeSlug, setActiveSlug] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     fetch("/api/context")
-      .then((r) => r.json())
+      .then((r) => {
+        if (!r.ok) throw new Error(`Server returned ${r.status}`);
+        return r.json();
+      })
       .then((data) => {
         setFiles(data.files);
         setActiveSlug(data.files[0]?.slug ?? null);
       })
+      .catch(() => setError("Couldn't load company context files. Try refreshing, or check the server logs."))
       .finally(() => setLoading(false));
   }, []);
 
@@ -35,6 +40,8 @@ export default function CompanyPage() {
 
       {loading ? (
         <p className="text-sm text-slate-400">Loading context files…</p>
+      ) : error ? (
+        <p className="text-sm text-red-500">{error}</p>
       ) : (
         <div className="flex gap-6">
           <nav className="w-48 shrink-0 flex flex-col gap-1">

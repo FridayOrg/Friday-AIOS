@@ -4,7 +4,7 @@ import path from "path";
 // The frontend lives in <repo root>/frontend, context/mock-data live one level up.
 // Single place this is defined so it never drifts between API routes.
 export const REPO_ROOT = path.join(process.cwd(), "..");
-export const CONTEXT_DIR = path.join(REPO_ROOT, "context");
+export const CONTEXT_DIR = path.join(REPO_ROOT, "Context");
 export const MOCK_DATA_DIR = path.join(REPO_ROOT, "mock-data");
 
 // The app runs on the real system clock. Optional FRIDAY_TZ (e.g. "Asia/Kolkata")

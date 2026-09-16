@@ -10,7 +10,7 @@ from pathlib import Path
 from dotenv import load_dotenv
 
 ROOT_DIR = Path(__file__).resolve().parents[2]  # c:\AIOS
-CONTEXT_DIR = ROOT_DIR / "context"
+CONTEXT_DIR = ROOT_DIR / "Context"
 MOCK_DATA_DIR = ROOT_DIR / "mock-data"
 
 load_dotenv(ROOT_DIR / ".env")
