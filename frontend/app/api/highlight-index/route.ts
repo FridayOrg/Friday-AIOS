@@ -10,7 +10,7 @@ export const dynamic = "force-dynamic";
 // matching itself stays client-side and instant (see lib/matchTarget.ts) instead of
 // requiring a backend round-trip on every chat turn.
 export async function GET() {
-  const data = getDashboardData();
+  const data = await getDashboardData();
 
   const entities: HighlightEntity[] = [
     ...data.revenue.byClient.map((c) => ({

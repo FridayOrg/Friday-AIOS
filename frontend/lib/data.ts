@@ -30,6 +30,49 @@ function readJson<T>(fileName: string): T {
   return JSON.parse(raw);
 }
 
+// Calendar data no longer comes from mock-data/calendar.json — it's fetched live
+// from the backend's /calendar endpoint (backend/app/calendar_client.py), which
+// reads Google Calendar directly. Proxied through the backend rather than called
+// from here so the Google service-account credentials only ever live server-side
+// in one place (see the ADR discussion: Ask Friday's answers and the dashboard
+// widgets share one live source instead of each maintaining their own).
+const FRIDAY_API_URL = process.env.FRIDAY_API_URL ?? "http://localhost:8000";
+
+// "Monday of the real current week" — calendar.json used to carry this as
+// calendar.week_start; live Google Calendar events have no such field, so it's
+// computed locally instead (mirrors backend/app/calendar_client.py's _week_bounds,
+// which uses this exact same Monday as its fetch window's start).
+function currentWeekStart(): string {
+  const [y, m, d] = isoDate().split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  const dayOfWeek = date.getUTCDay(); // 0 = Sunday .. 6 = Saturday
+  const daysSinceMonday = dayOfWeek === 0 ? 6 : dayOfWeek - 1;
+  date.setUTCDate(date.getUTCDate() - daysSinceMonday);
+  return date.toISOString().slice(0, 10);
+}
+
+// Sunday of the same week as currentWeekStart() — calendar.json used to carry
+// this as calendar.week_end.
+function currentWeekEnd(weekStartIso: string): string {
+  const [y, m, d] = weekStartIso.split("-").map(Number);
+  const date = new Date(Date.UTC(y, m - 1, d));
+  date.setUTCDate(date.getUTCDate() + 6);
+  return date.toISOString().slice(0, 10);
+}
+
+async function fetchCalendar(): Promise<{ calendar: { meetings: Meeting[] } }> {
+  try {
+    const res = await fetch(`${FRIDAY_API_URL}/calendar`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`/calendar returned ${res.status}`);
+    return await res.json();
+  } catch (err) {
+    // Backend unreachable/unauthenticated with Google, or a bad response — degrade
+    // to "no meetings" rather than breaking the dashboard or the AI's context.
+    console.error("Could not fetch live calendar data from the Friday backend:", err);
+    return { calendar: { meetings: [] } };
+  }
+}
+
 export interface Meeting {
   id: string;
   name: string;
@@ -67,8 +110,8 @@ export interface SpendEntry {
  *  `in_progress` / `upcoming`) via lib/timeline — so callers can tell "already
  *  happened" from "still to come" instead of treating every meeting dated today as
  *  upcoming. `past` kept as a convenience alias for `status === "done"`. */
-export function getTodaysMeetings(): (Meeting & { status: MeetingStatus; past: boolean })[] {
-  const data = readJson<{ calendar: { meetings: Meeting[] } }>("calendar.json");
+export async function getTodaysMeetings(): Promise<(Meeting & { status: MeetingStatus; past: boolean })[]> {
+  const data = await fetchCalendar();
   const today = isoDate();
   const now = new Date();
   return data.calendar.meetings
@@ -79,8 +122,8 @@ export function getTodaysMeetings(): (Meeting & { status: MeetingStatus; past: b
     });
 }
 
-export function getAllMeetingsThisWeek(): Meeting[] {
-  const data = readJson<{ calendar: { meetings: Meeting[] } }>("calendar.json");
+export async function getAllMeetingsThisWeek(): Promise<Meeting[]> {
+  const data = await fetchCalendar();
   return data.calendar.meetings;
 }
 
@@ -220,7 +263,7 @@ export interface DashboardData {
   } | null;
 }
 
-export function getDashboardData(): DashboardData {
+export async function getDashboardData(): Promise<DashboardData> {
   const revenueRaw = readJson<{
     snapshots: {
       snapshot_date: string;
@@ -288,13 +331,7 @@ export function getDashboardData(): DashboardData {
     }))
     .sort((a, b) => a.due.localeCompare(b.due));
 
-  const calRaw = readJson<{
-    calendar: {
-      week_start: string;
-      week_end: string;
-      meetings: Meeting[];
-    };
-  }>("calendar.json");
+  const calRaw = await fetchCalendar();
 
   const calendar = calRaw.calendar.meetings.flatMap((m) => {
     const dates = m.occurrences ?? (m.date ? [m.date] : []);
@@ -338,11 +375,13 @@ export function getDashboardData(): DashboardData {
     };
   }
 
+  const weekStart = currentWeekStart();
+
   return {
     today: isoDate(),
     now: isoTime(),
-    weekStart: calRaw.calendar.week_start,
-    weekEnd: calRaw.calendar.week_end,
+    weekStart,
+    weekEnd: currentWeekEnd(weekStart),
     revenue: {
       currentMrr: latestSnap.summary.mrr,
       mrrGrowthPct: revenueRaw.comparison?.mrr_growth_pct ?? null,

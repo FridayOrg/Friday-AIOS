@@ -68,6 +68,18 @@ ELEVENLABS_MODEL = os.environ.get("ELEVENLABS_MODEL", "eleven_turbo_v2_5")
 # Falls back to the main key if a second one isn't provided.
 GEMINI_CLASSIFIER_API_KEY = os.environ.get("GEMINI_CLASSIFIER_API_KEY") or GEMINI_API_KEY
 
+# Live Google Calendar integration (see calendar_client.py) — replaces
+# mock-data/calendar.json as the real-time source of truth for meeting data.
+# Uses an OAuth refresh token rather than a service-account key: the Google Cloud
+# project's org policy (iam.disableServiceAccountKeyCreation) blocks creating
+# service-account keys, so a one-time browser consent (already done via the
+# google-calendar-mcp dev tool's `auth` step) plus this long-lived refresh token is
+# the credential the backend re-authenticates with on every restart.
+GOOGLE_CALENDAR_ID = os.environ.get("GOOGLE_CALENDAR_ID")
+GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
+GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
+GOOGLE_REFRESH_TOKEN = os.environ.get("GOOGLE_REFRESH_TOKEN")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the

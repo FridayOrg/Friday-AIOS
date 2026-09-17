@@ -6,6 +6,9 @@ Endpoints:
   POST /ask            — ask Friday any question; routed to one of two agents below
   POST /ask/stream     — same as /ask, but streams the answer as it's generated (SSE)
   GET  /daily-brief     — fixed "what needs my attention today" briefing
+  GET  /calendar        — live meetings for the current week (see calendar_client.py),
+                           in the same shape mock-data/calendar.json used to provide;
+                           the frontend calls this instead of reading that file directly
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -31,6 +34,8 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
+from . import calendar_client
+from .config import now
 from .context_loader import (
     DAILY_BRIEF_PROMPT,
     build_analyst_system_prompt,
@@ -80,6 +85,11 @@ def _route(question: str, history: list[dict] | None) -> tuple[str, str]:
 @app.get("/health")
 def health():
     return {"status": "ok"}
+
+
+@app.get("/calendar")
+def calendar():
+    return calendar_client.fetch_calendar_document(now())
 
 
 @app.post("/ask", response_model=AskResponse)

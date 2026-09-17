@@ -9,7 +9,7 @@ export const dynamic = "force-dynamic";
 // Server component: reads all mock-data at request time, hands it to the client
 // dashboard for the collapse/expand interactivity. Keeps data-loading server-side
 // (no loading flash) and presentation in the client component.
-export default function DashboardPage() {
-  const data = getDashboardData();
+export default async function DashboardPage() {
+  const data = await getDashboardData();
   return <CeoDashboard data={data} />;
 }

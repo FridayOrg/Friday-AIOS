@@ -17,6 +17,7 @@ import re
 from datetime import date, timedelta
 from functools import lru_cache
 
+from . import calendar_client
 from .config import CONTEXT_DIR, MOCK_DATA_DIR, now, shift_days
 from .timeline import schedule_digest
 
@@ -226,18 +227,25 @@ def _mock_data_raw() -> tuple[tuple[str, str], ...]:
     return tuple(
         (f.name, f.read_text(encoding="utf-8"))
         for f in sorted(MOCK_DATA_DIR.glob("*.json"))
-        if f.name != "today.json"  # anchor-config file, not operational data
+        # today.json is anchor-config, not operational data; calendar.json is no
+        # longer the source of truth — live data is injected below instead.
+        if f.name not in ("today.json", "calendar.json")
     )
 
 
 def _mock_data_blob() -> str:
-    """Operational mock data with every date slid onto the real current week."""
+    """Operational data: static mock files with dates slid onto the real current
+    week, plus live calendar data fetched fresh on every call (see calendar_client)."""
     days = shift_days()
-    sections = [
-        f"## MOCK DATA FILE: {name} (JSON)\n\n{_shift_iso_dates(text, days)}"
+    sections = {
+        name: f"## MOCK DATA FILE: {name} (JSON)\n\n{_shift_iso_dates(text, days)}"
         for name, text in _mock_data_raw()
-    ]
-    return "\n\n---\n\n".join(sections)
+    }
+    sections["calendar.json"] = (
+        "## MOCK DATA FILE: calendar.json (JSON, live from Google Calendar)\n\n"
+        + json.dumps(calendar_client.fetch_calendar_document(now()), indent=2)
+    )
+    return "\n\n---\n\n".join(sections[name] for name in sorted(sections))
 
 
 def _shifted_json(filename: str) -> dict:
@@ -251,7 +259,7 @@ def _shifted_json(filename: str) -> dict:
 def _schedule_status() -> str:
     """The pre-computed SCHEDULE STATUS block — see timeline.schedule_digest. Built
     fresh per request against the real clock and the date-shifted mock data."""
-    cal = _shifted_json("calendar.json").get("calendar", {})
+    cal = calendar_client.fetch_calendar_document(now()).get("calendar", {})
     tasks = _shifted_json("tasks.json").get("tasks", [])
     return schedule_digest(cal.get("meetings", []), tasks, now())
 

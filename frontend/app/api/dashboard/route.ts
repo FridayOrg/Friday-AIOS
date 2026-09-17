@@ -10,7 +10,7 @@ import {
 export const dynamic = "force-dynamic";
 
 export async function GET() {
-  const meetings = getTodaysMeetings();
+  const meetings = await getTodaysMeetings();
   const attention = getAttentionItems();
   const spend = getSpendToday();
   const revenue = getRevenue();
