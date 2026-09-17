@@ -78,7 +78,10 @@ def _extract_meeting(raw: dict) -> dict | None:
         return None
 
     title = raw.get("title") or raw.get("meeting_title") or "(untitled meeting)"
-    meeting_url = raw.get("meeting_url") or raw.get("share_url") or raw.get("url")
+    # Prefer Fathom's own recording page (share_url/url) over meeting_url, which is
+    # just the original Zoom/Meet call link — not the recording, and often dead
+    # once the live call has ended. "Watch full meeting" should open the recording.
+    meeting_url = raw.get("share_url") or raw.get("url") or raw.get("meeting_url")
     started_at = raw.get("recording_start_time") or raw.get("scheduled_start_time")
 
     invitees = raw.get("calendar_invitees") or []
