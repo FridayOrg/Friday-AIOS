@@ -93,6 +93,12 @@ DATABASE_URL = os.environ.get("DATABASE_URL")
 FATHOM_WEBHOOK_SECRET = os.environ.get("FATHOM_WEBHOOK_SECRET")
 FATHOM_API_KEY = os.environ.get("FATHOM_API_KEY")
 
+# Gmail integration (see gmail_client.py) — reuses the same OAuth app identity as
+# Calendar (GOOGLE_CLIENT_ID/_SECRET above) but its own separate refresh token,
+# scoped only to gmail.readonly, so this feature is fully independent of the
+# calendar integration: nothing here ever touches GOOGLE_REFRESH_TOKEN.
+GMAIL_REFRESH_TOKEN = os.environ.get("GMAIL_REFRESH_TOKEN")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the

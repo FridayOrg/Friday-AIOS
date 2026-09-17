@@ -14,6 +14,9 @@ Endpoints:
   GET  /meeting-summaries — stored Fathom meeting summaries, most recent first
   POST /meeting-summaries/refresh — backfill/refresh via Fathom's REST API directly
                            (see fathom_client.py), separate from the webhook path
+  GET  /gmail/urgent    — cached list of inbox emails judged to need an immediate
+                           reply (see gmail_client.py / email_urgency.py)
+  POST /gmail/refresh    — forces a fresh Gmail fetch + urgency-classification pass
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -40,7 +43,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import calendar_client, db, fathom_client
+from . import calendar_client, db, fathom_client, gmail_client
 from .config import now
 from .context_loader import (
     DAILY_BRIEF_PROMPT,
@@ -169,6 +172,23 @@ def refresh_meeting_summaries():
         except Exception as e:
             logger.warning("Failed to store meeting %s: %s", m.get("recording_id"), e)
     return {"status": "ok", "fetched": len(meetings), "stored": stored}
+
+
+@app.get("/gmail/urgent")
+def gmail_urgent():
+    try:
+        return {"emails": gmail_client.get_cached_urgent_emails()}
+    except Exception as e:
+        logger.warning("Could not read urgent emails: %s", e)
+        return {"emails": []}
+
+
+@app.post("/gmail/refresh")
+def gmail_refresh():
+    """Forces a fresh Gmail fetch + urgency-classification pass, bypassing the
+    cache (see gmail_client.py)."""
+    emails = gmail_client.refresh_urgent_emails()
+    return {"status": "ok", "count": len(emails)}
 
 
 @app.post("/ask", response_model=AskResponse)
