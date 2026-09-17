@@ -80,6 +80,19 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REFRESH_TOKEN = os.environ.get("GOOGLE_REFRESH_TOKEN")
 
+# Persisted storage (see db.py) — currently only Fathom meeting summaries. A real
+# Postgres database (e.g. Render's Postgres add-on) rather than a local file:
+# Render's web service disk is ephemeral and wiped on every deploy, which a
+# feature meant to accumulate data over time can't tolerate.
+DATABASE_URL = os.environ.get("DATABASE_URL")
+
+# Fathom (fathom.video) meeting-notes integration (see fathom_client.py).
+# FATHOM_WEBHOOK_SECRET verifies incoming webhooks (Fathom's dashboard shows it
+# as "whsec_..."); FATHOM_API_KEY authenticates outbound REST calls (listing/
+# backfilling past meetings), generated from Fathom's User Settings > API Access.
+FATHOM_WEBHOOK_SECRET = os.environ.get("FATHOM_WEBHOOK_SECRET")
+FATHOM_API_KEY = os.environ.get("FATHOM_API_KEY")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the

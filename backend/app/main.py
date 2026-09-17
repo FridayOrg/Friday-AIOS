@@ -9,6 +9,11 @@ Endpoints:
   GET  /calendar        — live meetings for the current week (see calendar_client.py),
                            in the same shape mock-data/calendar.json used to provide;
                            the frontend calls this instead of reading that file directly
+  POST /webhooks/fathom  — Fathom's "new-meeting-content-ready" event; verifies the
+                           signature, stores the meeting summary (see db.py)
+  GET  /meeting-summaries — stored Fathom meeting summaries, most recent first
+  POST /meeting-summaries/refresh — backfill/refresh via Fathom's REST API directly
+                           (see fathom_client.py), separate from the webhook path
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -27,14 +32,15 @@ only reads, analyzes, and recommends. Nothing here sends anything or changes any
 """
 
 import json
+import logging
 
 import httpx
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import calendar_client
+from . import calendar_client, db, fathom_client
 from .config import now
 from .context_loader import (
     DAILY_BRIEF_PROMPT,
@@ -44,6 +50,8 @@ from .context_loader import (
 )
 from .llm_client import ask_friday, ask_friday_stream, classify_intent
 from .voice import synthesize_stream
+
+logger = logging.getLogger(__name__)
 
 
 class ChatTurn(BaseModel):
@@ -82,6 +90,17 @@ def _route(question: str, history: list[dict] | None) -> tuple[str, str]:
     return agent, system_prompt
 
 
+@app.on_event("startup")
+def _init_db():
+    """Creates the meeting_summaries table if needed. DATABASE_URL missing/bad
+    just logs a warning — Fathom integration degrades to "no summaries stored"
+    rather than blocking the rest of the app (calendar, chat, etc.) from starting."""
+    try:
+        db.init_db()
+    except Exception as e:
+        logger.warning("Could not initialize the database: %s", e)
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
@@ -90,6 +109,66 @@ def health():
 @app.get("/calendar")
 def calendar():
     return calendar_client.fetch_calendar_document(now())
+
+
+@app.post("/webhooks/fathom")
+async def fathom_webhook(request: Request):
+    """Fathom's "new-meeting-content-ready" event. Verifies the Svix-style
+    signature before trusting anything in the payload; a malformed body, an
+    unusable payload (no recording_id), or a storage failure all return a
+    response Fathom won't endlessly retry, rather than a 5xx it retries."""
+    raw_body = await request.body()
+    webhook_id = request.headers.get("webhook-id", "")
+    timestamp = request.headers.get("webhook-timestamp", "")
+    signature = request.headers.get("webhook-signature", "")
+
+    if not fathom_client.verify_webhook_signature(webhook_id, timestamp, raw_body, signature):
+        raise HTTPException(status_code=401, detail="invalid webhook signature")
+
+    try:
+        payload = json.loads(raw_body)
+    except json.JSONDecodeError:
+        raise HTTPException(status_code=400, detail="malformed JSON payload")
+
+    meeting = fathom_client.parse_webhook_payload(payload)
+    if meeting is None:
+        logger.warning("Fathom webhook payload had no usable meeting data.")
+        return {"status": "ignored"}
+
+    try:
+        db.upsert_meeting_summary(meeting)
+    except Exception as e:
+        logger.warning("Failed to store Fathom meeting summary: %s", e)
+        raise HTTPException(status_code=502, detail="failed to store meeting summary")
+
+    # recording_id is the de-dup key (see db.upsert_meeting_summary's ON CONFLICT),
+    # so Fathom retrying the same event just re-applies the same row harmlessly.
+    return {"status": "ok"}
+
+
+@app.get("/meeting-summaries")
+def meeting_summaries():
+    try:
+        return {"meetings": db.list_meeting_summaries()}
+    except Exception as e:
+        logger.warning("Could not read meeting summaries: %s", e)
+        return {"meetings": []}
+
+
+@app.post("/meeting-summaries/refresh")
+def refresh_meeting_summaries():
+    """Backfill/manual refresh via Fathom's REST API directly — separate from
+    the webhook path. Always 200s with a count; per-meeting storage failures
+    are logged and skipped rather than failing the whole refresh."""
+    meetings = fathom_client.list_meetings(limit=50)
+    stored = 0
+    for m in meetings:
+        try:
+            db.upsert_meeting_summary(m)
+            stored += 1
+        except Exception as e:
+            logger.warning("Failed to store meeting %s: %s", m.get("recording_id"), e)
+    return {"status": "ok", "fetched": len(meetings), "stored": stored}
 
 
 @app.post("/ask", response_model=AskResponse)

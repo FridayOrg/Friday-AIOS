@@ -14,11 +14,14 @@ import {
   TrendingDown,
   LayoutGrid,
   CalendarDays,
+  FileText,
+  ExternalLink,
 } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import type { DashboardData } from "@/lib/data";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
+import Markdown from "./Markdown";
 
 // ---------------------------------------------------------------------------
 // TOKENS  (unchanged from the ceo-dashboard reference design)
@@ -147,6 +150,7 @@ const SECTIONS = [
   { key: "tasks", title: "Priorities & Decisions", icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
   { key: "calendar", title: "This Week's Calendar", icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
   { key: "spend", title: "Spend & Notifications", icon: Wallet, iconBg: "#FCE6DA", iconColor: "#DD7A33" },
+  { key: "meetings", title: "Meeting Summaries", icon: FileText, iconBg: "#EAE9FE", iconColor: "#6D5BD0" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -154,7 +158,7 @@ const SECTIONS = [
 // ---------------------------------------------------------------------------
 
 export default function CeoDashboard({ data }: { data: DashboardData }) {
-  const { revenue, pipeline, tasks, calendar, spend } = data;
+  const { revenue, pipeline, tasks, calendar, spend, meetingSummaries } = data;
 
   const firstOverdue = tasks.find((t) => t.status === "overdue")?.id ?? null;
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
@@ -486,6 +490,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     <CalendarContent daysOfWeek={daysOfWeek} today={data.today} now={data.now} glow={glow} />
                   )}
                   {s.key === "spend" && <SpendContent spend={spend} />}
+                  {s.key === "meetings" && <MeetingSummariesContent summaries={meetingSummaries} />}
                 </div>
               )}
             </div>
@@ -856,6 +861,87 @@ function SpendContent({ spend }: { spend: DashboardData["spend"] }) {
       <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
         Spend tracking is mock data for a future billing connector. Replace with real figures once QuickBooks or a card feed is connected.
       </p>
+    </div>
+  );
+}
+
+// ---------------------------------------------------------------------------
+// MEETING SUMMARIES (Fathom)
+// ---------------------------------------------------------------------------
+
+function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meetingSummaries"] }) {
+  const [expanded, setExpanded] = useState<string | null>(summaries[0]?.recording_id ?? null);
+
+  if (summaries.length === 0) {
+    return (
+      <p className="text-xs leading-relaxed pt-2" style={{ color: C.faint }}>
+        No meeting summaries yet. These appear automatically once Fathom finishes processing a recorded meeting.
+      </p>
+    );
+  }
+
+  return (
+    <div className="pt-1">
+      {summaries.map((m) => {
+        const isOpen = expanded === m.recording_id;
+        return (
+          <div key={m.recording_id} style={{ borderBottom: `1px solid ${C.border}` }}>
+            <button
+              onClick={() => setExpanded(isOpen ? null : m.recording_id)}
+              className="w-full flex items-start gap-3 py-2.5 text-left"
+            >
+              <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: C.teal }} />
+              <div className="flex-1 min-w-0">
+                <p className="text-sm leading-snug">{m.title}</p>
+                <p className="text-xs mt-0.5" style={{ color: C.faint }}>
+                  {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
+                  {m.participants.length > 0 ? ` · ${m.participants.join(", ")}` : ""}
+                </p>
+              </div>
+              <ChevronDown
+                size={14}
+                style={{ color: C.faint, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
+              />
+            </button>
+            {isOpen && (
+              <div className="pb-3 pl-[18px] pr-2">
+                {m.summary_markdown ? (
+                  <div className="text-xs leading-relaxed" style={{ color: C.muted }}>
+                    <Markdown text={m.summary_markdown} />
+                  </div>
+                ) : (
+                  <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
+                    No summary text was included for this meeting.
+                  </p>
+                )}
+                {m.action_items.length > 0 && (
+                  <div className="mt-2">
+                    <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: C.muted }}>
+                      Action items
+                    </p>
+                    <ul className="list-disc pl-5 text-xs leading-relaxed flex flex-col gap-1" style={{ color: C.muted }}>
+                      {m.action_items.map((item, i) => (
+                        <li key={i}>{item}</li>
+                      ))}
+                    </ul>
+                  </div>
+                )}
+                {m.meeting_url && (
+                  <a
+                    href={m.meeting_url}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="inline-flex items-center gap-1 text-xs mt-3"
+                    style={{ color: C.teal }}
+                  >
+                    Watch full meeting <ExternalLink size={12} />
+                  </a>
+                )}
+              </div>
+            )}
+          </div>
+        );
+      })}
     </div>
   );
 }

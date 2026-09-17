@@ -87,6 +87,32 @@ export interface Meeting {
   occurrences?: string[];
 }
 
+export interface MeetingSummary {
+  recording_id: string;
+  title: string;
+  meeting_url: string | null;
+  started_at: string | null;
+  participants: string[];
+  summary_markdown: string | null;
+  action_items: string[];
+  received_at: string;
+}
+
+// Fathom meeting summaries — stored server-side (see backend/app/db.py) and
+// fetched here the same way live calendar data is: proxied through the
+// backend rather than a database call from the frontend directly.
+async function fetchMeetingSummaries(): Promise<MeetingSummary[]> {
+  try {
+    const res = await fetch(`${FRIDAY_API_URL}/meeting-summaries`, { cache: "no-store" });
+    if (!res.ok) throw new Error(`/meeting-summaries returned ${res.status}`);
+    const data = await res.json();
+    return data.meetings ?? [];
+  } catch (err) {
+    console.error("Could not fetch meeting summaries from the Friday backend:", err);
+    return [];
+  }
+}
+
 export interface Task {
   id: string;
   type: string;
@@ -207,6 +233,7 @@ export interface DashboardData {
   now: string; // real current time, "HH:MM" (24h) — for marking meetings already past
   weekStart: string;
   weekEnd: string;
+  meetingSummaries: MeetingSummary[]; // Fathom summaries, most recent first
   revenue: {
     currentMrr: number;
     mrrGrowthPct: number | null;
@@ -376,12 +403,14 @@ export async function getDashboardData(): Promise<DashboardData> {
   }
 
   const weekStart = currentWeekStart();
+  const meetingSummaries = await fetchMeetingSummaries();
 
   return {
     today: isoDate(),
     now: isoTime(),
     weekStart,
     weekEnd: currentWeekEnd(weekStart),
+    meetingSummaries,
     revenue: {
       currentMrr: latestSnap.summary.mrr,
       mrrGrowthPct: revenueRaw.comparison?.mrr_growth_pct ?? null,
