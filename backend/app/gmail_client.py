@@ -25,7 +25,7 @@ import httpx
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.credentials import Credentials
 
-from .config import GMAIL_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET
+from .config import GMAIL_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, now
 from .email_urgency import classify_emails
 
 logger = logging.getLogger(__name__)
@@ -112,11 +112,16 @@ def fetch_recent_emails(limit: int = _MAX_RESULTS) -> list[dict]:
         return []
 
     headers = {"Authorization": f"Bearer {token}"}
+    # Only today's messages — Gmail's after: operator is inclusive of that
+    # calendar day onward, so "today" onward with no upper bound covers just
+    # today (nothing "after" today exists yet).
+    today_str = now().strftime("%Y/%m/%d")
+    query = f"in:inbox after:{today_str}"
     try:
         list_resp = httpx.get(
             f"{_API_BASE}/messages",
             headers=headers,
-            params={"maxResults": limit, "q": "in:inbox"},
+            params={"maxResults": limit, "q": query},
             timeout=_TIMEOUT_SECONDS,
         )
         list_resp.raise_for_status()
