@@ -21,7 +21,6 @@ import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import type { DashboardData } from "@/lib/data";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
-import Markdown from "./Markdown";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
 
@@ -149,10 +148,16 @@ const to12h = (t: string) => {
 const SECTIONS = [
   { key: "financial", title: "Financial Performance", icon: DollarSign, iconBg: "#D7F6EA", iconColor: "#0E9F6E" },
   { key: "pipeline", title: "Sales & Guarantee Pipeline", icon: Target, iconBg: "#E7E4FC", iconColor: "#6E5AE0" },
-  { key: "tasks", title: "Priorities & Decisions", icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
-  { key: "calendar", title: "This Week's Calendar", icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
   { key: "spend", title: "Spend & Notifications", icon: Wallet, iconBg: "#FCE6DA", iconColor: "#DD7A33" },
-  { key: "meetings", title: "Meeting Summaries", icon: FileText, iconBg: "#EAE9FE", iconColor: "#6D5BD0" },
+] as const;
+
+// The 2x2 grid below "Daily Brief" — tasks/calendar/meetings moved out of the
+// collapsible SECTIONS accordion into always-visible grid cards instead.
+const GRID_CARDS = [
+  { key: "tasks", title: "Actions", icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
+  { key: "calendar", title: "Calendar", icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
+  { key: "industry", title: "Industry Updates", icon: FileText, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
+  { key: "meetings", title: "Meeting Summary", icon: FileText, iconBg: "#EAE9FE", iconColor: "#6D5BD0" },
 ] as const;
 
 // ---------------------------------------------------------------------------
@@ -229,9 +234,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
     }, 50);
   };
 
-  const daysOfWeek = useMemo(() => {
-    const start = new Date(data.weekStart + "T00:00:00");
-    return Array.from({ length: 7 }, (_, i) => {
+  // Today + the next 2 days (3-day window) for the Calendar grid card.
+  const daysNext3 = useMemo(() => {
+    const start = new Date(data.today + "T00:00:00");
+    return Array.from({ length: 3 }, (_, i) => {
       const d = new Date(start);
       d.setDate(start.getDate() + i);
       const iso = d.toISOString().slice(0, 10);
@@ -242,7 +248,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           .sort((a, b) => a.time.localeCompare(b.time)),
       };
     });
-  }, [data.weekStart, calendar]);
+  }, [data.today, calendar]);
 
   const overdueCount = tasks.filter((t) => t.status === "overdue").length;
   const anyOpen = Object.values(openSections).some(Boolean);
@@ -381,7 +387,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
         </div>
 
-        {/* ---------------- OVERVIEW ---------------- */}
+        {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
           style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
@@ -390,7 +396,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#E9F9F5" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
-            <h2 className="text-sm font-semibold">Overview</h2>
+            <h2 className="text-sm font-semibold">Daily Brief</h2>
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
@@ -437,13 +443,51 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             />
           </div>
 
-          <div className="mt-4">
-            <UrgentEmails />
-          </div>
+        </div>
 
-          <div className="mt-4">
-            <IndustryUpdates />
-          </div>
+        {/* ---------------- 2x2 GRID: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
+          {GRID_CARDS.map((c) => (
+            <div
+              key={glow?.section === c.key ? `${c.key}-${glow.ts}` : c.key}
+              id={`section-${c.key}`}
+              className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
+              style={{
+                background: "rgba(255,255,255,0.85)",
+                border: `1px solid ${C.border}`,
+                ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
+              }}
+            >
+              <div className="flex items-center justify-between px-5 py-4">
+                <div className="flex items-center gap-3">
+                  <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.iconBg }}>
+                    <c.icon size={15} style={{ color: c.iconColor }} />
+                  </span>
+                  <span className="text-sm font-semibold">{c.title}</span>
+                  {c.key === "tasks" && overdueCount > 0 && (
+                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#FDE7ED", color: C.down }}>
+                      {overdueCount} overdue
+                    </span>
+                  )}
+                </div>
+              </div>
+              <div className="px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
+                {c.key === "tasks" && (
+                  <>
+                    <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
+                    <div className="mt-3">
+                      <UrgentEmails />
+                    </div>
+                  </>
+                )}
+                {c.key === "calendar" && (
+                  <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
+                )}
+                {c.key === "industry" && <IndustryUpdates />}
+                {c.key === "meetings" && <MeetingSummariesContent summaries={meetingSummaries} />}
+              </div>
+            </div>
+          ))}
         </div>
 
         {/* ---------------- COLLAPSIBLE SECTIONS ---------------- */}
@@ -468,16 +512,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     <s.icon size={15} style={{ color: s.iconColor }} />
                   </span>
                   <span className="text-sm font-semibold">{s.title}</span>
-                  {s.key === "tasks" && overdueCount > 0 && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#FDE7ED", color: C.down }}>
-                      {overdueCount} overdue
-                    </span>
-                  )}
-                  {s.key === "calendar" && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#E9F9F5", color: C.teal }}>
-                      today
-                    </span>
-                  )}
                 </div>
                 <ChevronDown
                   size={16}
@@ -493,14 +527,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 <div className="expand-panel px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
                   {s.key === "financial" && <FinancialContent revenue={revenue} glow={glow} />}
                   {s.key === "pipeline" && <PipelineContent clients={pipeline.clients} glow={glow} />}
-                  {s.key === "tasks" && (
-                    <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
-                  )}
-                  {s.key === "calendar" && (
-                    <CalendarContent daysOfWeek={daysOfWeek} today={data.today} now={data.now} glow={glow} />
-                  )}
                   {s.key === "spend" && <SpendContent spend={spend} />}
-                  {s.key === "meetings" && <MeetingSummariesContent summaries={meetingSummaries} />}
                 </div>
               )}
             </div>
@@ -760,13 +787,13 @@ function TasksContent({
   );
 }
 
-function CalendarContent({
-  daysOfWeek,
+function Calendar3DayContent({
+  daysNext3,
   today,
   now,
   glow,
 }: {
-  daysOfWeek: {
+  daysNext3: {
     iso: string;
     meetings: { time: string; durationMin: number; name: string; priority: string }[];
   }[];
@@ -777,9 +804,19 @@ function CalendarContent({
   // Rebuild the real "now" instant from the server-computed date + time so the
   // client classifies meetings against the same clock the rest of the app uses.
   const nowDate = new Date(`${today}T${now}:00`);
+  const tomorrow = new Date(`${today}T00:00:00`);
+  tomorrow.setDate(tomorrow.getDate() + 1);
+  const tomorrowIso = tomorrow.toISOString().slice(0, 10);
+
+  const dayLabel = (iso: string) => {
+    if (iso === today) return "Today";
+    if (iso === tomorrowIso) return "Tomorrow";
+    return fmtDay(iso);
+  };
+
   return (
     <div className="space-y-3 pt-2">
-      {daysOfWeek.map((day) => {
+      {daysNext3.map((day) => {
         const isToday = day.iso === today;
         const statuses = day.meetings.map(
           (m) => classifyMeeting(day.iso, m.time, m.durationMin, nowDate).status
@@ -788,11 +825,10 @@ function CalendarContent({
         const nextIdx = isToday ? statuses.indexOf("upcoming") : -1;
         return (
           <div key={day.iso} className="flex gap-3">
-            <div className="w-14 shrink-0 pt-0.5">
+            <div className="w-16 shrink-0 pt-0.5">
               <div className="text-xs font-medium" style={{ color: isToday ? C.teal : C.faint }}>
-                {fmtDay(day.iso).split(",")[0]}
+                {dayLabel(day.iso)}
               </div>
-              <div className="text-[11px]" style={{ color: C.faint }}>{fmtDay(day.iso).split(", ")[1]}</div>
             </div>
             <div className="flex-1 space-y-1.5 pb-1">
               {day.meetings.length === 0 && (
@@ -879,9 +915,24 @@ function SpendContent({ spend }: { spend: DashboardData["spend"] }) {
 // MEETING SUMMARIES (Fathom)
 // ---------------------------------------------------------------------------
 
-function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meetingSummaries"] }) {
-  const [expanded, setExpanded] = useState<string | null>(summaries[0]?.recording_id ?? null);
+// First bullet point in a Fathom markdown summary, stripped of markdown link/
+// bold syntax — used as the 1-line "key takeaway" (the "## Key Takeaways"
+// section's first bullet is reliably the first bullet in the whole document).
+function extractFirstBullet(markdown: string | null): string | null {
+  if (!markdown) return null;
+  for (const line of markdown.split("\n")) {
+    const m = line.match(/^\s*[-*]\s+(.+)$/);
+    if (m) {
+      return m[1]
+        .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
+        .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .trim();
+    }
+  }
+  return null;
+}
 
+function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meetingSummaries"] }) {
   if (summaries.length === 0) {
     return (
       <p className="text-xs leading-relaxed pt-2" style={{ color: C.faint }}>
@@ -893,61 +944,32 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
   return (
     <div className="pt-1">
       {summaries.map((m) => {
-        const isOpen = expanded === m.recording_id;
+        const takeaway = extractFirstBullet(m.summary_markdown);
+        const action = m.action_items[0] ?? null;
         return (
-          <div key={m.recording_id} style={{ borderBottom: `1px solid ${C.border}` }}>
-            <button
-              onClick={() => setExpanded(isOpen ? null : m.recording_id)}
-              className="w-full flex items-start gap-3 py-2.5 text-left"
-            >
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: C.teal }} />
-              <div className="flex-1 min-w-0">
-                <p className="text-sm leading-snug">{m.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: C.faint }}>
-                  {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
-                  {m.participants.length > 0 ? ` · ${m.participants.join(", ")}` : ""}
-                </p>
-              </div>
-              <ChevronDown
-                size={14}
-                style={{ color: C.faint, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
-              />
-            </button>
-            {isOpen && (
-              <div className="pb-3 pl-[18px] pr-2">
-                {m.summary_markdown ? (
-                  <div className="text-xs leading-relaxed" style={{ color: C.muted }}>
-                    <Markdown text={m.summary_markdown} />
-                  </div>
-                ) : (
-                  <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
-                    No summary text was included for this meeting.
-                  </p>
-                )}
-                {m.action_items.length > 0 && (
-                  <div className="mt-2">
-                    <p className="text-[11px] font-medium uppercase tracking-wide mb-1" style={{ color: C.muted }}>
-                      Action items
-                    </p>
-                    <ul className="list-disc pl-5 text-xs leading-relaxed flex flex-col gap-1" style={{ color: C.muted }}>
-                      {m.action_items.map((item, i) => (
-                        <li key={i}>{item}</li>
-                      ))}
-                    </ul>
-                  </div>
-                )}
-                {m.meeting_url && (
-                  <a
-                    href={m.meeting_url}
-                    target="_blank"
-                    rel="noreferrer"
-                    className="inline-flex items-center gap-1 text-xs mt-3"
-                    style={{ color: C.teal }}
-                  >
-                    Watch full meeting <ExternalLink size={12} />
-                  </a>
-                )}
-              </div>
+          <div key={m.recording_id} className="py-2.5" style={{ borderBottom: `1px solid ${C.border}` }}>
+            <p className="text-sm font-medium leading-snug">{m.title}</p>
+            <p className="text-xs mt-0.5" style={{ color: C.faint }}>
+              {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
+            </p>
+            {takeaway && (
+              <p className="text-xs mt-1.5 leading-snug" style={{ color: C.muted }}>{takeaway}</p>
+            )}
+            {action && (
+              <p className="text-xs mt-1 leading-snug" style={{ color: C.muted }}>
+                <span className="font-medium">Action:</span> {action}
+              </p>
+            )}
+            {m.meeting_url && (
+              <a
+                href={m.meeting_url}
+                target="_blank"
+                rel="noreferrer"
+                className="inline-flex items-center gap-1 text-xs mt-1.5"
+                style={{ color: C.teal }}
+              >
+                Watch recording <ExternalLink size={12} />
+              </a>
             )}
           </div>
         );
