@@ -15,10 +15,7 @@ import { Newspaper, RefreshCw, ExternalLink } from "lucide-react";
 interface IndustryUpdate {
   url: string;
   title: string;
-  topic: string | null;
   content: string | null;
-  published_at: string | null;
-  relevance_reason: string | null;
   fetched_at: string;
 }
 
@@ -83,9 +80,8 @@ export default function IndustryUpdates() {
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-snug truncate">{u.title}</p>
-                    {u.topic && <p className="text-xs text-slate-400 mt-0.5 truncate">{u.topic}</p>}
-                    {u.relevance_reason && (
-                      <p className="text-xs text-slate-500 mt-1 leading-snug">{u.relevance_reason}</p>
+                    {u.content && (
+                      <p className="text-xs text-slate-500 mt-1 leading-snug">{u.content}</p>
                     )}
                   </div>
                   <a

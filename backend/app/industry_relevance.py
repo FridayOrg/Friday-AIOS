@@ -20,16 +20,23 @@ from .llm_client import get_classifier_client
 
 logger = logging.getLogger(__name__)
 
-_PROMPT_TEMPLATE = """You are triaging a list of tech-industry news items to decide
-which ones are genuinely significant enough for a founder/CEO to see on their
-dashboard — not routine PR, minor product tweaks, or duplicate coverage of the
-same story repeated across sources.
+_PROMPT_TEMPLATE = """You are triaging a list of search results to decide which
+ones are genuine, substantive news about one specific named competitor -
+Belkins or SalesRoads (both B2B appointment-setting / SDR-as-a-service
+companies) - worth a founder/CEO's attention on their dashboard.
 
-For each item, answer "yes" only if it is a substantive development: a major
-product launch, an acquisition, a significant policy/leadership change, a
-notable AI capability release, or something with real competitive/strategic
-relevance. Answer "no" for: minor blog posts, routine marketing, opinion
-pieces, or a story that's just re-reporting something already well-known.
+HARD FILTER — apply this before anything else: if the item is NOT clearly and
+specifically about Belkins or SalesRoads as a company (e.g. it's a random
+third-party job posting that merely mentions "appointment setter", a generic
+sales-industry article, or an unrelated company), answer "no" regardless of
+anything else. Only consider "yes" for items that are actually about Belkins
+or SalesRoads themselves.
+
+Among items that DO pass that filter, answer "yes" only if it is a
+substantive development: a new service/pricing offer, a notable client win
+or case study, a leadership/team change, a funding or acquisition event, or
+similar strategic news. Answer "no" for routine marketing, minor blog posts,
+or duplicate coverage of an already-known story.
 
 {item_blocks}
 

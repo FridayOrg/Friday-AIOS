@@ -33,12 +33,23 @@ _API_URL = "https://api.tavily.com/search"
 _TIMEOUT_SECONDS = 15
 _MAX_RESULTS_PER_TOPIC = 10
 
-# Search queries, not company integrations — extend this list later (per the
-# user's plan to name domain-specific companies) without touching anything
-# else in this file.
-TOPICS: list[str] = [
-    "Meta AI announcement",
-    "Google AI announcement",
+# Currently tracking BookMySales.ai's two closest direct competitors in the
+# B2B appointment-setting / SDR-as-a-service space (both also offer a
+# meetings guarantee, same positioning as BookMySales.ai itself). Extend this
+# list later with more competitors without touching anything else in this
+# file — just add another {name, query, domains} entry.
+#
+# Restricted to each company's own domain (include_domains) rather than a
+# generic web search: both are small agencies with little independent press
+# coverage, so an unrestricted query matched unrelated noise in practice —
+# "Belkins" matched Belkin (the electronics brand), "SalesRoads" matched
+# generic appointment-setter job postings and Salesforce stock news. Their
+# own site is a far more reliable signal for genuine company updates. Uses
+# topic="general" rather than "news" for the same reason — Tavily's news
+# index is built for publishers, not a small company's own blog.
+TOPICS: list[dict] = [
+    {"name": "Belkins", "query": "new service pricing case study announcement", "domains": ["belkins.io"]},
+    {"name": "SalesRoads", "query": "new service pricing case study announcement", "domains": ["salesroads.com"]},
 ]
 
 
@@ -68,14 +79,16 @@ def _is_today(published_at_iso: str | None, today: date) -> bool:
         return True
 
 
-def _fetch_topic(topic: str, today: date) -> list[dict]:
+def _fetch_topic(topic: dict, today: date) -> list[dict]:
+    name = topic["name"]
     try:
         response = httpx.post(
             _API_URL,
             headers={"Authorization": f"Bearer {TAVILY_API_KEY}"},
             json={
-                "query": topic,
-                "topic": "news",
+                "query": topic["query"],
+                "include_domains": topic["domains"],
+                "include_domains_mode": "filter",
                 "time_range": "day",
                 "max_results": _MAX_RESULTS_PER_TOPIC,
             },
@@ -84,15 +97,15 @@ def _fetch_topic(topic: str, today: date) -> list[dict]:
         response.raise_for_status()
     except httpx.HTTPStatusError as e:
         if e.response.status_code == 429:
-            logger.warning("Tavily rate limit hit for topic %r.", topic)
+            logger.warning("Tavily rate limit hit for topic %r.", name)
         else:
             logger.warning(
                 "Tavily API error %s for topic %r: %s",
-                e.response.status_code, topic, e.response.text[:200],
+                e.response.status_code, name, e.response.text[:200],
             )
         return []
     except httpx.HTTPError as e:
-        logger.warning("Tavily API unreachable for topic %r: %s", topic, e)
+        logger.warning("Tavily API unreachable for topic %r: %s", name, e)
         return []
 
     items = []
@@ -104,7 +117,7 @@ def _fetch_topic(topic: str, today: date) -> list[dict]:
             {
                 "url": r.get("url", ""),
                 "title": r.get("title") or "(untitled)",
-                "topic": topic,
+                "topic": name,
                 "content": r.get("content", ""),
                 "published_at": published_at,
             }
