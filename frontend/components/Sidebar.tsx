@@ -11,10 +11,12 @@ import {
   ChevronsRight,
   ChevronsLeft,
   X,
+  Briefcase,
 } from "lucide-react";
 
 const NAV_ITEMS = [
   { href: "/", label: "Dashboard", icon: LayoutDashboard },
+  { href: "/crm", label: "CRM", icon: Briefcase },
   { href: "/company", label: "Company", icon: Building2 },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/profile", label: "Profile", icon: User },

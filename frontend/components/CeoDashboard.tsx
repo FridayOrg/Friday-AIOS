@@ -9,7 +9,6 @@ import {
   Target,
   AlertCircle,
   CalendarClock,
-  Wallet,
   TrendingUp,
   TrendingDown,
   LayoutGrid,
@@ -17,7 +16,6 @@ import {
   FileText,
   ExternalLink,
 } from "lucide-react";
-import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import type { DashboardData } from "@/lib/data";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
@@ -145,14 +143,9 @@ const to12h = (t: string) => {
   return `${hr}:${m.toString().padStart(2, "0")} ${period}`;
 };
 
-const SECTIONS = [
-  { key: "financial", title: "Financial Performance", icon: DollarSign, iconBg: "#D7F6EA", iconColor: "#0E9F6E" },
-  { key: "pipeline", title: "Sales & Guarantee Pipeline", icon: Target, iconBg: "#E7E4FC", iconColor: "#6E5AE0" },
-  { key: "spend", title: "Spend & Notifications", icon: Wallet, iconBg: "#FCE6DA", iconColor: "#DD7A33" },
-] as const;
-
-// The 2x2 grid below "Daily Brief" — tasks/calendar/meetings moved out of the
-// collapsible SECTIONS accordion into always-visible grid cards instead.
+// The 2x2 grid below "Daily Brief". Financial Performance / Sales & Guarantee
+// Pipeline / Spend & Notifications live on their own /crm page (see
+// CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
   { key: "tasks", title: "Actions", icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
   { key: "calendar", title: "Calendar", icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
@@ -165,10 +158,9 @@ const GRID_CARDS = [
 // ---------------------------------------------------------------------------
 
 export default function CeoDashboard({ data }: { data: DashboardData }) {
-  const { revenue, pipeline, tasks, calendar, spend, meetingSummaries } = data;
+  const { revenue, pipeline, tasks, calendar, meetingSummaries } = data;
 
   const firstOverdue = tasks.find((t) => t.status === "overdue")?.id ?? null;
-  const [openSections, setOpenSections] = useState<Record<string, boolean>>({});
   const [expandedTask, setExpandedTask] = useState<string | null>(firstOverdue);
 
   // --- Chat-driven highlight (see lib/highlight-context.tsx) --------------
@@ -177,7 +169,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
   useEffect(() => {
     if (!target) return;
-    setOpenSections((prev) => ({ ...prev, [target.section]: true }));
     // Only auto-open a task's description when exactly one task matched — with several
     // (e.g. "high priority tasks") which one to expand is ambiguous, so just glow the rows.
     if (target.section === "tasks" && target.itemIds?.length === 1) setExpandedTask(target.itemIds[0]);
@@ -186,9 +177,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
       document.getElementById(`section-${target.section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
 
-    // No auto-clear timer: the glow stays until either the next question overwrites
-    // it (a new `target` re-runs this effect and replaces `glow`) or the user closes
-    // the section it's on (see toggleSection/toggleAll below) — not on a fixed clock.
+    // No auto-clear timer: the glow stays until the next question overwrites it (a
+    // new `target` re-runs this effect and replaces `glow`), not on a fixed clock.
     setGlow({ section: target.section, itemIds: target.itemIds, ts: target.ts });
 
     return () => clearTimeout(scrollTimer);
@@ -209,23 +199,14 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
       )
         out.push({ section: "tasks", label: t.title, sub: TYPE_LABEL[t.type] ?? t.type });
     });
-    revenue.byClient.forEach((c) => {
-      if (c.name.toLowerCase().includes(q))
-        out.push({ section: "financial", label: c.name, sub: `${fmtUsd(c.fee)}/mo` });
-    });
-    pipeline.clients.forEach((c) => {
-      if (c.name.toLowerCase().includes(q) || c.industry.toLowerCase().includes(q))
-        out.push({ section: "pipeline", label: c.name, sub: c.industry });
-    });
     calendar.forEach((m) => {
       if (m.name.toLowerCase().includes(q))
         out.push({ section: "calendar", label: m.name, sub: fmtDay(m.date) });
     });
     return out.slice(0, 8);
-  }, [q, tasks, revenue, pipeline, calendar]);
+  }, [q, tasks, calendar]);
 
   const jumpToSection = (key: string) => {
-    setOpenSections((prev) => ({ ...prev, [key]: true }));
     setQuery("");
     setTimeout(() => {
       document
@@ -234,13 +215,19 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
     }, 50);
   };
 
-  // Today + the next 2 days (3-day window) for the Calendar grid card.
+  // Today + the next 2 days (3-day window) for the Calendar grid card. Built
+  // via Date.UTC rather than `new Date(iso + "T00:00:00")` — the latter
+  // parses as LOCAL midnight, and a later .toISOString() then converts back
+  // to UTC, silently shifting the date back a day whenever the server's
+  // local timezone is ahead of UTC (e.g. IST) — this exact bug was observed
+  // directly when building this feature.
   const daysNext3 = useMemo(() => {
-    const start = new Date(data.today + "T00:00:00");
+    const [y, m, d] = data.today.split("-").map(Number);
+    const start = new Date(Date.UTC(y, m - 1, d));
     return Array.from({ length: 3 }, (_, i) => {
-      const d = new Date(start);
-      d.setDate(start.getDate() + i);
-      const iso = d.toISOString().slice(0, 10);
+      const dt = new Date(start);
+      dt.setUTCDate(start.getUTCDate() + i);
+      const iso = dt.toISOString().slice(0, 10);
       return {
         iso,
         meetings: calendar
@@ -251,24 +238,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
   }, [data.today, calendar]);
 
   const overdueCount = tasks.filter((t) => t.status === "overdue").length;
-  const anyOpen = Object.values(openSections).some(Boolean);
-
-  const toggleSection = (key: string) => {
-    setOpenSections((prev) => {
-      const wasOpen = prev[key];
-      if (wasOpen && glow?.section === key) setGlow(null); // closing the glowing section turns its glow off
-      return { ...prev, [key]: !wasOpen };
-    });
-  };
-
-  const toggleAll = () => {
-    if (anyOpen) {
-      setOpenSections({});
-      setGlow(null); // collapsing everything clears any active glow too
-    } else {
-      setOpenSections(Object.fromEntries(SECTIONS.map((s) => [s.key, true])));
-    }
-  };
 
   return (
     <div
@@ -360,7 +329,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                           </span>
                         </span>
                         <span className="text-[11px] shrink-0" style={{ color: C.teal }}>
-                          {SECTIONS.find((s) => s.key === r.section)?.title ?? r.section}
+                          {GRID_CARDS.find((c) => c.key === r.section)?.title ?? r.section}
                         </span>
                       </button>
                     ))
@@ -368,22 +337,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 </div>
               )}
             </div>
-            <button
-              onClick={toggleAll}
-              className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm font-medium"
-              style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}`, color: C.ink }}
-            >
-              {anyOpen ? "Collapse all" : "Expand all"}
-              <span
-                className="w-8 h-4 rounded-full relative transition-colors"
-                style={{ background: anyOpen ? "#D7F6EA" : "rgba(16,24,40,0.1)" }}
-              >
-                <span
-                  className="absolute top-0.5 w-3 h-3 rounded-full transition-all"
-                  style={{ background: anyOpen ? C.teal : C.faint, left: anyOpen ? "18px" : "2px" }}
-                />
-              </span>
-            </button>
           </div>
         </div>
 
@@ -490,49 +443,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           ))}
         </div>
 
-        {/* ---------------- COLLAPSIBLE SECTIONS ---------------- */}
-        <div className="space-y-3">
-          {SECTIONS.map((s) => (
-            <div
-              key={glow?.section === s.key ? `${s.key}-${glow.ts}` : s.key}
-              id={`section-${s.key}`}
-              className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === s.key ? " glow-pulse" : ""}`}
-              style={{
-                background: "rgba(255,255,255,0.85)",
-                border: `1px solid ${C.border}`,
-                ...(glow?.section === s.key ? glowProps(true, C.teal).style : {}),
-              }}
-            >
-              <button
-                onClick={() => toggleSection(s.key)}
-                className="w-full flex items-center justify-between px-5 py-4"
-              >
-                <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: s.iconBg }}>
-                    <s.icon size={15} style={{ color: s.iconColor }} />
-                  </span>
-                  <span className="text-sm font-semibold">{s.title}</span>
-                </div>
-                <ChevronDown
-                  size={16}
-                  style={{
-                    color: C.faint,
-                    transform: openSections[s.key] ? "rotate(180deg)" : "rotate(0deg)",
-                    transition: "transform 0.2s ease",
-                  }}
-                />
-              </button>
-
-              {openSections[s.key] && (
-                <div className="expand-panel px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
-                  {s.key === "financial" && <FinancialContent revenue={revenue} glow={glow} />}
-                  {s.key === "pipeline" && <PipelineContent clients={pipeline.clients} glow={glow} />}
-                  {s.key === "spend" && <SpendContent spend={spend} />}
-                </div>
-              )}
-            </div>
-          ))}
-        </div>
       </div>
     </div>
   );
@@ -648,86 +558,6 @@ function NextMeetingsTile({
 // SECTION CONTENTS
 // ---------------------------------------------------------------------------
 
-function FinancialContent({ revenue, glow }: { revenue: DashboardData["revenue"]; glow: Glow | null }) {
-  const sparkData = revenue.sparkline.map((v) => ({ v }));
-  return (
-    <div>
-      <div className="h-16 -mx-1 mb-3 mt-2">
-        <ResponsiveContainer width="100%" height="100%">
-          <AreaChart data={sparkData} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-            <defs>
-              <linearGradient id="mrrFill" x1="0" y1="0" x2="0" y2="1">
-                <stop offset="0%" stopColor="#0E9F6E" stopOpacity={0.3} />
-                <stop offset="100%" stopColor="#0E9F6E" stopOpacity={0} />
-              </linearGradient>
-            </defs>
-            <YAxis hide domain={["dataMin - 500", "dataMax + 500"]} />
-            <Area type="monotone" dataKey="v" stroke="#0E9F6E" strokeWidth={2} fill="url(#mrrFill)" />
-          </AreaChart>
-        </ResponsiveContainer>
-      </div>
-      <p className="text-[11px] mb-3" style={{ color: C.faint }}>
-        {revenue.sparkline.length} recorded MRR snapshot{revenue.sparkline.length === 1 ? "" : "s"}, trend fills in as more accrue.
-      </p>
-      <div className="space-y-2.5">
-        {revenue.byClient.map((c) => {
-          const isGlow = glow?.section === "financial" && !!glow.itemIds?.includes(c.id);
-          const g = glowProps(isGlow, isGlow ? glowColorFor("financial", c.risk) : "");
-          return (
-          <div
-            key={isGlow ? `${c.id}-${glow?.ts}` : c.id}
-            className={`flex items-center justify-between py-1.5${g.className}`}
-            style={{ borderBottom: `1px solid ${C.border}`, ...g.style }}
-          >
-            <div>
-              <p className="text-sm font-medium">{c.name}</p>
-              {c.note && <p className="text-xs" style={{ color: "#0E9F6E" }}>{c.note}</p>}
-            </div>
-            <div className="flex items-center gap-4">
-              <span className="text-xs" style={{ color: riskOf(c.risk).color }}>{riskOf(c.risk).label}</span>
-              <span
-                className="text-xs font-medium px-2.5 py-1 rounded-full flex items-center gap-1.5"
-                style={{ background: `${statusOf(c.status).color}1A`, color: statusOf(c.status).color }}
-              >
-                <span className="w-1.5 h-1.5 rounded-full" style={{ background: statusOf(c.status).color }} />
-                {statusOf(c.status).label}
-              </span>
-              <span className="text-sm w-20 text-right" style={{ color: C.muted }}>{fmtUsd(c.fee)}/mo</span>
-            </div>
-          </div>
-          );
-        })}
-      </div>
-      {revenue.forecastNote && (
-        <p className="text-xs mt-3 leading-relaxed" style={{ color: C.faint }}>{revenue.forecastNote}</p>
-      )}
-    </div>
-  );
-}
-
-function PipelineContent({
-  clients,
-  glow,
-}: {
-  clients: DashboardData["pipeline"]["clients"];
-  glow: Glow | null;
-}) {
-  return (
-    <div className="flex gap-6 overflow-x-auto pt-3 pb-1">
-      {clients.map((c) => {
-        const isGlow = glow?.section === "pipeline" && !!glow.itemIds?.includes(c.id);
-        return (
-          <Ring
-            key={isGlow ? `${c.id}-${glow?.ts}` : c.id}
-            client={c}
-            glow={isGlow ? glowColorFor("pipeline", c.status) : undefined}
-          />
-        );
-      })}
-    </div>
-  );
-}
-
 function TasksContent({
   tasks,
   expandedTask,
@@ -804,14 +634,16 @@ function Calendar3DayContent({
   // Rebuild the real "now" instant from the server-computed date + time so the
   // client classifies meetings against the same clock the rest of the app uses.
   const nowDate = new Date(`${today}T${now}:00`);
-  const tomorrow = new Date(`${today}T00:00:00`);
-  tomorrow.setDate(tomorrow.getDate() + 1);
+  const [ty, tm, td] = today.split("-").map(Number);
+  const tomorrow = new Date(Date.UTC(ty, tm - 1, td));
+  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
   const tomorrowIso = tomorrow.toISOString().slice(0, 10);
 
-  const dayLabel = (iso: string) => {
-    if (iso === today) return "Today";
-    if (iso === tomorrowIso) return "Tomorrow";
-    return fmtDay(iso);
+  const dayLabel = (iso: string): { top: string; bottom: string } => {
+    const datePart = fmtDay(iso).split(", ")[1]; // e.g. "Sep 18"
+    if (iso === today) return { top: "Today", bottom: datePart };
+    if (iso === tomorrowIso) return { top: "Tomorrow", bottom: datePart };
+    return { top: fmtDay(iso).split(",")[0], bottom: datePart };
   };
 
   return (
@@ -825,10 +657,11 @@ function Calendar3DayContent({
         const nextIdx = isToday ? statuses.indexOf("upcoming") : -1;
         return (
           <div key={day.iso} className="flex gap-3">
-            <div className="w-16 shrink-0 pt-0.5">
+            <div className="w-14 shrink-0 pt-0.5">
               <div className="text-xs font-medium" style={{ color: isToday ? C.teal : C.faint }}>
-                {dayLabel(day.iso)}
+                {dayLabel(day.iso).top}
               </div>
+              <div className="text-[11px]" style={{ color: C.faint }}>{dayLabel(day.iso).bottom}</div>
             </div>
             <div className="flex-1 space-y-1.5 pb-1">
               {day.meetings.length === 0 && (
@@ -887,26 +720,6 @@ function Calendar3DayContent({
           </div>
         );
       })}
-    </div>
-  );
-}
-
-function SpendContent({ spend }: { spend: DashboardData["spend"] }) {
-  return (
-    <div className="pt-2">
-      <p className="text-sm mb-3">
-        Today&rsquo;s total: <span className="font-semibold">{fmtUsd(spend.total)}</span>
-      </p>
-      <div className="flex flex-wrap gap-3 mb-4">
-        {spend.entries.map((e, i) => (
-          <span key={i} className="text-xs px-3 py-1.5 rounded-full" style={{ background: "rgba(16,24,40,0.04)", color: C.muted }}>
-            {e.label} <span style={{ color: C.ink }}>{fmtUsd(e.amount)}</span>
-          </span>
-        ))}
-      </div>
-      <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
-        Spend tracking is mock data for a future billing connector. Replace with real figures once QuickBooks or a card feed is connected.
-      </p>
     </div>
   );
 }
@@ -978,47 +791,3 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
   );
 }
 
-// ---------------------------------------------------------------------------
-// RING (pipeline progress)
-// ---------------------------------------------------------------------------
-
-function Ring({
-  client,
-  glow,
-}: {
-  client: DashboardData["pipeline"]["clients"][number];
-  glow?: string;
-}) {
-  const pct = Math.min(100, Math.round((client.booked / client.target) * 100));
-  const color = statusOf(client.status).color;
-  const r = 30;
-  const circ = 2 * Math.PI * r;
-  const offset = circ - (pct / 100) * circ;
-  const g = glowProps(!!glow, glow ?? "");
-  return (
-    <div className={`flex flex-col items-center shrink-0 w-24 rounded-xl${g.className}`} style={g.style}>
-      <svg width="72" height="72" viewBox="0 0 72 72">
-        <circle cx="36" cy="36" r={r} fill="none" stroke="rgba(16,24,40,0.08)" strokeWidth="6" />
-        <circle
-          cx="36"
-          cy="36"
-          r={r}
-          fill="none"
-          stroke={color}
-          strokeWidth="6"
-          strokeDasharray={circ}
-          strokeDashoffset={offset}
-          strokeLinecap="round"
-          transform="rotate(-90 36 36)"
-        />
-        <text x="36" y="41" textAnchor="middle" fontSize="16" fontWeight="700" fill={C.ink}>
-          {pct}%
-        </text>
-      </svg>
-      <p className="text-xs font-medium mt-2 text-center">{client.name}</p>
-      <p className="text-[11px] text-center" style={{ color: C.faint }}>
-        {client.booked}/{client.target} · M{client.month}
-      </p>
-    </div>
-  );
-}
