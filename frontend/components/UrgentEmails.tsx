@@ -79,7 +79,7 @@ export default function UrgentEmails() {
             Nothing needs an immediate reply right now.
           </p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-2 max-h-56 overflow-y-auto">
             {emails.map((e) => (
               <div key={e.id} className="rounded-lg bg-white/80 border border-[#F7D9E7] px-3 py-2.5">
                 <div className="flex items-start justify-between gap-2">

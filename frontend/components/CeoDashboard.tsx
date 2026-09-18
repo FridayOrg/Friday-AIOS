@@ -452,7 +452,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 />
               </button>
               {gridOpen[c.key] && (
-                <div className="expand-panel px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
+                <div
+                  className="expand-panel px-5 pb-5 pt-1 overflow-y-auto"
+                  style={{ borderTop: `1px solid ${C.border}`, maxHeight: 420 }}
+                >
                   {c.key === "tasks" && (
                     <>
                       <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />

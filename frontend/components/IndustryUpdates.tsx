@@ -77,7 +77,7 @@ export default function IndustryUpdates() {
         ) : updates.length === 0 ? (
           <p className="text-xs text-slate-400 pt-2">No significant updates today yet.</p>
         ) : (
-          <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
+          <div className="flex flex-col gap-2 pt-2 max-h-56 overflow-y-auto">
             {updates.map((u) => (
               <div key={u.url} className="rounded-lg bg-white/80 border border-[#D7E3F7] px-3 py-2.5">
                 <div className="flex items-start justify-between gap-2">
