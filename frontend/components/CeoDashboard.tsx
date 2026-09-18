@@ -403,19 +403,30 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
         </div>
 
-        {/* ---------------- 2x2 GRID: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-4 mb-4">
-          {GRID_CARDS.map((c) => (
-            <div
-              key={glow?.section === c.key ? `${c.key}-${glow.ts}` : c.key}
-              id={`section-${c.key}`}
-              className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
-              style={{
-                background: "rgba(255,255,255,0.85)",
-                border: `1px solid ${C.border}`,
-                ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
-              }}
-            >
+        {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+        >
+          <div className="flex items-center gap-2 mb-4">
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#E9F9F5" }}>
+              <LayoutGrid size={14} style={{ color: C.teal }} />
+            </span>
+            <h2 className="text-sm font-semibold">Quick Access</h2>
+          </div>
+
+          <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
+            {GRID_CARDS.map((c) => (
+              <div
+                key={glow?.section === c.key ? `${c.key}-${glow.ts}` : c.key}
+                id={`section-${c.key}`}
+                className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
+                style={{
+                  background: "rgba(255,255,255,0.7)",
+                  border: `1px solid ${C.border}`,
+                  ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
+                }}
+              >
               <button
                 onClick={() => toggleGridCard(c.key)}
                 className="w-full flex items-center justify-between px-5 py-4"
@@ -459,8 +470,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               )}
             </div>
           ))}
+          </div>
         </div>
-
       </div>
     </div>
   );
