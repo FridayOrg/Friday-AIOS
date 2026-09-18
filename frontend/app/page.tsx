@@ -1,6 +1,5 @@
 import { getDashboardData } from "@/lib/data";
 import CeoDashboard from "@/components/CeoDashboard";
-import UrgentEmails from "@/components/UrgentEmails";
 
 // Reads the real system clock (via lib/data → lib/paths) on every request, so the
 // dashboard must never be statically cached — otherwise "today" / past-meeting
@@ -12,10 +11,5 @@ export const dynamic = "force-dynamic";
 // (no loading flash) and presentation in the client component.
 export default async function DashboardPage() {
   const data = await getDashboardData();
-  return (
-    <>
-      <CeoDashboard data={data} />
-      <UrgentEmails />
-    </>
-  );
+  return <CeoDashboard data={data} />;
 }

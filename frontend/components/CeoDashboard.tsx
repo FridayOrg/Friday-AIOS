@@ -22,6 +22,7 @@ import type { DashboardData } from "@/lib/data";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
 import Markdown from "./Markdown";
+import UrgentEmails from "./UrgentEmails";
 
 // ---------------------------------------------------------------------------
 // TOKENS  (unchanged from the ceo-dashboard reference design)
@@ -433,6 +434,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               upcoming={data.upcomingMeetings}
               glow={glow?.section === "calendar" ? C.teal : undefined}
             />
+          </div>
+
+          <div className="mt-4">
+            <UrgentEmails />
           </div>
         </div>
 
