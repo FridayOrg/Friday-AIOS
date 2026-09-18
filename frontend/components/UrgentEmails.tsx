@@ -54,10 +54,10 @@ export default function UrgentEmails() {
   }
 
   return (
-    <div className="rounded-xl overflow-hidden bg-white/60 border border-black/[0.06]">
+    <div className="rounded-xl overflow-hidden bg-[#FDF4F8] border border-[#F7D9E7]">
       <div className="flex items-center justify-between px-4 py-3">
         <div className="flex items-center gap-2.5">
-          <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#FDE7ED] shrink-0">
+          <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#FBE3F0] shrink-0">
             <Mail size={13} className="text-[#D6428E]" />
           </span>
           <span className="text-sm font-semibold">Needs Your Reply</span>
@@ -71,7 +71,7 @@ export default function UrgentEmails() {
           Refresh
         </button>
       </div>
-      <div className="px-4 pb-4 pt-0.5 border-t border-black/[0.06]">
+      <div className="px-4 pb-4 pt-0.5 border-t border-[#F7D9E7]">
         {loading ? (
           <p className="text-xs text-slate-400 pt-2">Checking your inbox...</p>
         ) : emails.length === 0 ? (
@@ -81,7 +81,7 @@ export default function UrgentEmails() {
         ) : (
           <div className="grid sm:grid-cols-2 lg:grid-cols-3 gap-2 pt-2">
             {emails.map((e) => (
-              <div key={e.id} className="rounded-lg bg-white/70 border border-black/[0.05] px-3 py-2.5">
+              <div key={e.id} className="rounded-lg bg-white/80 border border-[#F7D9E7] px-3 py-2.5">
                 <div className="flex items-start justify-between gap-2">
                   <div className="min-w-0">
                     <p className="text-sm font-medium leading-snug truncate">{e.subject}</p>
