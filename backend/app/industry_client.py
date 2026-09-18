@@ -33,23 +33,33 @@ _API_URL = "https://api.tavily.com/search"
 _TIMEOUT_SECONDS = 15
 _MAX_RESULTS_PER_TOPIC = 10
 
-# Currently tracking BookMySales.ai's two closest direct competitors in the
-# B2B appointment-setting / SDR-as-a-service space (both also offer a
-# meetings guarantee, same positioning as BookMySales.ai itself). Extend this
-# list later with more competitors without touching anything else in this
-# file — just add another {name, query, domains} entry.
+# Two named direct competitors (domain-restricted — see below) plus one
+# broader entry that surfaces ANY similar company's news, not just these two.
+# Extend this list later with more named competitors without touching
+# anything else in this file — just add another {name, query, domains} entry;
+# "domains" is optional (omit it for a broad, unrestricted web search).
 #
-# Restricted to each company's own domain (include_domains) rather than a
-# generic web search: both are small agencies with little independent press
-# coverage, so an unrestricted query matched unrelated noise in practice —
-# "Belkins" matched Belkin (the electronics brand), "SalesRoads" matched
-# generic appointment-setter job postings and Salesforce stock news. Their
-# own site is a far more reliable signal for genuine company updates. Uses
-# topic="general" rather than "news" for the same reason — Tavily's news
-# index is built for publishers, not a small company's own blog.
+# Named entries are restricted to each company's own domain (include_domains):
+# both are small agencies with little independent press coverage, so an
+# unrestricted query matched unrelated noise in practice — "Belkins" matched
+# Belkin (the electronics brand), "SalesRoads" matched generic appointment-
+# setter job postings and Salesforce stock news. Their own site is a far more
+# reliable signal for genuine company updates.
+#
+# The broad entry has no domain restriction and uses topic="news" (Tavily's
+# news-indexed search, appropriate here since we're looking for actual press
+# coverage of the industry, not one small company's own blog) to catch any
+# other B2B appointment-setting / SDR-as-a-service company's news — new
+# funding, launches, partnerships — that isn't one of the two named
+# competitors above.
 TOPICS: list[dict] = [
     {"name": "Belkins", "query": "new service pricing case study announcement", "domains": ["belkins.io"]},
     {"name": "SalesRoads", "query": "new service pricing case study announcement", "domains": ["salesroads.com"]},
+    {
+        "name": "B2B Appointment Setting Industry",
+        "query": "B2B appointment setting agency OR SDR-as-a-service company launch funding partnership",
+        "news": True,
+    },
 ]
 
 
@@ -81,17 +91,22 @@ def _is_today(published_at_iso: str | None, today: date) -> bool:
 
 def _fetch_topic(topic: dict, today: date) -> list[dict]:
     name = topic["name"]
+    payload = {
+        "query": topic["query"],
+        "time_range": "day",
+        "max_results": _MAX_RESULTS_PER_TOPIC,
+    }
+    if topic.get("domains"):
+        payload["include_domains"] = topic["domains"]
+        payload["include_domains_mode"] = "filter"
+    if topic.get("news"):
+        payload["topic"] = "news"
+
     try:
         response = httpx.post(
             _API_URL,
             headers={"Authorization": f"Bearer {TAVILY_API_KEY}"},
-            json={
-                "query": topic["query"],
-                "include_domains": topic["domains"],
-                "include_domains_mode": "filter",
-                "time_range": "day",
-                "max_results": _MAX_RESULTS_PER_TOPIC,
-            },
+            json=payload,
             timeout=_TIMEOUT_SECONDS,
         )
         response.raise_for_status()

@@ -622,7 +622,7 @@ function Calendar3DayContent({
   };
 
   return (
-    <div className="space-y-3 pt-2">
+    <div className="flex flex-col gap-3 pt-2 max-h-56 overflow-y-auto">
       {daysNext3.map((day) => {
         const isToday = day.iso === today;
         const statuses = day.meetings.map(
@@ -631,67 +631,71 @@ function Calendar3DayContent({
         // The first still-upcoming meeting today is the "next" one.
         const nextIdx = isToday ? statuses.indexOf("upcoming") : -1;
         return (
-          <div key={day.iso} className="flex gap-3">
-            <div className="w-14 shrink-0 pt-0.5">
-              <div className="text-xs font-medium" style={{ color: isToday ? C.teal : C.faint }}>
+          <div key={day.iso}>
+            <div className="flex items-baseline gap-1.5 mb-1.5">
+              <span className="text-xs font-semibold" style={{ color: isToday ? C.teal : C.ink }}>
                 {dayLabel(day.iso).top}
-              </div>
-              <div className="text-[11px]" style={{ color: C.faint }}>{dayLabel(day.iso).bottom}</div>
+              </span>
+              <span className="text-[11px]" style={{ color: C.faint }}>{dayLabel(day.iso).bottom}</span>
             </div>
-            <div className="flex-1 space-y-1.5 pb-1">
-              {day.meetings.length === 0 && (
-                <div className="text-xs" style={{ color: C.faint }}>No meetings</div>
-              )}
-              {day.meetings.map((m, i) => {
-                const pStyle = priorityOf(m.priority);
-                const status = day.iso < today ? "done" : statuses[i];
-                const done = status === "done";
-                const live = status === "in_progress";
-                const isNext = i === nextIdx;
-                const meetingId = `${day.iso}|${m.time}|${m.name}`;
-                const isGlow = glow?.section === "calendar" && !!glow.itemIds?.includes(meetingId);
-                const g = glowProps(isGlow, isGlow ? glowColorFor("calendar", m.priority) : "");
-                return (
-                  <div
-                    key={isGlow ? `${i}-${glow?.ts}` : i}
-                    className={`flex items-center gap-2 text-xs${g.className}`}
-                    style={{ opacity: done ? 0.4 : 1, ...g.style }}
-                  >
-                    <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: pStyle.color }} />
-                    <span className="tabular-nums w-16 shrink-0" style={{ color: C.faint }}>{to12h(m.time)}</span>
-                    <span
-                      className="truncate"
-                      style={{
-                        color: m.priority === "critical" ? C.down : C.ink,
-                        fontWeight: m.priority === "critical" ? 600 : 400,
-                        textDecoration: done ? "line-through" : "none",
-                      }}
+            {day.meetings.length === 0 ? (
+              <div className="text-xs pb-1" style={{ color: C.faint }}>No meetings</div>
+            ) : (
+              <div className="flex flex-col gap-2">
+                {day.meetings.map((m, i) => {
+                  const pStyle = priorityOf(m.priority);
+                  const status = day.iso < today ? "done" : statuses[i];
+                  const done = status === "done";
+                  const live = status === "in_progress";
+                  const isNext = i === nextIdx;
+                  const meetingId = `${day.iso}|${m.time}|${m.name}`;
+                  const isGlow = glow?.section === "calendar" && !!glow.itemIds?.includes(meetingId);
+                  const g = glowProps(isGlow, isGlow ? glowColorFor("calendar", m.priority) : "");
+                  return (
+                    <div
+                      key={isGlow ? `${i}-${glow?.ts}` : i}
+                      className={`rounded-lg px-3 py-2.5${g.className}`}
+                      style={{ background: "#EFF6FD", border: "1px solid #D7E3F7", opacity: done ? 0.55 : 1, ...g.style }}
                     >
-                      {m.name}
-                    </span>
-                    {done && (
-                      <span className="shrink-0" style={{ color: C.faint }}>· done</span>
-                    )}
-                    {live && (
-                      <span
-                        className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                        style={{ background: "#FDECEC", color: C.down }}
-                      >
-                        now
-                      </span>
-                    )}
-                    {isNext && !live && (
-                      <span
-                        className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                        style={{ background: "#E9F9F5", color: C.teal }}
-                      >
-                        next
-                      </span>
-                    )}
-                  </div>
-                );
-              })}
-            </div>
+                      <div className="flex items-center justify-between gap-2">
+                        <div className="flex items-center gap-2 min-w-0">
+                          <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: pStyle.color }} />
+                          <span
+                            className="text-sm font-medium truncate"
+                            style={{
+                              color: m.priority === "critical" ? C.down : C.ink,
+                              textDecoration: done ? "line-through" : "none",
+                            }}
+                          >
+                            {m.name}
+                          </span>
+                        </div>
+                        {live && (
+                          <span
+                            className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "#FDECEC", color: C.down }}
+                          >
+                            now
+                          </span>
+                        )}
+                        {isNext && !live && (
+                          <span
+                            className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                            style={{ background: "#E9F9F5", color: C.teal }}
+                          >
+                            next
+                          </span>
+                        )}
+                      </div>
+                      <p className="text-xs mt-1" style={{ color: C.faint }}>
+                        {to12h(m.time)}
+                        {done && " · done"}
+                      </p>
+                    </div>
+                  );
+                })}
+              </div>
+            )}
           </div>
         );
       })}

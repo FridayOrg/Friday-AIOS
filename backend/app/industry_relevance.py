@@ -20,17 +20,21 @@ from .llm_client import get_classifier_client
 
 logger = logging.getLogger(__name__)
 
-_PROMPT_TEMPLATE = """You are triaging a list of search results to decide which
-ones are genuine, substantive news about one specific named competitor -
-Belkins or SalesRoads (both B2B appointment-setting / SDR-as-a-service
-companies) - worth a founder/CEO's attention on their dashboard.
+_PROMPT_TEMPLATE = """You are triaging a list of search results for a founder/CEO
+of BookMySales.ai, a B2B appointment-setting / SDR-as-a-service company. Decide
+which items are genuine, substantive news about a company that competes in
+this same space - either Belkins or SalesRoads specifically (two named direct
+competitors), OR any other real B2B appointment-setting / SDR-as-a-service /
+outbound-sales-development company (e.g. a new entrant, a funding round, a
+launch, a partnership).
 
 HARD FILTER — apply this before anything else: if the item is NOT clearly and
-specifically about Belkins or SalesRoads as a company (e.g. it's a random
+specifically about a real company operating in this space (e.g. it's a random
 third-party job posting that merely mentions "appointment setter", a generic
-sales-industry article, or an unrelated company), answer "no" regardless of
-anything else. Only consider "yes" for items that are actually about Belkins
-or SalesRoads themselves.
+sales-industry opinion piece with no company named, or a wholly unrelated
+company/topic), answer "no" regardless of anything else. Only consider "yes"
+for items that are genuinely about a specific company in this competitive
+space.
 
 Among items that DO pass that filter, answer "yes" only if it is a
 substantive development: a new service/pricing offer, a notable client win
