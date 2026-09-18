@@ -1,0 +1,28 @@
+name: Industry Updates refresh
+
+# Scheduled trigger for backend/app/main.py's POST /industry-updates/refresh.
+# The app itself has no in-process scheduler (Render's web service sleeps
+# after ~15 min idle on the free/starter tier, so an in-process timer would
+# just die with it) - this external cron is what makes the dashboard's
+# Industry Updates widget fresh independent of anyone viewing it. As a side
+# effect, this also keeps the backend from ever going fully idle.
+#
+# Requires two repo secrets (Settings > Secrets and variables > Actions):
+#   FRIDAY_BACKEND_URL                - e.g. https://friday-aios.onrender.com
+#   INDUSTRY_UPDATES_REFRESH_SECRET   - must match the backend's own env var
+#                                        of the same name
+
+on:
+  schedule:
+    - cron: "*/30 * * * *"  # every 30 minutes
+  workflow_dispatch: {}      # lets you trigger it manually from the Actions tab
+
+jobs:
+  refresh:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Call the refresh endpoint
+        run: |
+          curl --fail --silent --show-error \
+            -X POST "${{ secrets.FRIDAY_BACKEND_URL }}/industry-updates/refresh" \
+            -H "x-refresh-secret: ${{ secrets.INDUSTRY_UPDATES_REFRESH_SECRET }}"

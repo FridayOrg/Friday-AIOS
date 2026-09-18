@@ -23,6 +23,7 @@ import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
 import Markdown from "./Markdown";
 import UrgentEmails from "./UrgentEmails";
+import IndustryUpdates from "./IndustryUpdates";
 
 // ---------------------------------------------------------------------------
 // TOKENS  (unchanged from the ceo-dashboard reference design)
@@ -438,6 +439,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
           <div className="mt-4">
             <UrgentEmails />
+          </div>
+
+          <div className="mt-4">
+            <IndustryUpdates />
           </div>
         </div>
 

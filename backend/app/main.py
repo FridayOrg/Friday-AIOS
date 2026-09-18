@@ -17,6 +17,11 @@ Endpoints:
   GET  /gmail/urgent    — cached list of inbox emails judged to need an immediate
                            reply (see gmail_client.py / email_urgency.py)
   POST /gmail/refresh    — forces a fresh Gmail fetch + urgency-classification pass
+  GET  /industry-updates — today's stored, LLM-filtered industry news (see
+                           industry_client.py / industry_relevance.py)
+  POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
+                           guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
+                           scheduled GitHub Actions cron calls this, not a user
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -43,8 +48,9 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import calendar_client, db, fathom_client, gmail_client
-from .config import now
+from . import calendar_client, db, fathom_client, gmail_client, industry_client
+from .config import INDUSTRY_UPDATES_REFRESH_SECRET, now
+from .industry_relevance import classify_updates
 from .context_loader import (
     DAILY_BRIEF_PROMPT,
     build_analyst_system_prompt,
@@ -189,6 +195,40 @@ def gmail_refresh():
     cache (see gmail_client.py)."""
     emails = gmail_client.refresh_urgent_emails()
     return {"status": "ok", "count": len(emails)}
+
+
+@app.get("/industry-updates")
+def industry_updates():
+    try:
+        day_start, day_end = industry_client.day_bounds(now())
+        return {"updates": db.list_industry_updates(day_start, day_end)}
+    except Exception as e:
+        logger.warning("Could not read industry updates: %s", e)
+        return {"updates": []}
+
+
+@app.post("/industry-updates/refresh")
+def refresh_industry_updates(request: Request):
+    """Fetches from Tavily, LLM-filters for relevance, and stores the result —
+    called by a scheduled GitHub Actions cron rather than a user, hence the
+    shared-secret header check (this write endpoint has no other auth)."""
+    secret = request.headers.get("x-refresh-secret", "")
+    if not INDUSTRY_UPDATES_REFRESH_SECRET or secret != INDUSTRY_UPDATES_REFRESH_SECRET:
+        raise HTTPException(status_code=401, detail="invalid or missing refresh secret")
+
+    today = now().date()
+    raw_items = industry_client.fetch_todays_updates(today)
+    relevant = classify_updates(raw_items)
+
+    stored = 0
+    for item in relevant:
+        try:
+            db.upsert_industry_update(item)
+            stored += 1
+        except Exception as e:
+            logger.warning("Failed to store industry update %s: %s", item.get("url"), e)
+
+    return {"status": "ok", "fetched": len(raw_items), "relevant": len(relevant), "stored": stored}
 
 
 @app.post("/ask", response_model=AskResponse)

@@ -99,6 +99,15 @@ FATHOM_API_KEY = os.environ.get("FATHOM_API_KEY")
 # calendar integration: nothing here ever touches GOOGLE_REFRESH_TOKEN.
 GMAIL_REFRESH_TOKEN = os.environ.get("GMAIL_REFRESH_TOKEN")
 
+# Industry Updates (see industry_client.py) — Tavily's news-search API is the
+# data source (tavily.com; no company-specific integration, just search
+# queries, so new topics/companies can be added later with no code changes to
+# the fetch logic itself). INDUSTRY_UPDATES_REFRESH_SECRET guards the
+# POST /industry-updates/refresh endpoint so only the scheduled GitHub Actions
+# cron (not anyone who finds the URL) can trigger a fetch.
+TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
+INDUSTRY_UPDATES_REFRESH_SECRET = os.environ.get("INDUSTRY_UPDATES_REFRESH_SECRET")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the

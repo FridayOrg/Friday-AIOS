@@ -38,8 +38,9 @@ def _connect() -> Iterator["psycopg2.extensions.connection"]:
 
 
 def init_db() -> None:
-    """Creates the meeting_summaries table if it doesn't exist yet. Called once
-    at startup (see main.py) — safe to run on every deploy."""
+    """Creates the meeting_summaries / industry_updates tables if they don't
+    exist yet. Called once at startup (see main.py) — safe to run on every
+    deploy."""
     with _connect() as conn, conn.cursor() as cur:
         cur.execute(
             """
@@ -53,6 +54,20 @@ def init_db() -> None:
                 summary_markdown TEXT,
                 action_items JSONB NOT NULL DEFAULT '[]',
                 received_at TIMESTAMPTZ NOT NULL DEFAULT now()
+            )
+            """
+        )
+        cur.execute(
+            """
+            CREATE TABLE IF NOT EXISTS industry_updates (
+                id SERIAL PRIMARY KEY,
+                url TEXT UNIQUE NOT NULL,
+                title TEXT NOT NULL,
+                topic TEXT,
+                content TEXT,
+                published_at TIMESTAMPTZ,
+                relevance_reason TEXT,
+                fetched_at TIMESTAMPTZ NOT NULL DEFAULT now()
             )
             """
         )
@@ -109,4 +124,61 @@ def list_meeting_summaries(limit: int = 20) -> list[dict]:
         if r.get("started_at") is not None:
             r["started_at"] = r["started_at"].isoformat()
         r["received_at"] = r["received_at"].isoformat()
+    return rows
+
+
+def upsert_industry_update(item: dict) -> None:
+    """Insert a new industry update, or update it in place if this url was
+    already stored — handles the same item turning up again on the next
+    scheduled refresh."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute(
+            """
+            INSERT INTO industry_updates
+                (url, title, topic, content, published_at, relevance_reason)
+            VALUES (%(url)s, %(title)s, %(topic)s, %(content)s, %(published_at)s,
+                    %(relevance_reason)s)
+            ON CONFLICT (url) DO UPDATE SET
+                title = EXCLUDED.title,
+                topic = EXCLUDED.topic,
+                content = EXCLUDED.content,
+                published_at = EXCLUDED.published_at,
+                relevance_reason = EXCLUDED.relevance_reason
+            """,
+            {
+                "url": item["url"],
+                "title": item["title"],
+                "topic": item.get("topic"),
+                "content": item.get("content"),
+                "published_at": item.get("published_at"),
+                "relevance_reason": item.get("relevance_reason"),
+            },
+        )
+
+
+def list_industry_updates(day_start: str, day_end: str, limit: int = 30) -> list[dict]:
+    """Industry updates whose published_at (falling back to fetched_at, for
+    items with no known publish date) falls within [day_start, day_end) —
+    the caller passes today's exact bounds (see config.now()) so this reflects
+    the app's own clock/timezone, not the database server's. Most recent
+    first; never returns a prior day's item even if it's still the most
+    recently fetched row."""
+    with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            """
+            SELECT url, title, topic, content, published_at, relevance_reason, fetched_at
+            FROM industry_updates
+            WHERE COALESCE(published_at, fetched_at) >= %(day_start)s
+              AND COALESCE(published_at, fetched_at) < %(day_end)s
+            ORDER BY COALESCE(published_at, fetched_at) DESC
+            LIMIT %(limit)s
+            """,
+            {"day_start": day_start, "day_end": day_end, "limit": limit},
+        )
+        rows = [dict(r) for r in cur.fetchall()]
+
+    for r in rows:
+        if r.get("published_at") is not None:
+            r["published_at"] = r["published_at"].isoformat()
+        r["fetched_at"] = r["fetched_at"].isoformat()
     return rows
