@@ -162,6 +162,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
   const firstOverdue = tasks.find((t) => t.status === "overdue")?.id ?? null;
   const [expandedTask, setExpandedTask] = useState<string | null>(firstOverdue);
+  // Collapsed by default — click a grid card's header to reveal its content.
+  const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({});
+  const toggleGridCard = (key: string) => setGridOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // --- Chat-driven highlight (see lib/highlight-context.tsx) --------------
   const { target } = useHighlight();
@@ -169,6 +172,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
   useEffect(() => {
     if (!target) return;
+    setGridOpen((prev) => ({ ...prev, [target.section]: true }));
     // Only auto-open a task's description when exactly one task matched — with several
     // (e.g. "high priority tasks") which one to expand is ambiguous, so just glow the rows.
     if (target.section === "tasks" && target.itemIds?.length === 1) setExpandedTask(target.itemIds[0]);
@@ -207,6 +211,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
   }, [q, tasks, calendar]);
 
   const jumpToSection = (key: string) => {
+    setGridOpen((prev) => ({ ...prev, [key]: true }));
     setQuery("");
     setTimeout(() => {
       document
@@ -411,7 +416,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
               }}
             >
-              <div className="flex items-center justify-between px-5 py-4">
+              <button
+                onClick={() => toggleGridCard(c.key)}
+                className="w-full flex items-center justify-between px-5 py-4"
+              >
                 <div className="flex items-center gap-3">
                   <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.iconBg }}>
                     <c.icon size={15} style={{ color: c.iconColor }} />
@@ -423,22 +431,32 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     </span>
                   )}
                 </div>
-              </div>
-              <div className="px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
-                {c.key === "tasks" && (
-                  <>
-                    <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
-                    <div className="mt-3">
-                      <UrgentEmails />
-                    </div>
-                  </>
-                )}
-                {c.key === "calendar" && (
-                  <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
-                )}
-                {c.key === "industry" && <IndustryUpdates />}
-                {c.key === "meetings" && <MeetingSummariesContent summaries={meetingSummaries} />}
-              </div>
+                <ChevronDown
+                  size={16}
+                  style={{
+                    color: C.faint,
+                    transform: gridOpen[c.key] ? "rotate(180deg)" : "rotate(0deg)",
+                    transition: "transform 0.2s ease",
+                  }}
+                />
+              </button>
+              {gridOpen[c.key] && (
+                <div className="expand-panel px-5 pb-5 pt-1" style={{ borderTop: `1px solid ${C.border}` }}>
+                  {c.key === "tasks" && (
+                    <>
+                      <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
+                      <div className="mt-3">
+                        <UrgentEmails />
+                      </div>
+                    </>
+                  )}
+                  {c.key === "calendar" && (
+                    <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
+                  )}
+                  {c.key === "industry" && <IndustryUpdates />}
+                  {c.key === "meetings" && <MeetingSummariesContent summaries={meetingSummaries} />}
+                </div>
+              )}
             </div>
           ))}
         </div>
