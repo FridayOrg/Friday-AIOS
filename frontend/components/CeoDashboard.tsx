@@ -458,9 +458,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 >
                   {c.key === "tasks" && (
                     <>
-                      <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
+                      <UrgentEmails />
                       <div className="mt-3">
-                        <UrgentEmails />
+                        <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
                       </div>
                     </>
                   )}
