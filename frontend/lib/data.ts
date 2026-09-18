@@ -463,3 +463,23 @@ export function getContextFiles(): ContextFile[] {
     }))
     .sort((a, b) => a.title.localeCompare(b.title));
 }
+
+// The "Goals" side panel (dashboard + CRM pages) reads the numbered list
+// under strategy.md's "## 4. Current Goals" heading directly, rather than
+// duplicating that content as separately-maintained hardcoded strings —
+// company.md's own doc stays the single source of truth for what the actual
+// goals are.
+export function getStrategyGoals(): string[] {
+  let text: string;
+  try {
+    text = fs.readFileSync(path.join(CONTEXT_DIR, "strategy.md"), "utf-8");
+  } catch {
+    return [];
+  }
+  const section = text.match(/##\s*4\.\s*Current Goals\s*\n([\s\S]*?)(?:\n##\s|\n---|\s*$)/);
+  if (!section) return [];
+  return section[1]
+    .split(/\r?\n/)
+    .map((line) => line.match(/^\s*\d+\.\s+(.+)$/)?.[1]?.trim())
+    .filter((line): line is string => !!line);
+}

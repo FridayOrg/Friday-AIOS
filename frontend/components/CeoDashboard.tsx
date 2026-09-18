@@ -21,6 +21,7 @@ import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
+import GoalsPanel from "./GoalsPanel";
 
 // ---------------------------------------------------------------------------
 // TOKENS  (unchanged from the ceo-dashboard reference design)
@@ -147,17 +148,31 @@ const to12h = (t: string) => {
 // Pipeline / Spend & Notifications live on their own /crm page (see
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
-  { key: "tasks", title: "Actions", icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
-  { key: "calendar", title: "Calendar", icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
-  { key: "industry", title: "Industry Updates", icon: FileText, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
-  { key: "meetings", title: "Meeting Summary", icon: FileText, iconBg: "#EAE9FE", iconColor: "#6D5BD0" },
+  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
+  { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
+  {
+    key: "industry",
+    title: "Industry Updates",
+    subtitle: "Latest news and trends shaping the industry",
+    icon: FileText,
+    iconBg: "#DCEEFB",
+    iconColor: "#2D9CDB",
+  },
+  {
+    key: "meetings",
+    title: "Meeting Summary",
+    subtitle: "Key meetings and important takeaways",
+    icon: FileText,
+    iconBg: "#EAE9FE",
+    iconColor: "#6D5BD0",
+  },
 ] as const;
 
 // ---------------------------------------------------------------------------
 // COMPONENT
 // ---------------------------------------------------------------------------
 
-export default function CeoDashboard({ data }: { data: DashboardData }) {
+export default function CeoDashboard({ data, goals }: { data: DashboardData; goals: string[] }) {
   const { revenue, pipeline, tasks, calendar, meetingSummaries } = data;
 
   const firstOverdue = tasks.find((t) => t.status === "overdue")?.id ?? null;
@@ -345,6 +360,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
         </div>
 
+        <div className="flex flex-col lg:flex-row gap-4">
+          <GoalsPanel goals={goals} />
+          <div className="flex-1 min-w-0">
+
         {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
@@ -432,15 +451,22 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 className="w-full flex items-center justify-between px-5 py-4"
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg flex items-center justify-center" style={{ background: c.iconBg }}>
+                  <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.iconBg }}>
                     <c.icon size={15} style={{ color: c.iconColor }} />
                   </span>
-                  <span className="text-sm font-semibold">{c.title}</span>
-                  {c.key === "tasks" && overdueCount > 0 && (
-                    <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#FDE7ED", color: C.down }}>
-                      {overdueCount} overdue
-                    </span>
-                  )}
+                  <div className="flex flex-col items-start">
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm font-semibold">{c.title}</span>
+                      {c.key === "tasks" && overdueCount > 0 && (
+                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#FDE7ED", color: C.down }}>
+                          {overdueCount} overdue
+                        </span>
+                      )}
+                    </div>
+                    {c.subtitle && (
+                      <span className="text-xs" style={{ color: C.faint }}>{c.subtitle}</span>
+                    )}
+                  </div>
                 </div>
                 <ChevronDown
                   size={16}
@@ -473,6 +499,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               )}
             </div>
           ))}
+          </div>
+        </div>
+
           </div>
         </div>
       </div>
@@ -780,29 +809,35 @@ function extractFirstBullet(markdown: string | null): string | null {
 function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meetingSummaries"] }) {
   if (summaries.length === 0) {
     return (
-      <p className="text-xs leading-relaxed pt-2" style={{ color: C.faint }}>
+      <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
         No meeting summaries yet. These appear automatically once Fathom finishes processing a recorded meeting.
       </p>
     );
   }
 
   return (
-    <div className="pt-1">
+    <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
       {summaries.map((m) => {
         const takeaway = extractFirstBullet(m.summary_markdown);
         const action = m.action_items[0] ?? null;
         return (
-          <div key={m.recording_id} className="py-2.5" style={{ borderBottom: `1px solid ${C.border}` }}>
+          <div
+            key={m.recording_id}
+            className="rounded-lg px-3 py-2.5"
+            style={{ background: "#F5F3FE", border: "1px solid #E7E2FB" }}
+          >
             <p className="text-sm font-medium leading-snug">{m.title}</p>
             <p className="text-xs mt-0.5" style={{ color: C.faint }}>
               {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
             </p>
             {takeaway && (
-              <p className="text-xs mt-1.5 leading-snug" style={{ color: C.muted }}>{takeaway}</p>
+              <p className="text-xs mt-1.5 leading-snug" style={{ color: C.muted }}>
+                <span className="font-medium" style={{ color: C.ink }}>Goal:</span> {takeaway}
+              </p>
             )}
             {action && (
               <p className="text-xs mt-1 leading-snug" style={{ color: C.muted }}>
-                <span className="font-medium">Action:</span> {action}
+                <span className="font-medium" style={{ color: C.ink }}>Action:</span> {action}
               </p>
             )}
             {m.meeting_url && (
@@ -810,10 +845,10 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
                 href={m.meeting_url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs mt-1.5"
-                style={{ color: C.teal }}
+                className="inline-flex items-center gap-1 text-xs mt-2 font-medium"
+                style={{ color: "#6D5BD0" }}
               >
-                Watch recording <ExternalLink size={12} />
+                Watch recording <ExternalLink size={11} />
               </a>
             )}
           </div>

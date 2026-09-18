@@ -13,13 +13,14 @@ import { DollarSign, Target, ChevronDown, ChevronsUpDown } from "lucide-react";
 import { AreaChart, Area, ResponsiveContainer, YAxis } from "recharts";
 import type { DashboardData } from "@/lib/data";
 import { C, statusOf, riskOf, fmtUsd, fmtFullDay } from "@/lib/dashboardTokens";
+import GoalsPanel from "./GoalsPanel";
 
 const SECTIONS = [
   { key: "financial", title: "Financial Performance", icon: DollarSign, iconBg: "#D7F6EA", iconColor: "#0E9F6E" },
   { key: "pipeline", title: "Sales & Guarantee Pipeline", icon: Target, iconBg: "#E7E4FC", iconColor: "#6E5AE0" },
 ] as const;
 
-export default function CrmDashboard({ data }: { data: DashboardData }) {
+export default function CrmDashboard({ data, goals }: { data: DashboardData; goals: string[] }) {
   const { revenue, pipeline, spend } = data;
   const [openSections, setOpenSections] = useState<Record<string, boolean>>({
     financial: true,
@@ -67,7 +68,9 @@ export default function CrmDashboard({ data }: { data: DashboardData }) {
           </button>
         </div>
 
-        <div className="space-y-3">
+        <div className="flex flex-col lg:flex-row gap-4">
+          <GoalsPanel goals={goals} />
+          <div className="flex-1 min-w-0 space-y-3">
           {SECTIONS.map((s) => (
             <div
               key={s.key}
@@ -130,6 +133,7 @@ export default function CrmDashboard({ data }: { data: DashboardData }) {
                 <SpendContent spend={spend} />
               </div>
             )}
+          </div>
           </div>
         </div>
       </div>
