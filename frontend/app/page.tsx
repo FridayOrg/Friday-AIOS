@@ -1,4 +1,4 @@
-import { getDashboardData, getStrategyGoals } from "@/lib/data";
+import { getDashboardData } from "@/lib/data";
 import CeoDashboard from "@/components/CeoDashboard";
 
 // Reads the real system clock (via lib/data → lib/paths) on every request, so the
@@ -11,6 +11,5 @@ export const dynamic = "force-dynamic";
 // (no loading flash) and presentation in the client component.
 export default async function DashboardPage() {
   const data = await getDashboardData();
-  const goals = getStrategyGoals();
-  return <CeoDashboard data={data} goals={goals} />;
+  return <CeoDashboard data={data} />;
 }

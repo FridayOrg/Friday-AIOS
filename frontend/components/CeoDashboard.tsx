@@ -21,7 +21,6 @@ import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
-import GoalsPanel from "./GoalsPanel";
 
 // ---------------------------------------------------------------------------
 // TOKENS  (unchanged from the ceo-dashboard reference design)
@@ -172,11 +171,9 @@ const GRID_CARDS = [
 // COMPONENT
 // ---------------------------------------------------------------------------
 
-export default function CeoDashboard({ data, goals }: { data: DashboardData; goals: string[] }) {
+export default function CeoDashboard({ data }: { data: DashboardData }) {
   const { revenue, pipeline, tasks, calendar, meetingSummaries } = data;
 
-  const firstOverdue = tasks.find((t) => t.status === "overdue")?.id ?? null;
-  const [expandedTask, setExpandedTask] = useState<string | null>(firstOverdue);
   // Collapsed by default — click a grid card's header to reveal its content.
   const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({});
   const toggleGridCard = (key: string) => setGridOpen((prev) => ({ ...prev, [key]: !prev[key] }));
@@ -188,9 +185,6 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
   useEffect(() => {
     if (!target) return;
     setGridOpen((prev) => ({ ...prev, [target.section]: true }));
-    // Only auto-open a task's description when exactly one task matched — with several
-    // (e.g. "high priority tasks") which one to expand is ambiguous, so just glow the rows.
-    if (target.section === "tasks" && target.itemIds?.length === 1) setExpandedTask(target.itemIds[0]);
 
     const scrollTimer = setTimeout(() => {
       document.getElementById(`section-${target.section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
@@ -256,8 +250,6 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
       };
     });
   }, [data.today, calendar]);
-
-  const overdueCount = tasks.filter((t) => t.status === "overdue").length;
 
   return (
     <div
@@ -360,10 +352,6 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
           </div>
         </div>
 
-        <div className="flex flex-col lg:flex-row gap-4">
-          <GoalsPanel goals={goals} />
-          <div className="flex-1 min-w-0">
-
         {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
@@ -457,11 +445,6 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
                   <div className="flex flex-col items-start">
                     <div className="flex items-center gap-2">
                       <span className="text-sm font-semibold">{c.title}</span>
-                      {c.key === "tasks" && overdueCount > 0 && (
-                        <span className="text-[11px] font-medium px-2 py-0.5 rounded-full" style={{ background: "#FDE7ED", color: C.down }}>
-                          {overdueCount} overdue
-                        </span>
-                      )}
                     </div>
                     {c.subtitle && (
                       <span className="text-xs" style={{ color: C.faint }}>{c.subtitle}</span>
@@ -482,14 +465,7 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
                   className="expand-panel px-5 pb-5 pt-1 overflow-y-auto"
                   style={{ borderTop: `1px solid ${C.border}`, maxHeight: 420 }}
                 >
-                  {c.key === "tasks" && (
-                    <>
-                      <UrgentEmails />
-                      <div className="mt-3">
-                        <TasksContent tasks={tasks} expandedTask={expandedTask} setExpandedTask={setExpandedTask} glow={glow} />
-                      </div>
-                    </>
-                  )}
+                  {c.key === "tasks" && <UrgentEmails />}
                   {c.key === "calendar" && (
                     <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
                   )}
@@ -499,9 +475,6 @@ export default function CeoDashboard({ data, goals }: { data: DashboardData; goa
               )}
             </div>
           ))}
-          </div>
-        </div>
-
           </div>
         </div>
       </div>
@@ -618,65 +591,6 @@ function NextMeetingsTile({
 // ---------------------------------------------------------------------------
 // SECTION CONTENTS
 // ---------------------------------------------------------------------------
-
-function TasksContent({
-  tasks,
-  expandedTask,
-  setExpandedTask,
-  glow,
-}: {
-  tasks: DashboardData["tasks"];
-  expandedTask: string | null;
-  setExpandedTask: (id: string | null) => void;
-  glow: Glow | null;
-}) {
-  return (
-    <div className="pt-1">
-      {tasks.map((t) => {
-        const isOpen = expandedTask === t.id;
-        const style = priorityOf(t.priority);
-        const isGlow = glow?.section === "tasks" && !!glow.itemIds?.includes(t.id);
-        const g = glowProps(isGlow, isGlow ? glowColorFor("tasks", t.status === "overdue" ? "overdue" : t.priority) : "");
-        return (
-          <div
-            key={isGlow ? `${t.id}-${glow?.ts}` : t.id}
-            className={g.className.trim()}
-            style={{ borderBottom: `1px solid ${C.border}`, ...g.style }}
-          >
-            <button
-              onClick={() => setExpandedTask(isOpen ? null : t.id)}
-              className="w-full flex items-start gap-3 py-2.5 text-left"
-            >
-              <span className="mt-1.5 w-1.5 h-1.5 rounded-full shrink-0" style={{ background: style.color }} />
-              <div className="flex-1 min-w-0">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <span className="text-[11px] font-medium uppercase tracking-wide" style={{ color: style.color }}>
-                    {TYPE_LABEL[t.type] ?? t.type}
-                  </span>
-                  {t.status === "overdue" && (
-                    <span className="text-[11px] font-medium" style={{ color: C.down }}>Overdue</span>
-                  )}
-                </div>
-                <p className="text-sm leading-snug">{t.title}</p>
-                <p className="text-xs mt-0.5" style={{ color: C.faint }}>
-                  Due {fmtDay(t.due)}
-                  {t.by ? ` · ${t.by}` : ""}
-                </p>
-              </div>
-              <ChevronDown
-                size={14}
-                style={{ color: C.faint, transform: isOpen ? "rotate(180deg)" : "none", transition: "transform 0.2s" }}
-              />
-            </button>
-            {isOpen && (
-              <p className="text-xs leading-relaxed pb-3 pl-[18px] pr-2" style={{ color: C.muted }}>{t.desc}</p>
-            )}
-          </div>
-        );
-      })}
-    </div>
-  );
-}
 
 function Calendar3DayContent({
   daysNext3,
