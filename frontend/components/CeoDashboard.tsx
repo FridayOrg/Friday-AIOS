@@ -17,6 +17,7 @@ import {
   ExternalLink,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/data";
+import type { CrmOverview } from "@/lib/crmTypes";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
 import UrgentEmails from "./UrgentEmails";
@@ -172,7 +173,22 @@ const GRID_CARDS = [
 // ---------------------------------------------------------------------------
 
 export default function CeoDashboard({ data }: { data: DashboardData }) {
-  const { revenue, pipeline, tasks, calendar, meetingSummaries } = data;
+  const { tasks, calendar, meetingSummaries } = data;
+
+  // Daily Brief's revenue/pipeline/conversion tiles are real Pipedrive data
+  // (see backend/app/crm_metrics.py via GET /api/crm), fetched client-side —
+  // same self-contained-widget pattern as IndustryUpdates/UrgentEmails —
+  // rather than the mock revenue.json/pipeline.json this used to read.
+  const [crm, setCrm] = useState<CrmOverview | null>(null);
+  const [crmLoading, setCrmLoading] = useState(true);
+
+  useEffect(() => {
+    fetch("/api/crm?range=month", { cache: "no-store" })
+      .then((res) => res.json())
+      .then(setCrm)
+      .catch(() => setCrm({ configured: false, message: "Could not reach the Friday backend." }))
+      .finally(() => setCrmLoading(false));
+  }, []);
 
   // Open by default — Quick Access stays expanded; clicking a card's header
   // still toggles it closed if the user wants to collapse it.
@@ -375,34 +391,59 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               key={glow?.section === "financial" ? `mrr-${glow.ts}` : "mrr"}
               tile={TILE.revenue}
               icon={DollarSign}
-              label="Monthly Recurring Revenue"
-              value={fmtUsd(revenue.currentMrr)}
-              trendPct={revenue.mrrGrowthPct}
-              trendLabel="vs last month"
+              label="Won Revenue (This Month)"
+              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
+              trendPct={crm?.configured ? crm.kpis!.revenue_growth_pct : null}
+              neutral={!crm?.configured || crm.kpis!.revenue_growth_pct === null}
+              trendLabel={crm?.configured ? "vs last month" : crm?.message ?? "Pipedrive not connected"}
               positive
               glow={glow?.section === "financial" ? C.teal : undefined}
             />
             <OverviewTile
               tile={TILE.deals}
               icon={Target}
-              label="Active Clients"
-              value={String(revenue.activeClients)}
-              trendPct={
-                revenue.activeClients - revenue.clientDelta > 0
-                  ? (revenue.clientDelta / (revenue.activeClients - revenue.clientDelta)) * 100
-                  : null
+              label="Open Pipeline"
+              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
+              trendPct={null}
+              neutral
+              trendLabel={
+                crm?.configured
+                  ? `${crm.pipeline?.total_open_count ?? 0} open deal${crm.pipeline?.total_open_count === 1 ? "" : "s"}`
+                  : crm?.message ?? "Pipedrive not connected"
               }
-              trendLabel="this month"
               positive
             />
             <OverviewTile
               key={glow?.section === "pipeline" ? `guarantee-${glow.ts}` : "guarantee"}
               tile={TILE.retention}
               icon={TrendingUp}
-              label="Guarantee Completion"
-              value={`${pipeline.guaranteeCompletionPct}%`}
+              label="Conversion Rate"
+              value={
+                crmLoading
+                  ? "—"
+                  : !crm?.configured
+                  ? "N/A"
+                  : crm.kpis!.conversion_rate_pct === null
+                  ? "N/A"
+                  : `${crm.kpis!.conversion_rate_pct}%`
+              }
               trendPct={null}
-              trendLabel={`${pipeline.guaranteeMet} of ${pipeline.slotsTotal} met`}
+              neutral
+              trendLabel={
+                crm?.configured ? (
+                  crm.conversion ? (
+                    <>
+                      <span style={{ color: C.up, fontWeight: 600 }}>{crm.conversion.won_count} won</span>
+                      {" / "}
+                      <span style={{ color: C.down, fontWeight: 600 }}>{crm.conversion.lost_count} lost</span>
+                    </>
+                  ) : (
+                    "no deals won or lost yet this month"
+                  )
+                ) : (
+                  crm?.message ?? "Pipedrive not connected"
+                )
+              }
               positive
               glow={glow?.section === "pipeline" ? C.teal : undefined}
             />
@@ -508,7 +549,7 @@ function OverviewTile({
   label: string;
   value: string;
   trendPct: number | null;
-  trendLabel: string;
+  trendLabel: React.ReactNode;
   positive: boolean;
   neutral?: boolean;
   glow?: string;

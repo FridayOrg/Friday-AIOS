@@ -139,7 +139,11 @@ export interface SpendEntry {
 export async function getTodaysMeetings(): Promise<(Meeting & { status: MeetingStatus; past: boolean })[]> {
   const data = await fetchCalendar();
   const today = isoDate();
-  const now = new Date();
+  // See getDashboardData's nowDate comment: must be parsed through the same
+  // offset-less local-Date path classifyMeeting's `at()` uses, not `new Date()`,
+  // or an already-finished meeting can be misclassified as upcoming whenever the
+  // server's local TZ differs from FRIDAY_TZ.
+  const now = new Date(`${today}T${isoTime()}:00`);
   return data.calendar.meetings
     .filter((m) => (m.occurrences ? m.occurrences.includes(today) : m.date === today))
     .map((m) => {
@@ -377,8 +381,19 @@ export async function getDashboardData(): Promise<DashboardData> {
   // keep only those not yet finished (upcoming or in progress), and take up to 2 from
   // the earliest such day. So it shows today's remaining meetings until they're all
   // done, then rolls to the next day that has any.
-  const nowDate = new Date();
+  //
+  // nowDate must be built the same way classifyMeeting's `at()` parses a meeting's
+  // date+time — via a local, offset-less Date string — not `new Date()` (the real
+  // instant). Calendar times are wall-clock values in FRIDAY_TZ; `at()` naively
+  // parses them in whatever timezone the Node process itself runs in. On a server
+  // whose local TZ differs from FRIDAY_TZ (e.g. Render running UTC), `new Date()`
+  // and `at()`'s parse of the *same* moment land on different instants, and an
+  // already-finished meeting gets classified as still upcoming. Building nowDate
+  // from isoDate()/isoTime() (both FRIDAY_TZ-correct) through the identical
+  // local-parse path keeps the two sides consistent regardless of server TZ —
+  // exactly how Calendar3DayContent (CeoDashboard.tsx) already does it.
   const todayIso = isoDate();
+  const nowDate = new Date(`${todayIso}T${isoTime()}:00`);
   const notDone = calendar
     .map((m) => ({ ...m, ...classifyMeeting(m.date, m.time, m.durationMin, nowDate) }))
     .filter((m) => m.start && (m.status === "upcoming" || m.status === "in_progress"))
