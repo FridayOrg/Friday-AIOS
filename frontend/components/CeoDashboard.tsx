@@ -174,8 +174,14 @@ const GRID_CARDS = [
 export default function CeoDashboard({ data }: { data: DashboardData }) {
   const { revenue, pipeline, tasks, calendar, meetingSummaries } = data;
 
-  // Collapsed by default — click a grid card's header to reveal its content.
-  const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({});
+  // Open by default — Quick Access stays expanded; clicking a card's header
+  // still toggles it closed if the user wants to collapse it.
+  const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({
+    tasks: true,
+    calendar: true,
+    industry: true,
+    meetings: true,
+  });
   const toggleGridCard = (key: string) => setGridOpen((prev) => ({ ...prev, [key]: !prev[key] }));
 
   // --- Chat-driven highlight (see lib/highlight-context.tsx) --------------
