@@ -609,15 +609,12 @@ function Calendar3DayContent({
   // Rebuild the real "now" instant from the server-computed date + time so the
   // client classifies meetings against the same clock the rest of the app uses.
   const nowDate = new Date(`${today}T${now}:00`);
-  const [ty, tm, td] = today.split("-").map(Number);
-  const tomorrow = new Date(Date.UTC(ty, tm - 1, td));
-  tomorrow.setUTCDate(tomorrow.getUTCDate() + 1);
-  const tomorrowIso = tomorrow.toISOString().slice(0, 10);
 
+  // Only "today" gets the special "Today" label — every other day in the
+  // window (including tomorrow) just shows its actual weekday + date.
   const dayLabel = (iso: string): { top: string; bottom: string } => {
     const datePart = fmtDay(iso).split(", ")[1]; // e.g. "Sep 18"
     if (iso === today) return { top: "Today", bottom: datePart };
-    if (iso === tomorrowIso) return { top: "Tomorrow", bottom: datePart };
     return { top: fmtDay(iso).split(",")[0], bottom: datePart };
   };
 

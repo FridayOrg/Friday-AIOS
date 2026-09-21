@@ -5,6 +5,6 @@ import CrmDashboard from "@/components/CrmDashboard";
 export const dynamic = "force-dynamic";
 
 export default async function CrmPage() {
-  const data = await getDashboardData();
-  return <CrmDashboard data={data} />;
+  const { today } = await getDashboardData();
+  return <CrmDashboard today={today} />;
 }

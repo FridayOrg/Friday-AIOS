@@ -22,6 +22,9 @@ Endpoints:
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
+  GET  /crm/overview    — CEO CRM dashboard data sourced live from Pipedrive
+                           (deals, pipeline, activities, contacts, risks, charts);
+                           see pipedrive_client.py / crm_metrics.py
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -48,7 +51,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import calendar_client, db, fathom_client, gmail_client, industry_client
+from . import calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client
 from .config import INDUSTRY_UPDATES_REFRESH_SECRET, now
 from .industry_relevance import classify_updates
 from .context_loader import (
@@ -229,6 +232,24 @@ def refresh_industry_updates(request: Request):
             logger.warning("Failed to store industry update %s: %s", item.get("url"), e)
 
     return {"status": "ok", "fetched": len(raw_items), "relevant": len(relevant), "stored": stored}
+
+
+@app.get("/crm/overview")
+def crm_overview(
+    range: str = "month",
+    start: str | None = None,
+    end: str | None = None,
+    trend_period: str = "30d",
+):
+    """range: today|week|month|quarter|year|custom (custom requires start/end
+    as YYYY-MM-DD). trend_period (for the revenue trend chart only):
+    7d|30d|90d|quarter|year. See crm_metrics.build_overview for exactly how
+    each field is derived from Pipedrive."""
+    try:
+        return crm_metrics.build_overview(range, start, end, trend_period, now().date())
+    except Exception as e:
+        logger.warning("Could not build CRM overview: %s", e)
+        return {"configured": crm_metrics.pd.is_configured(), "message": "Failed to build CRM overview.", "error": str(e)}
 
 
 @app.post("/ask", response_model=AskResponse)

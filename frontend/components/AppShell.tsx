@@ -1,8 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
-import { Menu, User } from "lucide-react";
-import Sidebar from "./Sidebar";
+import TopNav from "./TopNav";
 import AskFriday from "./AskFriday";
 import { HighlightProvider } from "@/lib/highlight-context";
 
@@ -13,14 +12,11 @@ const MAX_PANEL_VW = 80;
 const DEFAULT_PANEL_VW = 26;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
-  const [sidebarCollapsed, setSidebarCollapsed] = useState(true); // collapsed by default
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_VW);
   const draggingRef = useRef(false);
 
-  // Mobile-only (< lg) state: the sidebar as a slide-in drawer, and Ask Friday as a
-  // full-screen overlay behind a floating button — desktop keeps the always-visible
-  // sidebar/panel above untouched.
-  const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
+  // Mobile-only (< lg) state: Ask Friday as a full-screen overlay behind a
+  // floating button — desktop keeps the always-visible panel above untouched.
   const [mobileChatOpen, setMobileChatOpen] = useState(false);
 
   const onPointerMove = useCallback((e: PointerEvent) => {
@@ -51,68 +47,29 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
   return (
     <HighlightProvider>
-      <div className="flex h-screen w-full overflow-hidden">
-        {/* Desktop sidebar — unchanged, just wrapped so it never renders below lg */}
-        <div className="hidden lg:block h-full">
-          <Sidebar
-            collapsed={sidebarCollapsed}
-            onToggle={() => setSidebarCollapsed((c) => !c)}
+      <div className="flex flex-col h-screen w-full overflow-hidden">
+        <TopNav />
+
+        <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+          <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
+            <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+          </div>
+
+          {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
+          <div
+            onPointerDown={startDragging}
+            role="separator"
+            aria-orientation="vertical"
+            aria-label="Resize Ask Friday panel"
+            className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-transparent hover:bg-blue-200 active:bg-blue-300 transition-colors"
           />
-        </div>
 
-        {/* Mobile sidebar drawer */}
-        {mobileMenuOpen && (
-          <div className="lg:hidden fixed inset-0 z-50 flex">
-            <div
-              className="absolute inset-0 bg-black/40"
-              onClick={() => setMobileMenuOpen(false)}
-            />
-            <div className="relative h-full shadow-xl">
-              <Sidebar
-                collapsed={false}
-                onToggle={() => setMobileMenuOpen(false)}
-                mobile
-                onClose={() => setMobileMenuOpen(false)}
-              />
-            </div>
+          <div
+            className="hidden lg:block shrink-0 h-full"
+            style={{ width: `${panelWidth}vw` }}
+          >
+            <AskFriday />
           </div>
-        )}
-
-        <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-          {/* Mobile top bar */}
-          <div className="lg:hidden flex items-center justify-between px-4 py-3 border-b border-slate-200 bg-white shrink-0">
-            <button
-              onClick={() => setMobileMenuOpen(true)}
-              aria-label="Open menu"
-              className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-50"
-            >
-              <Menu size={22} />
-            </button>
-            <div className="text-lg font-bold text-slate-900">
-              friday<span className="text-blue-600">.</span>
-            </div>
-            <div className="h-8 w-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center">
-              <User size={16} />
-            </div>
-          </div>
-
-          <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
-        </div>
-
-        {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
-        <div
-          onPointerDown={startDragging}
-          role="separator"
-          aria-orientation="vertical"
-          aria-label="Resize Ask Friday panel"
-          className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-transparent hover:bg-blue-200 active:bg-blue-300 transition-colors"
-        />
-
-        <div
-          className="hidden lg:block shrink-0 h-full"
-          style={{ width: `${panelWidth}vw` }}
-        >
-          <AskFriday />
         </div>
 
         {/* Mobile floating "Ask Friday" button */}

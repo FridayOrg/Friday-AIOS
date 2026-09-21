@@ -108,6 +108,16 @@ GMAIL_REFRESH_TOKEN = os.environ.get("GMAIL_REFRESH_TOKEN")
 TAVILY_API_KEY = os.environ.get("TAVILY_API_KEY")
 INDUSTRY_UPDATES_REFRESH_SECRET = os.environ.get("INDUSTRY_UPDATES_REFRESH_SECRET")
 
+# Pipedrive (see pipedrive_client.py) — the CEO/CRM dashboard's data source.
+# PIPEDRIVE_API_TOKEN: Settings > Personal Preferences > API in Pipedrive.
+# PIPEDRIVE_DOMAIN: the company subdomain only (e.g. "yourcompany", not the
+# full URL) — requests go to https://{domain}.pipedrive.com/api/v1/...
+# Same "never raise, return empty + let the caller mark data as unavailable"
+# convention as tavily/industry_client: a missing token disables live CRM data
+# rather than crashing the dashboard.
+PIPEDRIVE_API_TOKEN = os.environ.get("PIPEDRIVE_API_TOKEN")
+PIPEDRIVE_DOMAIN = os.environ.get("PIPEDRIVE_DOMAIN")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the
