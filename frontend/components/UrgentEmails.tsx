@@ -10,7 +10,8 @@
 // Overview card already provides that chrome.
 
 import { useEffect, useState } from "react";
-import { Mail, RefreshCw, ExternalLink } from "lucide-react";
+import Link from "next/link";
+import { Mail, RefreshCw, ExternalLink, ArrowRight } from "lucide-react";
 
 interface UrgentEmail {
   id: string;
@@ -101,6 +102,12 @@ export default function UrgentEmails() {
             ))}
           </div>
         )}
+        <Link
+          href="/tasks"
+          className="inline-flex items-center gap-1 text-xs font-medium text-[#D6428E] mt-3"
+        >
+          View more <ArrowRight size={12} />
+        </Link>
       </div>
     </div>
   );
