@@ -9,6 +9,7 @@
 // explicit approval" rule.
 
 import { useState } from "react";
+import { useRouter } from "next/navigation";
 import { CalendarPlus, Check, X, Loader2, ExternalLink } from "lucide-react";
 
 export interface ScheduleProposal {
@@ -61,6 +62,7 @@ function to12h(t: string) {
 type Status = "idle" | "scheduling" | "scheduled" | "cancelled" | "error";
 
 export default function ScheduleProposalCard({ proposal }: { proposal: ScheduleProposal }) {
+  const router = useRouter();
   const [status, setStatus] = useState<Status>("idle");
   const [error, setError] = useState<string | null>(null);
   const [eventLink, setEventLink] = useState<string | null>(null);
@@ -82,6 +84,10 @@ export default function ScheduleProposalCard({ proposal }: { proposal: ScheduleP
       }
       setEventLink(data.html_link ?? null);
       setStatus("scheduled");
+      // Re-run the dashboard's server-side data fetch (getDashboardData ->
+      // live /calendar) so the Calendar card and Next Meetings tile pick up
+      // the just-created event immediately, without a manual page reload.
+      router.refresh();
     } catch {
       setStatus("error");
       setError("Could not reach the Friday backend.");

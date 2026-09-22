@@ -182,6 +182,15 @@ def fetch_meetings(now: datetime) -> list[dict]:
     return meetings
 
 
+def _invalidate_meetings_cache() -> None:
+    """Forces the next fetch_meetings() call to hit Google Calendar directly
+    instead of serving up to _CACHE_TTL_SECONDS of stale data — called after
+    create_event() succeeds so a just-scheduled meeting shows up on the
+    dashboard/agent immediately rather than after the cache naturally expires."""
+    global _cache_expires_at
+    _cache_expires_at = 0.0
+
+
 def _fetch_meetings_uncached(now: datetime) -> list[dict]:
     token = _access_token()
     if token is None:
@@ -325,4 +334,5 @@ def create_event(
         raise CalendarWriteError("Could not reach Google Calendar — this meeting was not created.") from e
 
     created = response.json()
+    _invalidate_meetings_cache()
     return {"id": created.get("id", ""), "html_link": created.get("htmlLink", "")}
