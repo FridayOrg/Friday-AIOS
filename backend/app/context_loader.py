@@ -1,11 +1,16 @@
-"""Loads company context (context/*.md) and mock operational data (mock-data/*.json)
-into system prompts for Friday's two agents: Daily Update and Analyst/Advisor.
+"""Loads company context (context/*.md), mock operational data (mock-data/*.json),
+and live connector data (Google Calendar, Pipedrive CRM, Fathom meeting summaries,
+Industry Updates, Gmail urgent emails, Goals from strategy.md) into system prompts
+for Friday's two agents: Daily Update and Analyst/Advisor. See _live_data_blob()
+below for the live sources; each is fetched fresh per request and fails safe
+(returns empty/"unavailable" rather than raising) so one connector being down never
+breaks the prompt for the rest.
 
-Deliberately no chunking, embeddings, or vector store — at this scale (~12k tokens
-total) the full context fits in one prompt, and stuffing it all in every time is
-simpler and good enough for the MVP. Revisit only if the context genuinely outgrows
-a single prompt, or once real data connectors replace the mock-data files (at that
-point, tool-calling instead of context-stuffing becomes the natural next step).
+Deliberately no chunking, embeddings, or vector store — stuffing it all into one
+prompt every time is simpler and good enough for the MVP. Revisit (tool-calling
+instead of context-stuffing) once the combined prompt genuinely outgrows a single
+context window as more live connectors get added, or once the mock-data files
+(tasks/revenue/pipeline/spend) also get replaced by live sources.
 
 The system prompt is assembled fresh on every request (file contents are cached, but
 the date/time header and the mock-data date-shift are recomputed) so a long-running
@@ -13,13 +18,16 @@ server always reasons against the real current clock — see config.now().
 """
 
 import json
+import logging
 import re
 from datetime import date, timedelta
 from functools import lru_cache
 
-from . import calendar_client
+from . import calendar_client, crm_metrics, db, gmail_client, industry_client
 from .config import CONTEXT_DIR, MOCK_DATA_DIR, now, shift_days
 from .timeline import schedule_digest
+
+logger = logging.getLogger(__name__)
 
 _ISO_DATE_RE = re.compile(r"\b(\d{4})-(\d{2})-(\d{2})\b")
 
@@ -131,16 +139,27 @@ Response style: always short and scannable, never long prose:
   these together?" or "Happy to brainstorm through these if you'd like." Never phrase
   it as a rejection or a rule ("that's outside my scope", "please ask a separate
   question"); it should read like an open door, not a boundary.
-- If the question isn't about schedule/tasks/pipeline/revenue/spend at all (company
-  background, team/employees, strategy, customers, products, anything that would live
-  in a context doc rather than this operational data), don't just say you don't have
+- If the question isn't about schedule/tasks/pipeline/revenue/spend/CRM/meetings/
+  goals/industry updates/actions at all (company background, team/employees, product
+  strategy narrative, customers, anything that would live in a company-background
+  context doc rather than this operational/live data), don't just say you don't have
   it and stop. Say plainly that this is outside your data, then add one short,
   friendly line inviting them to just ask it directly; Friday's Advisor has that
   context and will pick it up automatically. Never guess at or fabricate an answer to
   cover the gap.
+- The sections marked "LIVE DATA" below (CRM/Pipedrive, Meeting Summaries, Industry
+  Updates, Actions/Needs Your Reply, Goals) are fetched fresh on every request, not
+  hardcoded or cached indefinitely; treat them as current and answer directly from
+  them. Never say you lack real-time access to CRM, meetings, goals, industry
+  updates, or email/action data; if a LIVE DATA section is empty or marked
+  unavailable, that means the connector genuinely has nothing right now (or isn't
+  configured), so say that plainly rather than claiming you have no access to it at
+  all.
 
-Below is the operational data you have access to (no company background/strategy
-documents, just calendar, tasks, pipeline, and revenue).
+Below is the operational data you have access to: calendar, tasks, pipeline,
+revenue/spend (mock/static files below), plus real-time CRM/Pipedrive, meeting
+summaries, industry updates, urgent-email actions, and goals (the "LIVE DATA"
+sections; no other company-background/strategy documents beyond the Goals list).
 """
 
 ANALYST_HEADER = """You are Friday's Analyst/Advisor agent: the founder's actual
@@ -235,7 +254,11 @@ def _mock_data_raw() -> tuple[tuple[str, str], ...]:
 
 def _mock_data_blob() -> str:
     """Operational data: static mock files with dates slid onto the real current
-    week, plus live calendar data fetched fresh on every call (see calendar_client)."""
+    week, plus live data fetched fresh on every call (calendar, CRM/Pipedrive,
+    meeting summaries, industry updates, urgent emails, goals — see
+    _live_data_blob). Both agents call this via _load_files(mock_data=True), so
+    both get the same live sources; only which company-background *.md files
+    each agent also sees (via md=True/False) differs between them."""
     days = shift_days()
     sections = {
         name: f"## MOCK DATA FILE: {name} (JSON)\n\n{_shift_iso_dates(text, days)}"
@@ -245,7 +268,105 @@ def _mock_data_blob() -> str:
         "## MOCK DATA FILE: calendar.json (JSON, live from Google Calendar)\n\n"
         + json.dumps(calendar_client.fetch_calendar_document(now()), indent=2)
     )
-    return "\n\n---\n\n".join(sections[name] for name in sorted(sections))
+    blob = "\n\n---\n\n".join(sections[name] for name in sorted(sections))
+    return blob + "\n\n---\n\n" + _live_data_blob()
+
+
+# ---------------------------------------------------------------------------
+# LIVE CONNECTOR DATA — real-time sources beyond the frozen mock-data files:
+# Pipedrive CRM, Fathom meeting summaries, stored Industry Updates, Gmail
+# urgent emails, and the Goals list from strategy.md. Each fetch is wrapped so
+# one connector being unconfigured/down/erroring never breaks the prompt for
+# the rest — it just surfaces plainly as "not available," matching every
+# connector module's own fail-safe convention (never fabricate, never crash).
+# ---------------------------------------------------------------------------
+
+
+def _crm_section() -> str:
+    """Live Pipedrive data: deals, pipeline by stage, top deals, activities,
+    contacts/organizations, conversion, forecast, and risks — see
+    crm_metrics.build_overview for exactly how each figure is derived.
+    Scoped to "month" (month-to-date) by default, matching the CRM page's own
+    default range, so a plain "how's this month" question has a sensible
+    built-in window without the model having to guess one."""
+    try:
+        overview = crm_metrics.build_overview("month", None, None, "30d", now().date())
+    except Exception as e:  # noqa: BLE001 - a CRM hiccup must not break the whole prompt
+        logger.warning("Could not build CRM overview for the agent prompt: %s", e)
+        return "## LIVE DATA: CRM / Pipedrive (JSON)\n\n{\"configured\": false, \"message\": \"CRM data temporarily unavailable.\"}"
+    return "## LIVE DATA: CRM / Pipedrive, month-to-date (JSON)\n\n" + json.dumps(overview, indent=2, default=str)
+
+
+def _meeting_summaries_section() -> str:
+    """Live Fathom meeting summaries (title, participants, summary, action
+    items) — most recent first, same data the Meeting Summary dashboard card
+    shows."""
+    try:
+        summaries = db.list_meeting_summaries(limit=20)
+    except Exception as e:  # noqa: BLE001 - e.g. DATABASE_URL unset
+        logger.warning("Could not load meeting summaries for the agent prompt: %s", e)
+        summaries = []
+    return "## LIVE DATA: Meeting Summaries, from Fathom (JSON)\n\n" + json.dumps(summaries, indent=2, default=str)
+
+
+def _industry_updates_section() -> str:
+    """Live, today-scoped Industry Updates — the same LLM-relevance-filtered
+    Tavily results the dashboard's Industry Updates card shows, not a new
+    source; see industry_client.py / industry_relevance.py."""
+    try:
+        day_start, day_end = industry_client.day_bounds(now())
+        updates = db.list_industry_updates(day_start, day_end)
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not load industry updates for the agent prompt: %s", e)
+        updates = []
+    return "## LIVE DATA: Industry Updates, today (JSON)\n\n" + json.dumps(updates, indent=2, default=str)
+
+
+def _urgent_emails_section() -> str:
+    """Live Gmail inbox items judged to need an immediate reply — the same
+    data the dashboard's Actions/"Needs Your Reply" card shows."""
+    try:
+        emails = gmail_client.get_cached_urgent_emails()
+    except Exception as e:  # noqa: BLE001
+        logger.warning("Could not load urgent emails for the agent prompt: %s", e)
+        emails = []
+    return "## LIVE DATA: Actions - Needs Your Reply (Gmail, JSON)\n\n" + json.dumps(emails, indent=2, default=str)
+
+
+_GOALS_SECTION_RE = re.compile(r"##\s*4\.\s*Current Goals\s*\n([\s\S]*?)(?:\n##\s|\n---|\s*$)")
+_GOALS_ITEM_RE = re.compile(r"^\s*\d+\.\s+(.+)$")
+
+
+def _goals_section() -> str:
+    """The numbered list under strategy.md's "## 4. Current Goals" heading —
+    the same section the dashboard's Goals page reads (frontend/lib/data.ts's
+    getStrategyGoals) — extracted on its own rather than exposing the whole
+    strategy.md file, so this stays scoped operational data (Daily Update's
+    design) rather than pulling in full company-background context."""
+    try:
+        text = (CONTEXT_DIR / "strategy.md").read_text(encoding="utf-8")
+    except OSError:
+        return "## LIVE DATA: Goals (from Context/strategy.md)\n\n[]"
+    match = _GOALS_SECTION_RE.search(text)
+    goals = []
+    if match:
+        for line in match.group(1).split("\n"):
+            item = _GOALS_ITEM_RE.match(line.strip("\r"))
+            if item:
+                goals.append(item.group(1).strip())
+    return "## LIVE DATA: Goals (from Context/strategy.md)\n\n" + json.dumps(goals, indent=2)
+
+
+def _live_data_blob() -> str:
+    return "\n\n---\n\n".join(
+        [
+            _crm_section(),
+            _meeting_summaries_section(),
+            _industry_updates_section(),
+            _urgent_emails_section(),
+            _goals_section(),
+        ]
+    )
 
 
 def _shifted_json(filename: str) -> dict:
