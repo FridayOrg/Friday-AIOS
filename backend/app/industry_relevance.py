@@ -51,9 +51,14 @@ no actual content ("sales is important," "AI is changing business").
 
 {item_blocks}
 
-Respond with EXACTLY one line per item above, in the same order, in this
-exact format and nothing else:
-<number>: yes|<reason under 12 words>
+Respond with EXACTLY one line per item above, in the same order, in this exact
+format and nothing else. For "yes" items, write a CLEAN one-sentence summary in
+your own words (never copy raw text from Content - it's often scraped page
+junk with navigation menus, "read more" links, and unrelated snippets mixed
+in); state the one concrete fact/insight a CEO would actually want to know,
+in plain English, under 25 words, with no markdown/links. For "no" items, a
+short reason is enough.
+<number>: yes|<clean one-sentence summary, under 25 words, no markdown>
 <number>: no|<reason under 12 words>
 """
 
@@ -106,7 +111,12 @@ def classify_updates(items: list[dict]) -> list[dict]:
 
     relevant = []
     for i, item in enumerate(items, start=1):
-        is_relevant, reason = results_by_index.get(i, (False, ""))
+        is_relevant, summary = results_by_index.get(i, (False, ""))
         if is_relevant:
-            relevant.append({**item, "relevance_reason": reason})
+            # `content` gets OVERWRITTEN with the model's clean summary here -
+            # the raw value (Tavily's scraped page text: nav menus, "read
+            # more" links, unrelated snippets) is only ever meant as input to
+            # this classification pass, never for display. This is what
+            # main.py's refresh endpoint stores and the dashboard shows.
+            relevant.append({**item, "content": summary, "relevance_reason": summary})
     return relevant

@@ -71,7 +71,7 @@ export default function IndustryUpdates() {
             <div key={u.url} className="rounded-lg bg-[#EFF6FD] border border-[#D7E3F7] px-3 py-2.5">
               <p className="text-sm font-medium leading-snug">{u.title}</p>
               {u.content && (
-                <p className="text-xs text-slate-500 mt-1 leading-snug">{u.content}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
               )}
               <a
                 href={u.url}
