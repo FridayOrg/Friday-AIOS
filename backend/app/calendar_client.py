@@ -295,11 +295,17 @@ def create_event(
     module, a write failure must NOT be silently swallowed into an empty
     result, since the caller (main.py) needs to tell the user it didn't
     actually get booked rather than reporting success."""
-    token = _write_access_token()
-    if token is None:
+    if not (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN):
         raise CalendarWriteError(
             "Calendar write access isn't configured yet (GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN "
             "missing) — this meeting was not created."
+        )
+    token = _write_access_token()
+    if token is None:
+        raise CalendarWriteError(
+            "Google rejected the stored calendar write credentials (the token may have "
+            "expired or been revoked) — this meeting was not created. Re-run the write-token "
+            "setup script to fix this."
         )
 
     body = {

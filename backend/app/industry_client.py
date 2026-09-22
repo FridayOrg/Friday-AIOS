@@ -46,18 +46,31 @@ _MAX_RESULTS_PER_TOPIC = 10
 # setter job postings and Salesforce stock news. Their own site is a far more
 # reliable signal for genuine company updates.
 #
-# The broad entry has no domain restriction and uses topic="news" (Tavily's
+# The broad entries have no domain restriction and use topic="news" (Tavily's
 # news-indexed search, appropriate here since we're looking for actual press
-# coverage of the industry, not one small company's own blog) to catch any
-# other B2B appointment-setting / SDR-as-a-service company's news — new
-# funding, launches, partnerships — that isn't one of the two named
-# competitors above.
+# coverage, not one small company's own blog).
+#
+# Two broad entries deliberately, not one: "B2B Appointment Setting Industry"
+# catches other named companies' news (funding, launches, partnerships) the
+# same way the two named competitors above do; "Sales Development Trends"
+# catches content with no single company attached at all - market/industry
+# trend pieces, research/reports, how outbound sales teams are adopting AI,
+# etc. On a quiet day with no competitor-specific news, this second topic is
+# what keeps the card from coming back empty - see industry_relevance.py's
+# relaxed hard filter, which now accepts genuine trend/analysis content, not
+# only company-specific developments.
 TOPICS: list[dict] = [
     {"name": "Belkins", "query": "new service pricing case study announcement", "domains": ["belkins.io"]},
     {"name": "SalesRoads", "query": "new service pricing case study announcement", "domains": ["salesroads.com"]},
     {
         "name": "B2B Appointment Setting Industry",
         "query": "B2B appointment setting agency OR SDR-as-a-service company launch funding partnership",
+        "news": True,
+    },
+    {
+        "name": "Sales Development Trends",
+        "query": "B2B sales development trends OR outbound sales strategy OR SDR industry report OR "
+        "AI in sales prospecting OR cold outreach benchmarks",
         "news": True,
     },
 ]

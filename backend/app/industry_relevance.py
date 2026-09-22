@@ -22,25 +22,32 @@ logger = logging.getLogger(__name__)
 
 _PROMPT_TEMPLATE = """You are triaging a list of search results for a founder/CEO
 of BookMySales.ai, a B2B appointment-setting / SDR-as-a-service company. Decide
-which items are genuine, substantive news about a company that competes in
-this same space - either Belkins or SalesRoads specifically (two named direct
-competitors), OR any other real B2B appointment-setting / SDR-as-a-service /
-outbound-sales-development company (e.g. a new entrant, a funding round, a
-launch, a partnership).
+which items are genuinely relevant to what's happening in this space right now -
+EITHER of these two kinds qualify, not just one:
 
-HARD FILTER — apply this before anything else: if the item is NOT clearly and
-specifically about a real company operating in this space (e.g. it's a random
-third-party job posting that merely mentions "appointment setter", a generic
-sales-industry opinion piece with no company named, or a wholly unrelated
-company/topic), answer "no" regardless of anything else. Only consider "yes"
-for items that are genuinely about a specific company in this competitive
-space.
+(A) COMPANY NEWS: a substantive development at a company that competes in this
+space - Belkins or SalesRoads specifically (two named direct competitors), OR
+any other real B2B appointment-setting / SDR-as-a-service / outbound-sales-
+development company (a new entrant, funding round, launch, partnership, notable
+client win, leadership change).
 
-Among items that DO pass that filter, answer "yes" only if it is a
-substantive development: a new service/pricing offer, a notable client win
-or case study, a leadership/team change, a funding or acquisition event, or
-similar strategic news. Answer "no" for routine marketing, minor blog posts,
-or duplicate coverage of an already-known story.
+(B) INDUSTRY/TREND CONTENT: genuine analysis, research, or reporting about the
+B2B appointment-setting / SDR-as-a-service / outbound-sales-development industry
+as a whole, even with no single company named - market trend pieces, adoption of
+AI in sales prospecting, outbound/cold-outreach benchmarks or strategy shifts,
+industry research or reports. This does NOT need to be about a named company at
+all; a well-sourced trend or research piece about this specific industry counts.
+
+HARD FILTER — apply this before anything else: if the item is neither (A) nor
+(B) - e.g. a random third-party job posting that merely mentions "appointment
+setter," a vague sales-motivation opinion piece with no real substance, or a
+wholly unrelated company/topic - answer "no" regardless of anything else.
+
+For (A), answer "yes" only if it is a substantive development (see list above),
+not routine marketing or duplicate coverage of an already-known story. For (B),
+answer "yes" only if it's a specific, substantive insight or finding (a real
+statistic, a named trend, a concrete strategy shift), not generic filler with
+no actual content ("sales is important," "AI is changing business").
 
 {item_blocks}
 
