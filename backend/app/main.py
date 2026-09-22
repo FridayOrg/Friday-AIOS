@@ -25,6 +25,12 @@ Endpoints:
   GET  /crm/overview    — CEO CRM dashboard data sourced live from Pipedrive
                            (deals, pipeline, activities, contacts, risks, charts);
                            see pipedrive_client.py / crm_metrics.py
+  POST /calendar/events — creates a real Google Calendar event. Only ever called
+                           after a human explicitly confirms a proposal the Analyst
+                           agent drafted in Ask Friday (see calendar_client.py's
+                           create_event / CalendarWriteError) — the only write/
+                           action endpoint in this API, per CLAUDE.md's Action/
+                           Autonomy Model (explicit approval required)
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -38,12 +44,16 @@ the same context-stuffed prompt and respond; see backend/app/context_loader.py f
 why (and when moving to real tool-calling will make sense: once mock-data files are
 replaced by live connectors).
 
-No write/action endpoints exist here at all: per CLAUDE.md's autonomy model, this MVP
-only reads, analyzes, and recommends. Nothing here sends anything or changes any data.
+Every endpoint except one only reads, analyzes, and recommends, per CLAUDE.md's Action/
+Autonomy Model. The sole exception, POST /calendar/events, is a real external write
+(creates a Google Calendar event) — but it is never invoked automatically; it only ever
+fires after a human explicitly confirms a proposal the Analyst agent drafted, matching
+that same model's "Send / update ... requires explicit user approval" rule.
 """
 
 import json
 import logging
+from datetime import datetime, timedelta
 
 import httpx
 from fastapi import FastAPI, HTTPException, Request
@@ -52,7 +62,7 @@ from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
 from . import calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client
-from .config import INDUSTRY_UPDATES_REFRESH_SECRET, now
+from .config import GOOGLE_CALENDAR_ID, INDUSTRY_UPDATES_REFRESH_SECRET, now
 from .industry_relevance import classify_updates
 from .context_loader import (
     DAILY_BRIEF_PROMPT,
@@ -121,6 +131,48 @@ def health():
 @app.get("/calendar")
 def calendar():
     return calendar_client.fetch_calendar_document(now())
+
+
+class ScheduleEventRequest(BaseModel):
+    title: str
+    date: str  # "YYYY-MM-DD"
+    time: str  # "HH:MM", 24h
+    duration_minutes: int = 30
+    attendees: list[str] | None = None
+    notes: str | None = None
+
+
+@app.post("/calendar/events")
+def create_calendar_event(req: ScheduleEventRequest):
+    """Creates a real Google Calendar event. Only ever meant to be called after
+    a human explicitly confirms a proposal Ask Friday drafted (see
+    ANALYST_HEADER in context_loader.py and the frontend's schedule-proposal
+    card) — nothing upstream of this endpoint invokes it automatically. Per
+    CLAUDE.md's Action/Autonomy Model, an externally-visible write like this
+    always requires that explicit approval step before it happens."""
+    if not GOOGLE_CALENDAR_ID:
+        raise HTTPException(status_code=503, detail="GOOGLE_CALENDAR_ID not configured; cannot create events.")
+
+    try:
+        start = datetime.strptime(f"{req.date} {req.time}", "%Y-%m-%d %H:%M")
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date/time.")
+    start = start.astimezone() if now().tzinfo is None else start.replace(tzinfo=now().tzinfo)
+    end = start + timedelta(minutes=req.duration_minutes)
+
+    try:
+        result = calendar_client.create_event(
+            calendar_id=GOOGLE_CALENDAR_ID,
+            title=req.title,
+            start_iso=start.isoformat(),
+            end_iso=end.isoformat(),
+            attendees=req.attendees,
+            description=req.notes,
+        )
+    except calendar_client.CalendarWriteError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    return {"status": "ok", **result}
 
 
 @app.post("/webhooks/fathom")

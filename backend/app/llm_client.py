@@ -173,9 +173,13 @@ _ANALYST_RE = re.compile(
     # so these must go to Analyst regardless of how factual-sounding the phrasing is
     r"employees?|staff\b|headcount|team roster|org chart|who works|who's on the team|"
     r"job title|reports? to|team structure|department|hiring|"
-    # drafting / composing / rescheduling (Observe → Recommend → Draft ladder)
+    # drafting / composing / rescheduling / scheduling a NEW meeting (Observe →
+    # Recommend → Draft ladder — creating a meeting is a draft-then-confirm action,
+    # same as drafting an email, not a status lookup even though "schedule" also
+    # appears as a plain noun in genuine lookups like "what's my schedule today")
     r"draft|draught|compose|rephrase|re-?word|re-?write|word this|phrase this|"
     r"reschedul\w*|re-?schedul\w*|rearrang\w*|postpon\w*|"
+    r"(?:schedule|book|set up|arrange) (?:a|an|the|us|me)\b|"
     r"(?:write|prepare|send|put together) (?:me |up |out |an? |the |some )*(?:e-?mail|message|msg|note|memo|reply|response|blurb|apolog)|"
     r"(?:an?|the|my|this|your) (?:e-?mail|message|memo) (?:to|for|about|regarding|saying|back)|"
     r"e-?mail (?:to|for) (?:them|him|her|the |a )|"
@@ -197,6 +201,7 @@ _NOT_DAILY_RE = re.compile(
     r"write|prepare|put together|send|reply|respond|apolog|"
     r"e-?mail|message|memo|"
     r"reschedul\w*|re-?schedul\w*|rearrang\w*|postpon\w*|move (?:the|my|our|it|that)|cancel|"
+    r"(?:schedule|book|set up|arrange) (?:a|an|the|us|me)\b|"
     r"help me|help us|"
     r"why|should i|shall i|how (?:do|should|would|can) i|what if|"
     r"recommend|suggest|advice|advise|opinion|brainstorm|strateg\w*)\b",
@@ -228,10 +233,11 @@ employee info, strategy, customer details, or product info.
 
 "analyst" = the founder's full personal assistant: reasoning, recommendations,
 explanations, risk analysis, brainstorming, planning, drafting emails/messages,
-task/project management help, team/project decisions, "why"/"should I" questions, AND
-any factual question about the company itself (employees/team/org structure,
-strategy, customers, products/services, metrics definitions) even when it isn't
-asking for advice.
+scheduling/booking a NEW meeting (drafting a proposal for the founder to confirm,
+never just answering what's already on the calendar), task/project management help,
+team/project decisions, "why"/"should I" questions, AND any factual question about
+the company itself (employees/team/org structure, strategy, customers,
+products/services, metrics definitions) even when it isn't asking for advice.
 
 THE DECIDING RULE: if the question is trickier than a plain single-purpose lookup —
 even slightly — it's "analyst", full stop, no second-guessing. A daily-shaped
@@ -248,6 +254,9 @@ Examples:
 - "What's the important meeting today, and why?" -> analyst (reasoning attached)
 - "I forgot I had this meeting today — can you help me draft an email?" -> analyst
   (personal note + a drafting request, not a lookup at all)
+- "Schedule a call with Northgate tomorrow at 3pm." -> analyst (creating a new
+  meeting is a draft-then-confirm action, not a lookup)
+- "What's on my schedule today?" -> daily (plain lookup of the existing calendar)
 
 Recent conversation (oldest first, may be empty):
 {history_text}

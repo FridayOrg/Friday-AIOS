@@ -35,6 +35,7 @@ from google.oauth2.credentials import Credentials
 
 from .config import (
     GOOGLE_CALENDAR_ID,
+    GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN,
     GOOGLE_CLIENT_ID,
     GOOGLE_CLIENT_SECRET,
     GOOGLE_REFRESH_TOKEN,
@@ -43,6 +44,7 @@ from .config import (
 logger = logging.getLogger(__name__)
 
 _SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+_WRITE_SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 _EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
 _TIMEOUT_SECONDS = 8
 
@@ -220,3 +222,107 @@ def fetch_calendar_document(now: datetime) -> dict:
     """The full document shape context_loader.py / the frontend expect in place of
     calendar.json's parsed contents: {"calendar": {"meetings": [...]}}."""
     return {"calendar": {"meetings": fetch_meetings(now)}}
+
+
+# ---------------------------------------------------------------------------
+# WRITE PATH — event creation. Only ever called from main.py's
+# POST /calendar/events, itself only ever called after the user explicitly
+# clicks "Confirm & Schedule" on a proposal Ask Friday drafted (see
+# ANALYST_HEADER in context_loader.py) — never invoked directly from a chat
+# reply. Uses GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN, a separate credential from
+# the readonly one fetch_meetings() above uses.
+# ---------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=1)
+def _write_credentials() -> Credentials | None:
+    if not (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN):
+        logger.warning(
+            "GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN "
+            "not fully set; calendar event creation disabled."
+        )
+        return None
+    return Credentials(
+        token=None,
+        refresh_token=GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN,
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=_WRITE_SCOPES,
+    )
+
+
+def _write_access_token() -> str | None:
+    creds = _write_credentials()
+    if creds is None:
+        return None
+    try:
+        creds.refresh(GoogleAuthRequest())
+        return creds.token
+    except Exception as e:  # noqa: BLE001 - any auth failure just disables event creation
+        logger.warning("Google Calendar write authentication failed: %s", e)
+        return None
+
+
+class CalendarWriteError(Exception):
+    """Raised by create_event() with a message safe to show the user directly
+    (never a raw exception string) — main.py turns this into a 4xx response
+    rather than a 500, since these are all "can't do this" not "server broke"
+    conditions (not configured, Google rejected the request, unreachable)."""
+
+
+def create_event(
+    calendar_id: str,
+    title: str,
+    start_iso: str,
+    end_iso: str,
+    attendees: list[str] | None = None,
+    description: str | None = None,
+) -> dict:
+    """Creates a single Google Calendar event. start_iso/end_iso must be
+    RFC3339 with an explicit UTC offset (same requirement as the read path).
+    Returns {"id", "html_link"} on success. Raises CalendarWriteError (never
+    a raw exception) on any failure — unlike every read function in this
+    module, a write failure must NOT be silently swallowed into an empty
+    result, since the caller (main.py) needs to tell the user it didn't
+    actually get booked rather than reporting success."""
+    token = _write_access_token()
+    if token is None:
+        raise CalendarWriteError(
+            "Calendar write access isn't configured yet (GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN "
+            "missing) — this meeting was not created."
+        )
+
+    body = {
+        "summary": title,
+        "start": {"dateTime": start_iso},
+        "end": {"dateTime": end_iso},
+    }
+    if description:
+        body["description"] = description
+    if attendees:
+        body["attendees"] = [{"email": a} for a in attendees]
+
+    url = _EVENTS_URL.format(calendar_id=quote(calendar_id, safe=""))
+    try:
+        response = httpx.post(
+            url,
+            params={"sendUpdates": "all"},  # emails real invites to attendees
+            json=body,
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logger.warning(
+            "Google Calendar event creation failed %s: %s", e.response.status_code, e.response.text[:300]
+        )
+        raise CalendarWriteError(
+            f"Google rejected the request (status {e.response.status_code}) — this meeting was not created."
+        ) from e
+    except httpx.HTTPError as e:
+        logger.warning("Google Calendar unreachable while creating event: %s", e)
+        raise CalendarWriteError("Could not reach Google Calendar — this meeting was not created.") from e
+
+    created = response.json()
+    return {"id": created.get("id", ""), "html_link": created.get("htmlLink", "")}

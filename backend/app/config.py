@@ -80,6 +80,15 @@ GOOGLE_CLIENT_ID = os.environ.get("GOOGLE_CLIENT_ID")
 GOOGLE_CLIENT_SECRET = os.environ.get("GOOGLE_CLIENT_SECRET")
 GOOGLE_REFRESH_TOKEN = os.environ.get("GOOGLE_REFRESH_TOKEN")
 
+# A SEPARATE refresh token, scoped to calendar.events (write) rather than
+# calendar.readonly, used only by calendar_client.create_event() (agent-proposed
+# meeting scheduling, confirmed explicitly by the user in Ask Friday before this
+# is ever called). Deliberately isolated from GOOGLE_REFRESH_TOKEN above, same
+# reasoning as GMAIL_REFRESH_TOKEN being separate from it: a bug in the write path
+# can never touch the working read-only calendar integration. Unset = write
+# disabled, scheduling proposals can be drafted but not confirmed.
+GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN = os.environ.get("GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN")
+
 # Persisted storage (see db.py) — currently only Fathom meeting summaries. A real
 # Postgres database (e.g. Render's Postgres add-on) rather than a local file:
 # Render's web service disk is ephemeral and wiped on every deploy, which a

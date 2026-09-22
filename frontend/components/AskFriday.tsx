@@ -3,6 +3,7 @@
 import { useEffect, useRef, useState } from "react";
 import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X } from "lucide-react";
 import Markdown from "./Markdown";
+import ScheduleProposalCard, { extractScheduleProposal } from "./ScheduleProposalCard";
 import { useHighlight } from "@/lib/highlight-context";
 
 interface ChatMessage {
@@ -37,6 +38,20 @@ const MAX_INPUT_HEIGHT_PX = 160;
 
 function now() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+// A schedule-proposal fenced block (see ANALYST_HEADER) only ever matches once
+// it's fully streamed in (the regex requires the closing fence), so calling
+// this on every render — including mid-stream — is safe: it just renders as
+// plain markdown until the block completes, then swaps in the confirm card.
+function FridayMessageBody({ text }: { text: string }) {
+  const { cleanText, proposal } = extractScheduleProposal(text);
+  return (
+    <>
+      <Markdown text={cleanText} />
+      {proposal && <ScheduleProposalCard proposal={proposal} />}
+    </>
+  );
 }
 
 export default function AskFriday({ onClose }: { onClose?: () => void }) {
@@ -696,7 +711,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             >
               {m.role === "friday" ? (
                 m.text ? (
-                  <Markdown text={m.text} />
+                  <FridayMessageBody text={m.text} />
                 ) : i === messages.length - 1 && busy ? (
                   <span className="inline-flex gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]" />
