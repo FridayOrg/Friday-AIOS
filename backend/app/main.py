@@ -28,6 +28,12 @@ Endpoints:
   POST /calendar/events — creates a real Google Calendar event directly, given
                            full details (see calendar_client.py's create_event /
                            CalendarWriteError)
+  POST /gmail/send      — sends a real email directly, given full details (see
+                           gmail_client.py's send_email / GmailSendError). Ask
+                           Friday's own chat flow never calls this directly on a
+                           draft turn — only once the user explicitly confirms in
+                           a later message (see _pending_email_draft /
+                           _is_send_confirmation)
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -187,6 +193,26 @@ def create_calendar_event(req: ScheduleEventRequest):
         raise HTTPException(status_code=502, detail=str(e))
 
     return {"status": "ok", "id": result["id"], "html_link": result["html_link"]}
+
+
+class SendEmailRequest(BaseModel):
+    to_email: str
+    subject: str
+    body: str
+
+
+@app.post("/gmail/send")
+def send_gmail_email(req: SendEmailRequest):
+    """Sends a real email directly (used by any external caller that already
+    has full details - not exercised by Ask Friday's own chat flow, which
+    sends inline via _maybe_send_email, only after the user explicitly
+    confirms a draft in a later message)."""
+    try:
+        result = gmail_client.send_email(req.to_email, req.subject, req.body)
+    except gmail_client.GmailSendError as e:
+        raise HTTPException(status_code=502, detail=str(e))
+
+    return {"status": "ok", "id": result["id"]}
 
 
 @app.post("/webhooks/fathom")
@@ -372,6 +398,98 @@ def _execute_schedule_proposal(answer: str) -> tuple[str | None, ScheduledMeetin
     return confirmation, ScheduledMeeting(title=req.title, date=req.date, time=req.time)
 
 
+# ---------------------------------------------------------------------------
+# EMAIL DRAFTING — the Analyst agent drafts (see ANALYST_HEADER's "Drafting
+# emails" section), the user reviews and explicitly confirms in a LATER
+# message ("yes, send it" / "confirm") before anything actually sends. Unlike
+# scheduling, this is deliberately NOT immediate: requirements 4/5/8 (voice
+# email drafting spec) call for an explicit confirm step, so sending only
+# ever happens from _maybe_send_email below, never from the drafting turn
+# itself, and never from the LLM's own text.
+# ---------------------------------------------------------------------------
+
+_EMAIL_DRAFT_RE = re.compile(r"```email-draft\s*\n(.*?)\n```", re.DOTALL)
+
+# Anchored to the START of the message (^) — a reply must OPEN with a clear
+# yes/no, not just contain the word somewhere ("no meetings today" must not
+# trigger a cancel). Deliberately NOT anchored to the end ($) too: real
+# confirmations are rarely just the bare word ("yes, send it", "yeah go
+# ahead", "Confirm." are all common phrasings) — trailing words are fine as
+# long as the message doesn't also look like an edit request (see
+# _EDIT_INTENT_RE), which is handled as a redraft instead, falling through to
+# the normal agent flow.
+_SEND_CONFIRM_RE = re.compile(
+    r"^\s*(yes|yeah|yep|yup|sure|confirm(?:ed)?|correct|looks good|that'?s (?:right|correct|fine|good)|"
+    r"send it|go ahead|do it|please send|send(?: it)?(?: now)?|ok(?:ay)?)\b",
+    re.IGNORECASE,
+)
+_SEND_CANCEL_RE = re.compile(
+    r"^\s*(no|nope|nah|cancel|don'?t send|stop|hold on|wait|not yet|never ?mind)\b",
+    re.IGNORECASE,
+)
+# If a "yes"-shaped reply also carries an edit instruction ("yes but change
+# the subject"), treat it as a redraft request, not a plain confirmation —
+# sending the ORIGINAL unedited draft in that case would be wrong.
+_EDIT_INTENT_RE = re.compile(
+    r"\b(but|change|edit|update|instead|actually|wait|also|add|remove|make it)\b", re.IGNORECASE
+)
+
+
+def _extract_email_draft(text: str) -> dict | None:
+    match = _EMAIL_DRAFT_RE.search(text)
+    if not match:
+        return None
+    try:
+        data = json.loads(match.group(1))
+    except Exception:
+        return None
+    if not (data.get("to_email") and data.get("subject") and data.get("body")):
+        return None
+    return data
+
+
+def _pending_email_draft(history: list[dict] | None) -> dict | None:
+    """The most recent email-draft block, but ONLY if it was the very last
+    thing Friday said — so a yes/no always applies to the draft just shown,
+    never a stray one from earlier in the conversation."""
+    if not history:
+        return None
+    last = history[-1]
+    if last.get("role") != "friday":
+        return None
+    return _extract_email_draft(last.get("text") or "")
+
+
+def _maybe_send_email(question: str, history: list[dict] | None) -> str | None:
+    """If the immediately preceding Friday turn was an email draft awaiting
+    confirmation and `question` is a clear yes/no to it, handles it
+    deterministically (send or cancel) without involving the LLM at all —
+    the draft's exact recipient/subject/body comes straight from history,
+    never re-generated by the model on the confirm turn, so there's no risk
+    of it drifting from what the user actually reviewed. Returns None for
+    anything else (a redraft/edit request, an unrelated question, or no
+    pending draft at all), so the caller falls through to the normal agent
+    flow — editing a draft works naturally since the model still sees it in
+    conversation history."""
+    draft = _pending_email_draft(history)
+    if draft is None:
+        return None
+
+    trimmed = question.strip()
+    if _SEND_CONFIRM_RE.match(trimmed) and not _EDIT_INTENT_RE.search(trimmed):
+        try:
+            gmail_client.send_email(draft["to_email"], draft["subject"], draft["body"])
+        except gmail_client.GmailSendError as e:
+            return f"I tried to send that email but it didn't go through: {e}"
+        who = draft.get("to_name") or draft["to_email"]
+        return f"✅ Email sent to {who}: \"{draft['subject']}\"."
+
+    if _SEND_CANCEL_RE.match(trimmed):
+        return "Okay, I won't send it. Let me know if you'd like to change anything in the draft."
+
+    return None
+
+
 @app.post("/ask", response_model=AskResponse)
 def ask(payload: AskRequest):
     question = payload.question.strip()
@@ -379,6 +497,11 @@ def ask(payload: AskRequest):
         raise HTTPException(status_code=400, detail="question must not be empty")
 
     history = [t.model_dump() for t in payload.history] if payload.history else None
+
+    email_reply = _maybe_send_email(question, history)
+    if email_reply is not None:
+        return AskResponse(answer=email_reply, agent="analyst")
+
     agent, system_prompt = _route(question, history)
     try:
         answer = ask_friday(system_prompt, question, history=history)
@@ -400,6 +523,13 @@ def ask_stream(payload: AskRequest):
     history = [t.model_dump() for t in payload.history] if payload.history else None
 
     def event_stream():
+        email_reply = _maybe_send_email(question, history)
+        if email_reply is not None:
+            yield f"data: {json.dumps({'agent': 'analyst'})}\n\n"
+            yield f"data: {json.dumps({'delta': email_reply})}\n\n"
+            yield "data: [DONE]\n\n"
+            return
+
         agent, system_prompt = _route(question, history)
         yield f"data: {json.dumps({'agent': agent})}\n\n"
         full = ""

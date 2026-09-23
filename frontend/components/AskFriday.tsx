@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
 import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X } from "lucide-react";
 import Markdown from "./Markdown";
+import EmailDraftCard, { extractEmailDraft, speakableText } from "./EmailDraftCard";
 import { useHighlight } from "@/lib/highlight-context";
 
 interface ChatMessage {
@@ -46,6 +47,24 @@ function now() {
 // carries a structured "scheduled" event alongside it (exact date/time/
 // title), used below to refresh the dashboard and glow that meeting on the
 // Calendar card, not just to render text.
+
+// An email-draft fenced block (see ANALYST_HEADER) only ever matches once
+// it's fully streamed in (the regex requires the closing fence), so calling
+// this on every render — including mid-stream — is safe: it just renders as
+// plain markdown until the block completes, then swaps in the review card.
+// Unlike scheduling, the raw block deliberately stays in the underlying
+// message text (see `messages` state / `history`) even though it's hidden
+// here — the backend needs it in a later turn to know what to actually send
+// once the user confirms.
+function FridayMessageBody({ text }: { text: string }) {
+  const { cleanText, draft } = extractEmailDraft(text);
+  return (
+    <>
+      <Markdown text={cleanText} />
+      {draft && <EmailDraftCard draft={draft} />}
+    </>
+  );
+}
 
 export default function AskFriday({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
@@ -594,10 +613,10 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             // malformed SSE line; skip it rather than breaking the whole stream
           }
         }
-        pumpSpeech(state.full, false); // queue any sentence completed by this batch
+        pumpSpeech(speakableText(state.full), false); // queue any sentence completed by this batch — never speaks a raw email-draft block
       }
       state.done = true; // reveal loop finishes catching up on its own, then stops
-      pumpSpeech(state.full, true); // speak the final fragment
+      pumpSpeech(speakableText(state.full), true); // speak the final fragment
       if (scheduled) {
         // Re-run the dashboard's server-side data fetch so the Calendar card
         // and Next Meetings tile pick up the just-created event, then glow
@@ -716,7 +735,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             >
               {m.role === "friday" ? (
                 m.text ? (
-                  <Markdown text={m.text} />
+                  <FridayMessageBody text={m.text} />
                 ) : i === messages.length - 1 && busy ? (
                   <span className="inline-flex gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]" />

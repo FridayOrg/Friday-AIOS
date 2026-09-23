@@ -11,26 +11,32 @@ immediate reply. A short in-memory cache (see get_cached_urgent_emails) avoids
 re-fetching and re-classifying on every dashboard load; refresh_urgent_emails
 forces a fresh pass (see main.py's POST /gmail/refresh).
 
-Never raises on failure: a missing/expired token, an empty inbox, or a rate
-limit all just return an empty list so the rest of the dashboard is
-unaffected.
+Read functions never raise on failure: a missing/expired token, an empty
+inbox, or a rate limit all just return an empty list so the rest of the
+dashboard is unaffected. send_email() (bottom of this file) is the one
+exception — it's a real write and raises GmailSendError on failure, using its
+own separate write-scoped token (GMAIL_SEND_REFRESH_TOKEN), same isolation
+pattern as GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN in calendar_client.py.
 """
 
+import base64
 import logging
 import time
 from datetime import datetime, timezone
+from email.mime.text import MIMEText
 from functools import lru_cache
 
 import httpx
 from google.auth.transport.requests import Request as GoogleAuthRequest
 from google.oauth2.credentials import Credentials
 
-from .config import GMAIL_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, now
+from .config import GMAIL_REFRESH_TOKEN, GMAIL_SEND_REFRESH_TOKEN, GOOGLE_CLIENT_ID, GOOGLE_CLIENT_SECRET, now
 from .email_urgency import classify_emails
 
 logger = logging.getLogger(__name__)
 
 _SCOPES = ["https://www.googleapis.com/auth/gmail.readonly"]
+_SEND_SCOPES = ["https://www.googleapis.com/auth/gmail.send"]
 _API_BASE = "https://gmail.googleapis.com/gmail/v1/users/me"
 _TIMEOUT_SECONDS = 15
 _MAX_RESULTS = 20
@@ -177,3 +183,85 @@ def refresh_urgent_emails() -> list[dict]:
     _cache_emails = urgent
     _cache_expires_at = time.monotonic() + _CACHE_TTL_SECONDS
     return urgent
+
+
+# ---------------------------------------------------------------------------
+# SEND PATH — only ever called from main.py after the user has explicitly
+# confirmed a draft in Ask Friday (see _pending_email_draft /
+# _is_send_confirmation), or from the direct POST /gmail/send endpoint given
+# full details up front. Uses GMAIL_SEND_REFRESH_TOKEN, a separate credential
+# from the readonly one every function above this uses.
+# ---------------------------------------------------------------------------
+
+
+@lru_cache(maxsize=1)
+def _send_credentials() -> Credentials | None:
+    if not (GOOGLE_CLIENT_ID and GOOGLE_CLIENT_SECRET and GMAIL_SEND_REFRESH_TOKEN):
+        logger.warning(
+            "GOOGLE_CLIENT_ID/GOOGLE_CLIENT_SECRET/GMAIL_SEND_REFRESH_TOKEN not fully "
+            "set; Gmail sending disabled."
+        )
+        return None
+    return Credentials(
+        token=None,
+        refresh_token=GMAIL_SEND_REFRESH_TOKEN,
+        client_id=GOOGLE_CLIENT_ID,
+        client_secret=GOOGLE_CLIENT_SECRET,
+        token_uri="https://oauth2.googleapis.com/token",
+        scopes=_SEND_SCOPES,
+    )
+
+
+def _send_access_token() -> str | None:
+    creds = _send_credentials()
+    if creds is None:
+        return None
+    try:
+        creds.refresh(GoogleAuthRequest())
+        return creds.token
+    except Exception as e:  # noqa: BLE001 - any auth failure just disables sending
+        logger.warning("Gmail send authentication failed: %s", e)
+        return None
+
+
+class GmailSendError(Exception):
+    """Raised by send_email() with a message safe to show the user directly.
+    Unlike every read function in this module, a send failure must NOT be
+    silently swallowed into an empty result — the caller (main.py) needs to
+    tell the user it didn't actually go out, never report success."""
+
+
+def send_email(to_email: str, subject: str, body: str) -> dict:
+    """Sends a single plain-text email via the Gmail API. Returns {"id"} on
+    success. Raises GmailSendError (never a raw exception) on any failure:
+    missing/invalid token, or Google rejecting the request."""
+    token = _send_access_token()
+    if token is None:
+        raise GmailSendError(
+            "Gmail send access isn't configured yet (GMAIL_SEND_REFRESH_TOKEN missing) "
+            "— this email was not sent."
+        )
+
+    message = MIMEText(body)
+    message["to"] = to_email
+    message["subject"] = subject
+    raw = base64.urlsafe_b64encode(message.as_bytes()).decode("ascii")
+
+    try:
+        response = httpx.post(
+            f"{_API_BASE}/messages/send",
+            headers={"Authorization": f"Bearer {token}"},
+            json={"raw": raw},
+            timeout=_TIMEOUT_SECONDS,
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        logger.warning("Gmail send failed %s: %s", e.response.status_code, e.response.text[:300])
+        raise GmailSendError(
+            f"Google rejected the request (status {e.response.status_code}) — this email was not sent."
+        ) from e
+    except httpx.HTTPError as e:
+        logger.warning("Gmail unreachable while sending: %s", e)
+        raise GmailSendError("Could not reach Gmail — this email was not sent.") from e
+
+    return {"id": response.json().get("id", "")}

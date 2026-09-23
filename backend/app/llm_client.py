@@ -201,6 +201,7 @@ _DAILY_RE = re.compile(
 _NOT_DAILY_RE = re.compile(
     r"\b(draft|draught|compose|rephrase|re-?word|re-?write|"
     r"write|prepare|put together|send|reply|respond|apolog|"
+    r"change|edit|update|instead|redraft|"
     r"e-?mail|message|memo|"
     r"reschedul\w*|re-?schedul\w*|rearrang\w*|postpon\w*|move (?:the|my|our|it|that)|cancel|"
     r"(?:schedule|book|set up|arrange)(?:\s+\w+){0,6}\s+(?:meeting|meetings|meet|meetup|meet-up|"

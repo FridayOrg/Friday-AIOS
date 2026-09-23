@@ -108,6 +108,15 @@ FATHOM_API_KEY = os.environ.get("FATHOM_API_KEY")
 # calendar integration: nothing here ever touches GOOGLE_REFRESH_TOKEN.
 GMAIL_REFRESH_TOKEN = os.environ.get("GMAIL_REFRESH_TOKEN")
 
+# A SEPARATE refresh token, scoped to gmail.send rather than gmail.readonly,
+# used only by gmail_client.send_email() (agent-drafted email, sent only after
+# the user explicitly confirms in Ask Friday — see main.py's
+# _pending_email_draft / _is_send_confirmation). Same isolation reasoning as
+# GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN: a bug in the send path can never touch
+# the working readonly inbox integration. Unset = sending disabled, drafts can
+# still be shown but never sent.
+GMAIL_SEND_REFRESH_TOKEN = os.environ.get("GMAIL_SEND_REFRESH_TOKEN")
+
 # Industry Updates (see industry_client.py) — Tavily's news-search API is the
 # data source (tavily.com; no company-specific integration, just search
 # queries, so new topics/companies can be added later with no code changes to
