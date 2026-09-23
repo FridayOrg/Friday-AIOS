@@ -99,9 +99,16 @@ class AskRequest(BaseModel):
     history: list[ChatTurn] | None = None
 
 
+class ScheduledMeeting(BaseModel):
+    title: str
+    date: str  # "YYYY-MM-DD"
+    time: str  # "HH:MM", 24h — matches the shape calendar_client.py's meetings use
+
+
 class AskResponse(BaseModel):
     answer: str
     agent: str
+    scheduled: ScheduledMeeting | None = None
 
 
 def _route(question: str, history: list[dict] | None) -> tuple[str, str]:
@@ -322,12 +329,17 @@ def _friendly_when(start: datetime) -> str:
     return f"{start.strftime('%a, %d %b %Y')} at {hour12}:{minute} {period}"
 
 
-def _execute_schedule_proposal(answer: str) -> str | None:
+def _execute_schedule_proposal(answer: str) -> tuple[str | None, ScheduledMeeting | None]:
     """If `answer` contains a complete schedule-proposal block (see
     ANALYST_HEADER in context_loader.py), creates the real Google Calendar
-    event right away and returns a deterministic confirmation string to show
-    the user in its place. Returns None if there's no block to act on, so
-    the caller knows to leave `answer` untouched.
+    event right away. Returns (replacement_text, scheduled):
+      - (None, None): no block found — caller leaves `answer` untouched.
+      - (text, None): a block was found but scheduling failed — `text` is a
+        plain explanation, nothing was created.
+      - (text, scheduled): success — `text` is the deterministic confirmation
+        to show, `scheduled` is the exact {title, date, time} the frontend
+        needs to highlight that meeting on the Calendar card (it can't
+        reliably re-derive this from the human-friendly confirmation text).
 
     This is the founder's own explicit choice: schedule immediately, no
     draft/confirm step (see main.py's module docstring). The confirmation
@@ -335,28 +347,29 @@ def _execute_schedule_proposal(answer: str) -> str | None:
     actually got created rather than whatever the model happened to write."""
     match = _SCHEDULE_PROPOSAL_RE.search(answer)
     if not match:
-        return None
+        return None, None
 
     try:
         data = json.loads(match.group(1))
         req = ScheduleEventRequest(**data)
     except Exception as e:
         logger.warning("Could not parse the agent's schedule-proposal block: %s", e)
-        return None
+        return None, None
 
     try:
         result = _schedule_event(req)
     except ValueError:
-        return f"I couldn't schedule **{req.title}** — the date/time wasn't valid. Could you try again?"
+        return f"I couldn't schedule **{req.title}** — the date/time wasn't valid. Could you try again?", None
     except calendar_client.CalendarWriteError as e:
-        return f"I tried to schedule **{req.title}** but it didn't go through: {e}"
+        return f"I tried to schedule **{req.title}** but it didn't go through: {e}", None
 
     when = _friendly_when(result["start"])
     attendee_note = f" with {', '.join(req.attendees)}" if req.attendees else ""
-    return (
+    confirmation = (
         f"✅ Meeting scheduled: **{req.title}**, {when} ({req.duration_minutes} min){attendee_note}. "
         f"[View on Google Calendar]({result['html_link']})"
     )
+    return confirmation, ScheduledMeeting(title=req.title, date=req.date, time=req.time)
 
 
 @app.post("/ask", response_model=AskResponse)
@@ -372,10 +385,10 @@ def ask(payload: AskRequest):
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM call failed: {e}")
 
-    auto = _execute_schedule_proposal(answer)
+    auto, scheduled = _execute_schedule_proposal(answer)
     if auto is not None:
         answer = auto
-    return AskResponse(answer=answer, agent=agent)
+    return AskResponse(answer=answer, agent=agent, scheduled=scheduled)
 
 
 @app.post("/ask/stream")
@@ -408,9 +421,11 @@ def ask_stream(payload: AskRequest):
                     yield f"data: {json.dumps({'delta': chunk})}\n\n"
 
             if withholding:
-                auto = _execute_schedule_proposal(full)
+                auto, scheduled = _execute_schedule_proposal(full)
                 if auto is not None:
                     yield f"data: {json.dumps({'delta': auto})}\n\n"
+                    if scheduled is not None:
+                        yield f"data: {json.dumps({'scheduled': scheduled.model_dump()})}\n\n"
                 else:
                     for w in withheld:
                         yield f"data: {json.dumps({'delta': w})}\n\n"

@@ -42,14 +42,14 @@ function now() {
 
 // Scheduling now happens immediately, server-side (see backend/app/main.py's
 // _execute_schedule_proposal) — the agent's reply already IS the final
-// confirmation text by the time it reaches the client, so this just checks
-// for that fixed marker to trigger a dashboard refresh (Calendar card / Next
-// Meetings tile), not to render any special UI of its own.
-const SCHEDULED_MARKER = "Meeting scheduled:";
+// confirmation text by the time it reaches the client. The stream also
+// carries a structured "scheduled" event alongside it (exact date/time/
+// title), used below to refresh the dashboard and glow that meeting on the
+// Calendar card, not just to render text.
 
 export default function AskFriday({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
-  const { highlightFromText } = useHighlight();
+  const { highlightFromText, highlightMeeting } = useHighlight();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false); // waiting for the first chunk
   const [streaming, setStreaming] = useState(false); // chunks are actively arriving
@@ -540,6 +540,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
     abortRef.current = controller;
     const state = { full: "", done: false };
     activeStreamRef.current = state;
+    let scheduled: { date: string; time: string; title: string } | null = null;
 
     try {
       const res = await fetch("/api/ask", {
@@ -586,6 +587,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               state.full += parsed.delta;
             } else if (typeof parsed.error === "string") {
               state.full += (state.full ? "\n\n" : "") + parsed.error;
+            } else if (parsed.scheduled) {
+              scheduled = parsed.scheduled;
             }
           } catch {
             // malformed SSE line; skip it rather than breaking the whole stream
@@ -595,11 +598,14 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       }
       state.done = true; // reveal loop finishes catching up on its own, then stops
       pumpSpeech(state.full, true); // speak the final fragment
-      highlightFromText(state.full); // match the dashboard against what Friday actually said, not the question
-      if (state.full.includes(SCHEDULED_MARKER)) {
+      if (scheduled) {
         // Re-run the dashboard's server-side data fetch so the Calendar card
-        // and Next Meetings tile pick up the just-created event immediately.
+        // and Next Meetings tile pick up the just-created event, then glow
+        // that exact meeting once it renders.
         router.refresh();
+        highlightMeeting(scheduled.date, scheduled.time, scheduled.title);
+      } else {
+        highlightFromText(state.full); // match the dashboard against what Friday actually said, not the question
       }
     } catch (err) {
       if ((err as Error)?.name !== "AbortError") {

@@ -179,7 +179,7 @@ _ANALYST_RE = re.compile(
     # appears as a plain noun in genuine lookups like "what's my schedule today")
     r"draft|draught|compose|rephrase|re-?word|re-?write|word this|phrase this|"
     r"reschedul\w*|re-?schedul\w*|rearrang\w*|postpon\w*|"
-    r"(?:schedule|book|set up|arrange)(?:\s+\w+){0,3}\s+(?:meeting|meetings|meet|meetup|meet-up|"
+    r"(?:schedule|book|set up|arrange)(?:\s+\w+){0,6}\s+(?:meeting|meetings|meet|meetup|meet-up|"
     r"event|events|call|calls|catch[- ]?up|sync|appointment|demo|discussion|review|standup|"
     r"stand-up|huddle|chat|one[- ]on[- ]one|1:1)|"
     r"(?:write|prepare|send|put together) (?:me |up |out |an? |the |some )*(?:e-?mail|message|msg|note|memo|reply|response|blurb|apolog)|"
@@ -203,7 +203,7 @@ _NOT_DAILY_RE = re.compile(
     r"write|prepare|put together|send|reply|respond|apolog|"
     r"e-?mail|message|memo|"
     r"reschedul\w*|re-?schedul\w*|rearrang\w*|postpon\w*|move (?:the|my|our|it|that)|cancel|"
-    r"(?:schedule|book|set up|arrange)(?:\s+\w+){0,3}\s+(?:meeting|meetings|meet|meetup|meet-up|"
+    r"(?:schedule|book|set up|arrange)(?:\s+\w+){0,6}\s+(?:meeting|meetings|meet|meetup|meet-up|"
     r"event|events|call|calls|catch[- ]?up|sync|appointment|demo|discussion|review|standup|"
     r"stand-up|huddle|chat|one[- ]on[- ]one|1:1)|"
     r"help me|help us|"
