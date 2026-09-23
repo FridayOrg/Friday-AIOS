@@ -10,10 +10,11 @@ TOPICS is a plain list of search queries, not company-specific integration
 code — new companies/domains get added here later with no other changes
 needed anywhere in this module.
 
-Restricted to today's news only (time_range="day" on the Tavily request, plus
-a published_date sanity check on the response) so a stale item from a prior
-day's fetch never lingers into "today" on the dashboard — the calling code in
-main.py additionally filters storage reads to today's date range.
+Restricted to the past week (time_range="week" on the Tavily request, plus a
+published_date sanity check on the response) so nothing older than 7 days
+lingers on the dashboard — the calling code in main.py additionally filters
+storage reads to the same rolling 7-day window, and caps the displayed count
+to the 3 most recent items.
 
 Never raises on failure: a missing/invalid API key, an unreachable API, a
 rate limit, or a genuinely quiet news day all just return an empty list so a
@@ -90,23 +91,25 @@ def _parse_published_date(raw: str | None) -> str | None:
     return None
 
 
-def _is_today(published_at_iso: str | None, today: date) -> bool:
-    """True if published_at_iso falls on `today`, or if the date is unknown
-    (Tavily doesn't always return one) — the query itself is already scoped
-    to today via time_range="day", so an unknown date isn't treated as stale."""
+def _within_window(published_at_iso: str | None, start: date, end: date) -> bool:
+    """True if published_at_iso falls within [start, end] (inclusive), or if
+    the date is unknown (Tavily doesn't always return one) — the query itself
+    is already scoped to the past week via time_range="week", so an unknown
+    date isn't treated as stale."""
     if published_at_iso is None:
         return True
     try:
-        return datetime.fromisoformat(published_at_iso).date() == today
+        published_date = datetime.fromisoformat(published_at_iso).date()
+        return start <= published_date <= end
     except ValueError:
         return True
 
 
-def _fetch_topic(topic: dict, today: date) -> list[dict]:
+def _fetch_topic(topic: dict, start: date, end: date) -> list[dict]:
     name = topic["name"]
     payload = {
         "query": topic["query"],
-        "time_range": "day",
+        "time_range": "week",
         "max_results": _MAX_RESULTS_PER_TOPIC,
     }
     if topic.get("domains"):
@@ -139,7 +142,7 @@ def _fetch_topic(topic: dict, today: date) -> list[dict]:
     items = []
     for r in response.json().get("results", []):
         published_at = _parse_published_date(r.get("published_date"))
-        if not _is_today(published_at, today):
+        if not _within_window(published_at, start, end):
             continue
         items.append(
             {
@@ -153,14 +156,14 @@ def _fetch_topic(topic: dict, today: date) -> list[dict]:
     return items
 
 
-def day_bounds(now: datetime) -> tuple[str, str]:
-    """Midnight through the following midnight of `now`'s calendar day, as
-    RFC3339 with an explicit UTC offset — used to scope the stored-data read
-    (db.list_industry_updates) to today only, in the app's own timezone
-    rather than the database server's. Mirrors calendar_client.py's
-    _week_bounds."""
-    start = datetime.combine(now.date(), datetime.min.time())
-    end = start + timedelta(days=1)
+def week_bounds(now: datetime) -> tuple[str, str]:
+    """Midnight 7 days ago through the following midnight of `now`'s calendar
+    day (a rolling 7-day window, inclusive of today), as RFC3339 with an
+    explicit UTC offset — used to scope the stored-data read
+    (db.list_industry_updates) in the app's own timezone rather than the
+    database server's. Mirrors calendar_client.py's _week_bounds."""
+    end = datetime.combine(now.date(), datetime.min.time()) + timedelta(days=1)
+    start = end - timedelta(days=7)
     if now.tzinfo is not None:
         start, end = start.replace(tzinfo=now.tzinfo), end.replace(tzinfo=now.tzinfo)
     else:
@@ -168,18 +171,20 @@ def day_bounds(now: datetime) -> tuple[str, str]:
     return start.isoformat(), end.isoformat()
 
 
-def fetch_todays_updates(today: date) -> list[dict]:
+def fetch_recent_updates(today: date) -> list[dict]:
     """Raw (unfiltered) news items for every topic in TOPICS, restricted to
-    `today`. Empty list (never an exception) on any failure: missing API key,
-    unreachable API, rate-limited, or genuinely no news matching."""
+    the past 7 days (through `today`). Empty list (never an exception) on any
+    failure: missing API key, unreachable API, rate-limited, or genuinely no
+    news matching."""
     if not TAVILY_API_KEY:
         logger.warning("TAVILY_API_KEY not set; Industry Updates disabled.")
         return []
 
+    start = today - timedelta(days=6)  # 7-day window inclusive of today
     items = []
     seen_urls: set[str] = set()
     for topic in TOPICS:
-        for item in _fetch_topic(topic, today):
+        for item in _fetch_topic(topic, start, today):
             if item["url"] and item["url"] not in seen_urls:
                 seen_urls.add(item["url"])
                 items.append(item)

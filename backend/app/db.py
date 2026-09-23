@@ -227,10 +227,11 @@ def upsert_industry_update(item: dict) -> None:
 def list_industry_updates(day_start: str, day_end: str, limit: int = 30) -> list[dict]:
     """Industry updates whose published_at (falling back to fetched_at, for
     items with no known publish date) falls within [day_start, day_end) —
-    the caller passes today's exact bounds (see config.now()) so this reflects
-    the app's own clock/timezone, not the database server's. Most recent
-    first; never returns a prior day's item even if it's still the most
-    recently fetched row."""
+    the caller passes the exact window (see industry_client.week_bounds) so
+    this reflects the app's own clock/timezone, not the database server's.
+    Most recent first; never returns an item outside that window even if
+    it's still the most recently fetched row. The dashboard currently passes
+    a rolling 7-day window with limit=3 (see main.py's GET /industry-updates)."""
     with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
             """

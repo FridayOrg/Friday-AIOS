@@ -20,8 +20,9 @@ Endpoints:
   GET  /gmail/urgent    — cached list of inbox emails judged to need an immediate
                            reply (see gmail_client.py / email_urgency.py)
   POST /gmail/refresh    — forces a fresh Gmail fetch + urgency-classification pass
-  GET  /industry-updates — today's stored, LLM-filtered industry news (see
-                           industry_client.py / industry_relevance.py)
+  GET  /industry-updates — top 3 most recent stored, LLM-filtered industry
+                           news items from the past week (see industry_client.py
+                           / industry_relevance.py)
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
@@ -314,8 +315,8 @@ def gmail_refresh():
 @app.get("/industry-updates")
 def industry_updates():
     try:
-        day_start, day_end = industry_client.day_bounds(now())
-        return {"updates": db.list_industry_updates(day_start, day_end)}
+        week_start, week_end = industry_client.week_bounds(now())
+        return {"updates": db.list_industry_updates(week_start, week_end, limit=3)}
     except Exception as e:
         logger.warning("Could not read industry updates: %s", e)
         return {"updates": []}
@@ -331,7 +332,7 @@ def refresh_industry_updates(request: Request):
         raise HTTPException(status_code=401, detail="invalid or missing refresh secret")
 
     today = now().date()
-    raw_items = industry_client.fetch_todays_updates(today)
+    raw_items = industry_client.fetch_recent_updates(today)
     relevant = classify_updates(raw_items)
 
     stored = 0
