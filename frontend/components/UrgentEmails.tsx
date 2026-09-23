@@ -56,24 +56,24 @@ export default function UrgentEmails() {
 
   return (
     <div>
-      <div className="rounded-xl overflow-hidden bg-[#FDF4F8] border border-[#F7D9E7]">
+      <div className="rounded-xl overflow-hidden bg-[#3F1233] border border-[#5A2145]">
         <div className="flex items-center justify-between px-4 py-3">
           <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#FBE3F0] shrink-0">
-              <Mail size={13} className="text-[#D6428E]" />
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#4A1938] shrink-0">
+              <Mail size={13} className="text-[#F472B6]" />
             </span>
             <span className="text-sm font-semibold">Needs Your Reply</span>
           </div>
           <button
             onClick={handleRefresh}
             disabled={refreshing}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 disabled:opacity-50"
+            className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-50"
           >
             <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
             Refresh
           </button>
         </div>
-        <div className="px-4 pb-4 pt-0.5 border-t border-[#F7D9E7]">
+        <div className="px-4 pb-4 pt-0.5 border-t border-[#5A2145]">
           {loading ? (
             <p className="text-xs text-slate-400 pt-2">Checking your inbox...</p>
           ) : emails.length === 0 ? (
@@ -83,18 +83,18 @@ export default function UrgentEmails() {
           ) : (
             <div className="flex flex-col gap-2 pt-2 max-h-56 overflow-y-auto">
               {emails.map((e) => (
-                <div key={e.id} className="rounded-lg bg-white/80 border border-[#F7D9E7] px-3 py-2.5">
+                <div key={e.id} className="rounded-lg bg-white/5 border border-[#5A2145] px-3 py-2.5">
                   <div className="flex items-start justify-between gap-2">
                     <div className="min-w-0">
                       <p className="text-sm font-medium leading-snug truncate">{e.subject}</p>
                       <p className="text-xs text-slate-400 mt-0.5 truncate">{e.sender}</p>
-                      <p className="text-xs text-slate-500 mt-1 leading-snug">{e.reason}</p>
+                      <p className="text-xs text-slate-400 mt-1 leading-snug">{e.reason}</p>
                     </div>
                     <a
                       href={e.gmail_url}
                       target="_blank"
                       rel="noreferrer"
-                      className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-600 mt-0.5"
+                      className="shrink-0 inline-flex items-center gap-1 text-xs text-teal-400 mt-0.5"
                     >
                       <ExternalLink size={12} />
                     </a>
@@ -107,7 +107,7 @@ export default function UrgentEmails() {
       </div>
       <Link
         href="/tasks"
-        className="inline-flex items-center gap-1 text-xs font-medium text-[#D6428E] mt-3"
+        className="inline-flex items-center gap-1 text-xs font-medium text-[#F472B6] mt-3"
       >
         View more <ArrowRight size={12} />
       </Link>

@@ -34,13 +34,13 @@ export default function TopNav() {
   const [mobileOpen, setMobileOpen] = useState(false);
 
   return (
-    <header className="sticky top-0 z-40 w-full bg-white border-b border-slate-200 shrink-0">
+    <header className="sticky top-0 z-40 w-full bg-[#0F172A] border-b border-white/10 shrink-0">
       <div className="flex items-center justify-between h-16 px-4 lg:px-6 gap-4">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
           <img src="/friday-mark.png" alt="Friday" className="h-8 w-8 rounded-lg object-cover" />
-          <span className="text-lg font-bold text-slate-900 hidden sm:inline">
+          <span className="text-lg font-bold text-white hidden sm:inline">
             friday<span className="text-blue-600">.</span>
           </span>
         </Link>
@@ -55,8 +55,8 @@ export default function TopNav() {
                 href={href}
                 className={`flex items-center gap-2 rounded-lg px-3 py-2 text-sm font-medium transition-colors ${
                   active
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-50 hover:text-slate-900"
+                    ? "bg-sky-500/15 text-sky-300"
+                    : "text-slate-300 hover:bg-white/5 hover:text-white"
                 }`}
               >
                 <Icon size={16} strokeWidth={2} />
@@ -70,17 +70,17 @@ export default function TopNav() {
         <div className="hidden md:flex items-center gap-2 shrink-0">
           <button
             aria-label="Search"
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200"
           >
             <Search size={18} />
           </button>
           <button
             aria-label="Notifications"
-            className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200"
           >
             <Bell size={18} />
           </button>
-          <div className="h-8 w-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center">
+          <div className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center">
             <User size={16} />
           </div>
         </div>
@@ -89,7 +89,7 @@ export default function TopNav() {
         <button
           onClick={() => setMobileOpen((o) => !o)}
           aria-label={mobileOpen ? "Close menu" : "Open menu"}
-          className="md:hidden h-9 w-9 rounded-lg flex items-center justify-center text-slate-600 hover:bg-slate-50"
+          className="md:hidden h-9 w-9 rounded-lg flex items-center justify-center text-slate-300 hover:bg-white/5"
         >
           {mobileOpen ? <X size={22} /> : <Menu size={22} />}
         </button>
@@ -97,7 +97,7 @@ export default function TopNav() {
 
       {/* Mobile dropdown panel */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-slate-200 bg-white px-4 py-3">
+        <div className="md:hidden border-t border-white/10 bg-[#0F172A] px-4 py-3">
           <nav className="flex flex-col gap-1">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
@@ -108,8 +108,8 @@ export default function TopNav() {
                   onClick={() => setMobileOpen(false)}
                   className={`flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-colors ${
                     active
-                      ? "bg-blue-50 text-blue-700"
-                      : "text-slate-600 hover:bg-slate-50"
+                      ? "bg-sky-500/15 text-sky-300"
+                      : "text-slate-300 hover:bg-white/5"
                   }`}
                 >
                   <Icon size={18} strokeWidth={2} />
@@ -118,20 +118,20 @@ export default function TopNav() {
               );
             })}
           </nav>
-          <div className="mt-3 pt-3 border-t border-slate-100 flex items-center gap-2">
+          <div className="mt-3 pt-3 border-t border-white/10 flex items-center gap-2">
             <button
               aria-label="Search"
-              className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200"
             >
               <Search size={18} />
             </button>
             <button
               aria-label="Notifications"
-              className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-500 hover:bg-slate-50 hover:text-slate-700"
+              className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200"
             >
               <Bell size={18} />
             </button>
-            <div className="h-8 w-8 rounded-full bg-violet-100 text-violet-700 flex items-center justify-center">
+            <div className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center">
               <User size={16} />
             </div>
           </div>

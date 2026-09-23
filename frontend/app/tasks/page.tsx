@@ -16,14 +16,14 @@ interface Task {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  overdue: "bg-red-50 text-red-600",
-  pending: "bg-amber-50 text-amber-600",
+  overdue: "bg-red-500/15 text-red-300",
+  pending: "bg-amber-500/15 text-amber-300",
 };
 
 const PRIORITY_STYLE: Record<string, string> = {
-  high: "bg-red-100 text-red-700",
-  medium: "bg-amber-100 text-amber-700",
-  low: "bg-slate-100 text-slate-600",
+  high: "bg-red-500/15 text-red-300",
+  medium: "bg-amber-500/15 text-amber-300",
+  low: "bg-white/10 text-slate-300",
 };
 
 // Overdue tasks always surface first, then by priority — same "what needs
@@ -49,8 +49,8 @@ function FilterPill({
       onClick={onClick}
       className={`text-xs font-medium px-3 py-1.5 rounded-full capitalize transition-colors ${
         active
-          ? "bg-blue-50 text-blue-700"
-          : "bg-white text-slate-500 border border-slate-200 hover:bg-slate-50"
+          ? "bg-sky-500/15 text-sky-300"
+          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
       }`}
     >
       {children}
@@ -86,8 +86,8 @@ export default function TasksPage() {
   return (
     <div className="p-8 max-w-4xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
-        <CheckSquare size={22} className="text-blue-600" />
-        <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
+        <CheckSquare size={22} className="text-sky-400" />
+        <h1 className="text-2xl font-bold text-white">Tasks</h1>
       </div>
 
       {loading ? (
@@ -101,7 +101,7 @@ export default function TasksPage() {
                   {s}
                 </FilterPill>
               ))}
-              <span className="hidden sm:inline w-px h-4 bg-slate-200 mx-1" />
+              <span className="hidden sm:inline w-px h-4 bg-white/10 mx-1" />
               {PRIORITY_FILTERS.map((p) => (
                 <FilterPill key={p} active={priorityFilter === p} onClick={() => setPriorityFilter(p)}>
                   {p === "all" ? "all priority" : p}
@@ -117,28 +117,28 @@ export default function TasksPage() {
             {visibleTasks.map((t) => (
               <div
                 key={t.id}
-                className="bg-white rounded-2xl border border-slate-200 p-5 flex flex-col gap-2"
+                className="bg-[#141E33] rounded-2xl border border-white/10 p-5 flex flex-col gap-2"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-slate-900">{t.title}</h3>
+                  <h3 className="text-sm font-semibold text-white">{t.title}</h3>
                   <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
-                        PRIORITY_STYLE[t.priority] ?? "bg-slate-100 text-slate-600"
+                        PRIORITY_STYLE[t.priority] ?? "bg-white/10 text-slate-300"
                       }`}
                     >
                       {t.priority}
                     </span>
                     <span
                       className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
-                        STATUS_STYLE[t.status] ?? "bg-slate-100 text-slate-600"
+                        STATUS_STYLE[t.status] ?? "bg-white/10 text-slate-300"
                       }`}
                     >
                       {t.status}
                     </span>
                   </div>
                 </div>
-                <p className="text-sm text-slate-600">{t.description}</p>
+                <p className="text-sm text-slate-300">{t.description}</p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
                   <span>Due {t.due_date}</span>
                   {t.related_client && <span>Client: {t.related_client}</span>}

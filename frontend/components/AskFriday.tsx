@@ -684,10 +684,10 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <aside className="w-full h-full flex flex-col bg-slate-50 border-l border-slate-200">
+    <aside className="w-full h-full flex flex-col bg-[#0F172A] border-l border-white/10">
       <div className="px-6 pt-6 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-blue-700 font-semibold">
+          <div className="flex items-center gap-2 text-sky-300 font-semibold">
             <Sparkles size={18} />
             ASK FRIDAY
           </div>
@@ -697,7 +697,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               disabled={busy}
               aria-label="Play my brief"
               title="Play my brief"
-              className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-white/10 disabled:opacity-40"
             >
               <PlayCircle size={16} />
             </button>
@@ -708,8 +708,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               title={voiceOut ? "Spoken replies on" : "Spoken replies off"}
               className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
                 voiceOut
-                  ? "bg-blue-100 text-blue-700"
-                  : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+                  ? "bg-sky-500/20 text-sky-300"
+                  : "text-slate-400 hover:text-slate-200 hover:bg-white/10"
               } ${speaking ? "animate-pulse" : ""}`}
             >
               {voiceOut ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -718,7 +718,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               <button
                 onClick={onClose}
                 aria-label="Close chat"
-                className="lg:hidden h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+                className="lg:hidden h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-white/10"
               >
                 <X size={16} />
               </button>
@@ -732,8 +732,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       </div>
 
       {insight && (
-        <div className="mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm">
-          <span className="flex-1 text-amber-900">
+        <div className="mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm">
+          <span className="flex-1 text-amber-200">
             {insight.message.replace(/\s*—\s*want details\?$/, "")}
             {" — "}
             <button
@@ -750,7 +750,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <button
             onClick={() => setInsight(null)}
             aria-label="Dismiss"
-            className="shrink-0 text-amber-400 hover:text-amber-700"
+            className="shrink-0 text-amber-400 hover:text-amber-200"
           >
             <X size={14} />
           </button>
@@ -760,10 +760,10 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 flex flex-col gap-5">
         {messages.length === 0 && (
           <div className="flex flex-col gap-3 mt-2">
-            <p className="text-sm font-medium text-slate-700">
+            <p className="text-sm font-medium text-slate-200">
               Good {timeGreeting()}, {FOUNDER_NAME}.
             </p>
-            <p className="text-sm text-slate-500">
+            <p className="text-sm text-slate-400">
               Ask me anything about the business. I won&rsquo;t volunteer a briefing
               until you do. A few things you could start with:
             </p>
@@ -771,7 +771,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               <button
                 key={q}
                 onClick={() => send(q)}
-                className="text-left text-sm rounded-xl border border-slate-200 bg-white px-4 py-3 text-slate-700 hover:border-blue-300 hover:bg-blue-50 transition-colors"
+                className="text-left text-sm rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-200 hover:border-sky-400/50 hover:bg-sky-500/10 transition-colors"
               >
                 {q}
               </button>
@@ -783,7 +783,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <div key={i} className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-sm">
               {m.role === "user" ? (
-                <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold bg-slate-200 text-slate-600">
+                <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold bg-white/10 text-slate-300">
                   Y
                 </div>
               ) : (
@@ -791,14 +791,14 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
                 <img
                   src="/friday-mark.png"
                   alt="Friday"
-                  className="h-7 w-7 rounded-full object-cover bg-blue-100"
+                  className="h-7 w-7 rounded-full object-cover bg-sky-500/20"
                 />
               )}
-              <span className="font-medium text-slate-800">
+              <span className="font-medium text-slate-100">
                 {m.role === "user" ? "You" : "Friday"}
               </span>
               {m.agent && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-slate-100 text-slate-500">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
                   {AGENT_LABEL[m.agent]}
                 </span>
               )}
@@ -807,8 +807,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             <div
               className={`ml-9 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-white border border-slate-200 text-slate-700 whitespace-pre-wrap"
-                  : "bg-blue-50 text-slate-800"
+                  ? "bg-white/5 border border-white/10 text-slate-200 whitespace-pre-wrap"
+                  : "bg-sky-500/10 text-slate-100"
               }`}
             >
               {m.role === "friday" ? (
@@ -829,8 +829,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         ))}
       </div>
 
-      <div className="p-4 border-t border-slate-200 bg-white">
-        <div className="flex items-end gap-2 rounded-xl border border-slate-200 bg-slate-50 px-3 py-2">
+      <div className="p-4 border-t border-white/10 bg-[#0F172A]">
+        <div className="flex items-end gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
           <button
             onClick={toggleMic}
             disabled={busy}
@@ -840,7 +840,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center transition-colors disabled:opacity-40 ${
               listening
                 ? "bg-red-500 text-white shadow-[0_0_0_4px_rgba(239,68,68,0.2)]"
-                : "text-slate-400 hover:text-slate-700 hover:bg-slate-200"
+                : "text-slate-400 hover:text-slate-200 hover:bg-white/10"
             }`}
           >
             <Mic size={15} className={listening ? "animate-pulse" : ""} />

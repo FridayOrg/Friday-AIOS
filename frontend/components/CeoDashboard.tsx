@@ -22,53 +22,22 @@ import type { DashboardData } from "@/lib/data";
 import type { CrmOverview } from "@/lib/crmTypes";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
+import { C, PAGE_BG, CARD_BG, statusOf, riskOf, priorityOf } from "@/lib/dashboardTokens";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
 
 // ---------------------------------------------------------------------------
-// TOKENS  (unchanged from the ceo-dashboard reference design)
+// TOKENS — shared dark palette from lib/dashboardTokens; TILE stays local
+// since its gradients are specific to these 4 Daily Brief stat cards.
 // ---------------------------------------------------------------------------
 
-const C = {
-  ink: "#101828",
-  muted: "#667085",
-  faint: "#98A2B3",
-  border: "rgba(16,24,40,0.07)",
-  teal: "#0F9E8E",
-  up: "#12B76A",
-  down: "#F04438",
-};
-
 const TILE = {
-  revenue: { from: "#D7F6EA", to: "#EEFBF4", icon: "#0E9F6E", iconBg: "#C9F3E0" },
-  deals: { from: "#E7E4FC", to: "#F3F1FE", icon: "#6E5AE0", iconBg: "#DCD7FA" },
-  retention: { from: "#FBE3F0", to: "#FDF0F8", icon: "#D6428E", iconBg: "#F7CFE6" },
-  burn: { from: "#FCE6DA", to: "#FEF1E9", icon: "#DD7A33", iconBg: "#FAD9BE" },
-  calendar: { from: "#DCEEFB", to: "#EEF6FD", icon: "#2D9CDB", iconBg: "#C7E4F7" },
+  revenue: { from: "#0F3D3A", to: "#134E3F", icon: "#34D399", iconBg: "#0F2E2A" },
+  deals: { from: "#2E1F5E", to: "#3B2A73", icon: "#A78BFA", iconBg: "#241A4A" },
+  retention: { from: "#5B1A46", to: "#6E2159", icon: "#F472B6", iconBg: "#3F1233" },
+  burn: { from: "#5A2E12", to: "#6E3A18", icon: "#FB923C", iconBg: "#3D1F0C" },
+  calendar: { from: "#0F2A4A", to: "#133A63", icon: "#38BDF8", iconBg: "#0C2038" },
 };
-
-const STATUS: Record<string, { color: string; label: string }> = {
-  guarantee_met: { color: "#0E9F6E", label: "Guarantee met" },
-  on_track: { color: "#2D9CDB", label: "On track" },
-  ramping: { color: "#DD9A2E", label: "Ramping" },
-};
-const statusOf = (k: string) => STATUS[k] ?? { color: C.muted, label: k };
-
-const RISK: Record<string, { color: string; label: string }> = {
-  none: { color: "#0E9F6E", label: "No risk" },
-  low: { color: "#667085", label: "Low risk" },
-  medium: { color: "#DD9A2E", label: "Medium risk" },
-  high: { color: "#F04438", label: "High risk" },
-};
-const riskOf = (k: string) => RISK[k] ?? { color: C.muted, label: k };
-
-const PRIORITY: Record<string, { color: string; label: string }> = {
-  critical: { color: "#F04438", label: "Critical" },
-  high: { color: "#DD9A2E", label: "High" },
-  medium: { color: "#98A2B3", label: "Medium" },
-  low: { color: "#98A2B3", label: "Low" },
-};
-const priorityOf = (k: string) => PRIORITY[k] ?? { color: C.faint, label: k };
 
 const TYPE_LABEL: Record<string, string> = {
   approval_needed: "Approval needed",
@@ -163,23 +132,23 @@ function greetingFor(nowHHMM: string): string {
 // Pipeline / Spend & Notifications live on their own /crm page (see
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
-  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "#FBE3F0", iconColor: "#D6428E" },
-  { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "#DCEEFB", iconColor: "#2D9CDB" },
+  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "#3F1233", iconColor: "#F472B6" },
+  { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "#0C2038", iconColor: "#38BDF8" },
   {
     key: "industry",
     title: "Industry Updates",
     subtitle: "Latest news and trends shaping the industry",
     icon: FileText,
-    iconBg: "#DCEEFB",
-    iconColor: "#2D9CDB",
+    iconBg: "#0C2038",
+    iconColor: "#38BDF8",
   },
   {
     key: "meetings",
     title: "Meeting Summary",
     subtitle: "Key meetings and important takeaways",
     icon: FileText,
-    iconBg: "#EAE9FE",
-    iconColor: "#6D5BD0",
+    iconBg: "#241A4A",
+    iconColor: "#A78BFA",
   },
 ] as const;
 
@@ -294,7 +263,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         minHeight: "100%",
         fontFamily: "'Inter', system-ui, sans-serif",
         color: C.ink,
-        background: "linear-gradient(135deg, #EAF7F1 0%, #EEEBFB 45%, #FBF0F6 100%)",
+        background: `linear-gradient(135deg, ${PAGE_BG} 0%, #0D1526 50%, ${PAGE_BG} 100%)`,
       }}
     >
       <style>{`
@@ -323,7 +292,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             <div className="relative">
               <div
                 className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm"
-                style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+                style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
               >
                 <Search size={15} style={{ color: C.faint }} />
                 <input
@@ -349,9 +318,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 <div
                   className="absolute right-0 mt-2 w-80 rounded-lg z-20 overflow-hidden"
                   style={{
-                    background: "#fff",
+                    background: CARD_BG,
                     border: `1px solid ${C.border}`,
-                    boxShadow: "0 12px 32px -12px rgba(16,24,40,0.25)",
+                    boxShadow: "0 12px 32px -12px rgba(0,0,0,0.5)",
                   }}
                 >
                   {searchResults.length === 0 ? (
@@ -363,7 +332,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       <button
                         key={i}
                         onClick={() => jumpToSection(r.section)}
-                        className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-slate-50"
+                        className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-white/5"
                         style={{
                           borderBottom:
                             i < searchResults.length - 1 ? `1px solid ${C.border}` : "none",
@@ -392,10 +361,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#E9F9F5" }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#0F2E2A" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
             <h2 className="text-sm font-semibold">Daily Brief</h2>
@@ -475,10 +444,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#E9F9F5" }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#0F2E2A" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
             <h2 className="text-sm font-semibold">Quick Access</h2>
@@ -491,7 +460,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 id={`section-${c.key}`}
                 className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
                 style={{
-                  background: "rgba(255,255,255,0.7)",
+                  background: "rgba(20,30,51,0.7)",
                   border: `1px solid ${C.border}`,
                   ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
                 }}
@@ -714,7 +683,7 @@ function Calendar3DayContent({
                     <div
                       key={isGlow ? `${i}-${glow?.ts}` : i}
                       className={`rounded-lg px-3 py-2.5${g.className}`}
-                      style={{ background: "#EFF6FD", border: "1px solid #D7E3F7", opacity: done ? 0.55 : 1, ...g.style }}
+                      style={{ background: "#122238", border: "1px solid #1E3A5F", opacity: done ? 0.55 : 1, ...g.style }}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -732,7 +701,7 @@ function Calendar3DayContent({
                         {live && (
                           <span
                             className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "#FDECEC", color: C.down }}
+                            style={{ background: "#3A1414", color: C.down }}
                           >
                             now
                           </span>
@@ -740,7 +709,7 @@ function Calendar3DayContent({
                         {isNext && !live && (
                           <span
                             className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "#E9F9F5", color: C.teal }}
+                            style={{ background: "#0F2E2A", color: C.teal }}
                           >
                             next
                           </span>
@@ -815,7 +784,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
           <div
             key={m.recording_id}
             className="rounded-lg px-3 py-2.5"
-            style={{ background: "#F5F3FE", border: "1px solid #E7E2FB" }}
+            style={{ background: "#1E1738", border: "1px solid #332759" }}
           >
             <p className="text-sm font-medium leading-snug">{m.title}</p>
             <p className="text-xs mt-0.5" style={{ color: C.faint }}>
@@ -853,7 +822,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs mt-2 font-medium"
-                style={{ color: "#6D5BD0" }}
+                style={{ color: "#A78BFA" }}
               >
                 Watch recording <ExternalLink size={11} />
               </a>
@@ -917,7 +886,7 @@ function ActionItemDueDate({
           onClick={() => save(draft || null)}
           disabled={saving || !draft}
           className="text-[11px] font-medium disabled:opacity-40"
-          style={{ color: "#6D5BD0" }}
+          style={{ color: "#A78BFA" }}
         >
           Save
         </button>

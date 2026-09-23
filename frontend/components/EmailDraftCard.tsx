@@ -86,15 +86,15 @@ export default function EmailDraftCard({ draft }: { draft: EmailDraft }) {
   }
 
   return (
-    <div className="mt-2 rounded-xl border border-blue-200 bg-white px-4 py-3">
-      <div className="flex items-center gap-2 text-sm font-semibold text-slate-800">
-        <Mail size={15} className="text-blue-600 shrink-0" />
+    <div className="mt-2 rounded-xl border border-sky-500/30 bg-white/5 px-4 py-3">
+      <div className="flex items-center gap-2 text-sm font-semibold text-slate-100">
+        <Mail size={15} className="text-sky-400 shrink-0" />
         {draft.subject}
       </div>
-      <p className="mt-1 text-xs text-slate-500">
+      <p className="mt-1 text-xs text-slate-400">
         To: {draft.to_name ? `${draft.to_name} <${draft.to_email}>` : draft.to_email}
       </p>
-      <p className="mt-2 text-sm text-slate-700 whitespace-pre-wrap leading-relaxed">{draft.body}</p>
+      <p className="mt-2 text-sm text-slate-200 whitespace-pre-wrap leading-relaxed">{draft.body}</p>
 
       {status === "idle" && (
         <div className="mt-3 flex gap-2">
@@ -107,7 +107,7 @@ export default function EmailDraftCard({ draft }: { draft: EmailDraft }) {
           </button>
           <button
             onClick={() => setStatus("cancelled")}
-            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+            className="flex items-center gap-1.5 text-xs font-medium px-3 py-1.5 rounded-lg border border-white/10 text-slate-400 hover:bg-white/10"
           >
             <X size={13} />
             Cancel
@@ -115,13 +115,13 @@ export default function EmailDraftCard({ draft }: { draft: EmailDraft }) {
         </div>
       )}
       {status === "sending" && (
-        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-500">
+        <div className="mt-3 flex items-center gap-1.5 text-xs text-slate-400">
           <Loader2 size={13} className="animate-spin" />
           Sending…
         </div>
       )}
       {status === "sent" && (
-        <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-700">
+        <div className="mt-3 flex items-center gap-1.5 text-xs font-medium text-emerald-400">
           <Check size={13} />
           Sent
         </div>
@@ -129,10 +129,10 @@ export default function EmailDraftCard({ draft }: { draft: EmailDraft }) {
       {status === "cancelled" && <p className="mt-3 text-xs text-slate-400">Not sent. Ask Friday to change anything before sending.</p>}
       {status === "error" && (
         <div className="mt-3 flex flex-col gap-1.5">
-          <p className="text-xs font-medium text-red-600">{error}</p>
+          <p className="text-xs font-medium text-red-400">{error}</p>
           <button
             onClick={() => setStatus("idle")}
-            className="self-start text-xs font-medium px-3 py-1.5 rounded-lg border border-slate-200 text-slate-500 hover:bg-slate-50"
+            className="self-start text-xs font-medium px-3 py-1.5 rounded-lg border border-white/10 text-slate-400 hover:bg-white/10"
           >
             Try again
           </button>

@@ -88,7 +88,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         {/* Mobile Ask Friday overlay */}
         {mobileChatOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black/40">
-            <div className="absolute inset-x-0 bottom-0 h-[88vh] bg-slate-50 rounded-t-2xl overflow-hidden shadow-xl">
+            <div className="absolute inset-x-0 bottom-0 h-[88vh] bg-[#0F172A] rounded-t-2xl overflow-hidden shadow-xl">
               <AskFriday onClose={() => setMobileChatOpen(false)} />
             </div>
           </div>

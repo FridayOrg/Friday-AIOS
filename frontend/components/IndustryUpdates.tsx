@@ -55,7 +55,7 @@ export default function IndustryUpdates() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-800 disabled:opacity-50"
+          className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-50"
         >
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
           Refresh
@@ -68,16 +68,16 @@ export default function IndustryUpdates() {
       ) : (
         <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
           {updates.map((u) => (
-            <div key={u.url} className="rounded-lg bg-[#EFF6FD] border border-[#D7E3F7] px-3 py-2.5">
+            <div key={u.url} className="rounded-lg bg-[#0C2038] border border-[#1E3A5F] px-3 py-2.5">
               <p className="text-sm font-medium leading-snug">{u.title}</p>
               {u.content && (
-                <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
+                <p className="text-xs text-slate-400 mt-1 leading-snug line-clamp-2">{u.content}</p>
               )}
               <a
                 href={u.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs mt-2 text-[#2D9CDB] font-medium"
+                className="inline-flex items-center gap-1 text-xs mt-2 text-[#38BDF8] font-medium"
               >
                 View full article <ExternalLink size={11} />
               </a>

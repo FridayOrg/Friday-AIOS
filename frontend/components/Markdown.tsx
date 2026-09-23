@@ -9,7 +9,7 @@ export default function Markdown({ text }: { text: string }) {
       components={{
         p: ({ children }) => <p className="mb-2 last:mb-0">{children}</p>,
         strong: ({ children }) => (
-          <strong className="font-semibold text-slate-900">{children}</strong>
+          <strong className="font-semibold text-white">{children}</strong>
         ),
         em: ({ children }) => <em className="italic">{children}</em>,
         ul: ({ children }) => (
@@ -23,11 +23,11 @@ export default function Markdown({ text }: { text: string }) {
         h2: ({ children }) => <h3 className="font-semibold text-base mt-3 mb-1 first:mt-0">{children}</h3>,
         h3: ({ children }) => <h3 className="font-semibold text-sm mt-3 mb-1 first:mt-0">{children}</h3>,
         code: ({ children }) => (
-          <code className="bg-slate-100 rounded px-1 py-0.5 text-[13px]">{children}</code>
+          <code className="bg-white/10 rounded px-1 py-0.5 text-[13px]">{children}</code>
         ),
-        hr: () => <hr className="my-3 border-slate-200" />,
+        hr: () => <hr className="my-3 border-white/10" />,
         a: ({ children, href }) => (
-          <a href={href} className="text-blue-600 underline" target="_blank" rel="noreferrer">
+          <a href={href} className="text-sky-400 underline" target="_blank" rel="noreferrer">
             {children}
           </a>
         ),

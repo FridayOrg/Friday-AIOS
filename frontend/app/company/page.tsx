@@ -34,14 +34,14 @@ export default function CompanyPage() {
   return (
     <div className="p-8 max-w-5xl mx-auto">
       <div className="flex items-center gap-2 mb-6">
-        <Building2 size={22} className="text-blue-600" />
-        <h1 className="text-2xl font-bold text-slate-900">Company</h1>
+        <Building2 size={22} className="text-sky-400" />
+        <h1 className="text-2xl font-bold text-white">Company</h1>
       </div>
 
       {loading ? (
         <p className="text-sm text-slate-400">Loading context files…</p>
       ) : error ? (
-        <p className="text-sm text-red-500">{error}</p>
+        <p className="text-sm text-red-400">{error}</p>
       ) : (
         <div className="flex gap-6">
           <nav className="w-48 shrink-0 flex flex-col gap-1">
@@ -51,8 +51,8 @@ export default function CompanyPage() {
                 onClick={() => setActiveSlug(f.slug)}
                 className={`text-left text-sm rounded-lg px-3 py-2 font-medium transition-colors ${
                   f.slug === activeSlug
-                    ? "bg-blue-50 text-blue-700"
-                    : "text-slate-600 hover:bg-slate-50"
+                    ? "bg-sky-500/15 text-sky-300"
+                    : "text-slate-300 hover:bg-white/5"
                 }`}
               >
                 {f.title}
@@ -60,9 +60,9 @@ export default function CompanyPage() {
             ))}
           </nav>
 
-          <div className="flex-1 bg-white rounded-2xl border border-slate-200 p-6 min-w-0">
+          <div className="flex-1 bg-[#141E33] rounded-2xl border border-white/10 p-6 min-w-0">
             {active ? (
-              <article className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-[inherit]">
+              <article className="text-sm text-slate-200 leading-relaxed whitespace-pre-wrap font-[inherit]">
                 {active.content}
               </article>
             ) : (

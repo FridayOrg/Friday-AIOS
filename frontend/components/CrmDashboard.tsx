@@ -45,10 +45,10 @@ import {
   Tooltip,
   Legend,
 } from "recharts";
-import { C, fmtFullDay } from "@/lib/dashboardTokens";
+import { C, PAGE_BG, CARD_BG, fmtFullDay } from "@/lib/dashboardTokens";
 import type { CrmOverview, DateRangeKey, TrendPeriod, DealRow } from "@/lib/crmTypes";
 
-const STAGE_COLORS = ["#2D9CDB", "#6E5AE0", "#0E9F6E", "#DD9A2E", "#F04438", "#0F9E8E", "#DD7A33"];
+const STAGE_COLORS = ["#38BDF8", "#A78BFA", "#34D399", "#FBBF24", "#F87171", "#22D3EE", "#FB923C"];
 
 const RANGE_OPTIONS: { key: DateRangeKey; label: string }[] = [
   { key: "today", label: "Today" },
@@ -131,7 +131,7 @@ export default function CrmDashboard({ today }: { today: string }) {
         minHeight: "100%",
         fontFamily: "'Inter', system-ui, sans-serif",
         color: C.ink,
-        background: "linear-gradient(135deg, #EAF7F1 0%, #EEEBFB 45%, #FBF0F6 100%)",
+        background: `linear-gradient(135deg, ${PAGE_BG} 0%, #0D1526 50%, ${PAGE_BG} 100%)`,
       }}
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
@@ -153,7 +153,7 @@ export default function CrmDashboard({ today }: { today: string }) {
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
                   className="text-xs px-2.5 py-2 rounded-lg"
-                  style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+                  style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
                 />
                 <span className="text-xs" style={{ color: C.faint }}>to</span>
                 <input
@@ -161,7 +161,7 @@ export default function CrmDashboard({ today }: { today: string }) {
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
                   className="text-xs px-2.5 py-2 rounded-lg"
-                  style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+                  style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
                 />
               </div>
             )}
@@ -169,7 +169,7 @@ export default function CrmDashboard({ today }: { today: string }) {
               value={range}
               onChange={(e) => setRange(e.target.value as DateRangeKey)}
               className="text-xs font-medium px-3 py-2 rounded-lg"
-              style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}`, color: C.ink }}
+              style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.ink }}
             >
               {RANGE_OPTIONS.map((o) => (
                 <option key={o.key} value={o.key}>{o.label}</option>
@@ -179,7 +179,7 @@ export default function CrmDashboard({ today }: { today: string }) {
               onClick={handleRefresh}
               disabled={refreshing}
               className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg disabled:opacity-50"
-              style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}`, color: C.muted }}
+              style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.muted }}
             >
               <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
               Refresh
@@ -188,11 +188,11 @@ export default function CrmDashboard({ today }: { today: string }) {
         </div>
 
         {loading ? (
-          <div className="rounded-xl px-5 py-10 text-sm text-center" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}`, color: C.faint }}>
+          <div className="rounded-xl px-5 py-10 text-sm text-center" style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.faint }}>
             Loading CRM data…
           </div>
         ) : !data?.configured ? (
-          <div className="rounded-xl px-5 py-8 text-sm text-center" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}`, color: C.faint }}>
+          <div className="rounded-xl px-5 py-8 text-sm text-center" style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.faint }}>
             {data?.message ?? "Pipedrive is not configured."}
           </div>
         ) : (
@@ -248,8 +248,8 @@ function KpiRow({ data }: { data: CrmOverview }) {
       value: fmtCurrency(k.won_revenue),
       change: fmtPct(k.revenue_growth_pct),
       icon: DollarSign,
-      bg: "#D7F6EA",
-      fg: "#0E9F6E",
+      bg: "#0F2E2A",
+      fg: "#34D399",
       spark: trendPoints,
     },
     {
@@ -257,40 +257,40 @@ function KpiRow({ data }: { data: CrmOverview }) {
       value: fmtCurrency(k.open_pipeline_value),
       change: null,
       icon: Target,
-      bg: "#E7E4FC",
-      fg: "#6E5AE0",
+      bg: "#241A4A",
+      fg: "#A78BFA",
     },
     {
       label: "Deals Won",
       value: String(k.deals_won),
       change: null,
       icon: CheckCircle2,
-      bg: "#DCEEFB",
-      fg: "#2D9CDB",
+      bg: "#0C2038",
+      fg: "#38BDF8",
     },
     {
       label: "Conversion Rate",
       value: k.conversion_rate_pct === null ? "Not available" : `${k.conversion_rate_pct}%`,
       change: null,
       icon: Percent,
-      bg: "#FCE6DA",
-      fg: "#DD7A33",
+      bg: "#3D1F0C",
+      fg: "#FB923C",
     },
     {
       label: "Activities Due",
       value: String(k.activities_due),
       change: null,
       icon: Clock,
-      bg: "#FDE8EC",
-      fg: "#E0507A",
+      bg: "#3F1233",
+      fg: "#F472B6",
     },
     {
       label: "New Contacts",
       value: String(k.new_contacts),
       change: null,
       icon: Users,
-      bg: "#EAF3E0",
-      fg: "#6B9E3F",
+      bg: "#1A2E12",
+      fg: "#84CC16",
     },
   ];
 
@@ -300,7 +300,7 @@ function KpiRow({ data }: { data: CrmOverview }) {
         <div
           key={c.label}
           className="rounded-xl p-4 flex flex-col gap-2"
-          style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
         >
           <div className="flex items-center justify-between">
             <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.bg }}>
@@ -349,7 +349,7 @@ function ChartCard({
   title, subtitle, right, children,
 }: { title: string; subtitle?: string; right?: React.ReactNode; children: React.ReactNode }) {
   return (
-    <div className="rounded-xl p-5 h-full" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl p-5 h-full" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <div className="flex items-center justify-between mb-1">
         <div>
           <h3 className="text-sm font-semibold">{title}</h3>
@@ -379,7 +379,7 @@ function RevenueTrendCard({
           value={trendPeriod}
           onChange={(e) => onTrendPeriodChange(e.target.value as TrendPeriod)}
           className="text-[11px] font-medium px-2 py-1.5 rounded-lg"
-          style={{ background: "rgba(16,24,40,0.03)", border: `1px solid ${C.border}`, color: C.muted }}
+          style={{ background: "rgba(255,255,255,0.05)", border: `1px solid ${C.border}`, color: C.muted }}
         >
           {TREND_OPTIONS.map((o) => (
             <option key={o.key} value={o.key}>{o.label}</option>
@@ -395,15 +395,15 @@ function RevenueTrendCard({
             <AreaChart data={points} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
               <defs>
                 <linearGradient id="revTrendFill" x1="0" y1="0" x2="0" y2="1">
-                  <stop offset="0%" stopColor="#0E9F6E" stopOpacity={0.3} />
-                  <stop offset="100%" stopColor="#0E9F6E" stopOpacity={0} />
+                  <stop offset="0%" stopColor="#34D399" stopOpacity={0.3} />
+                  <stop offset="100%" stopColor="#34D399" stopOpacity={0} />
                 </linearGradient>
               </defs>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,24,40,0.06)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis dataKey="date" tick={{ fontSize: 10, fill: C.faint }} tickFormatter={fmtDate} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: C.faint }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => fmtCurrency(v)} />
               <Tooltip formatter={(v) => fmtCurrency(Number(v))} labelFormatter={(l) => fmtDate(String(l))} />
-              <Area type="monotone" dataKey="value" stroke="#0E9F6E" strokeWidth={2} fill="url(#revTrendFill)" />
+              <Area type="monotone" dataKey="value" stroke="#34D399" strokeWidth={2} fill="url(#revTrendFill)" />
             </AreaChart>
           </ResponsiveContainer>
         </div>
@@ -422,7 +422,7 @@ function PipelineByStageCard({ data }: { data: CrmOverview }) {
         <div className="h-56 mt-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={rows} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,24,40,0.06)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis dataKey="stage_name" tick={{ fontSize: 10, fill: C.faint }} axisLine={false} tickLine={false} interval={0} angle={-15} textAnchor="end" height={50} />
               <YAxis tick={{ fontSize: 10, fill: C.faint }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => fmtCurrency(v)} />
               <Tooltip formatter={(v) => fmtCurrency(Number(v))} />
@@ -474,13 +474,13 @@ function WonVsLostCard({ data }: { data: CrmOverview }) {
         <div className="h-56 mt-2">
           <ResponsiveContainer width="100%" height="100%">
             <BarChart data={rows} margin={{ top: 5, right: 5, bottom: 0, left: 0 }}>
-              <CartesianGrid strokeDasharray="3 3" stroke="rgba(16,24,40,0.06)" vertical={false} />
+              <CartesianGrid strokeDasharray="3 3" stroke="rgba(255,255,255,0.08)" vertical={false} />
               <XAxis dataKey="month" tick={{ fontSize: 10, fill: C.faint }} axisLine={false} tickLine={false} />
               <YAxis tick={{ fontSize: 10, fill: C.faint }} axisLine={false} tickLine={false} width={50} tickFormatter={(v) => fmtCurrency(v)} />
               <Tooltip formatter={(v) => fmtCurrency(Number(v))} />
               <Legend wrapperStyle={{ fontSize: 11 }} />
-              <Bar dataKey="won_value" name="Won" fill="#0E9F6E" radius={[6, 6, 0, 0]} />
-              <Bar dataKey="lost_value" name="Lost" fill="#F04438" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="won_value" name="Won" fill="#34D399" radius={[6, 6, 0, 0]} />
+              <Bar dataKey="lost_value" name="Lost" fill="#F87171" radius={[6, 6, 0, 0]} />
             </BarChart>
           </ResponsiveContainer>
         </div>
@@ -504,9 +504,9 @@ function EmptyChart({ label }: { label: string }) {
 function ForecastCard({ data }: { data: CrmOverview }) {
   const f = data.forecast;
   return (
-    <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <div className="flex items-center gap-2 mb-1">
-        <Target size={14} style={{ color: "#6E5AE0" }} />
+        <Target size={14} style={{ color: "#A78BFA" }} />
         <h3 className="text-sm font-semibold">Sales Forecast</h3>
       </div>
       {f ? (
@@ -535,7 +535,7 @@ function TopDealsCard({
 }: { data: CrmOverview; expandedDeal: number | null; setExpandedDeal: (id: number | null) => void }) {
   const deals = data.top_deals ?? [];
   return (
-    <div className="rounded-xl overflow-hidden" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl overflow-hidden" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <div className="px-5 py-4">
         <h3 className="text-sm font-semibold">Top Open Deals</h3>
         <p className="text-[11px]" style={{ color: C.faint }}>Ranked by value, highest first</p>
@@ -608,17 +608,17 @@ function ActivitiesCard({ data }: { data: CrmOverview }) {
   const a = data.activities;
   if (!a) return null;
   return (
-    <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <h3 className="text-sm font-semibold mb-3">Activities</h3>
       <div className="grid grid-cols-3 gap-2 mb-4">
         <ActivityStat label="Overdue" value={a.overdue_count} color={C.down} />
-        <ActivityStat label="Due Today" value={a.due_today_count} color="#DD9A2E" />
-        <ActivityStat label="Upcoming" value={a.upcoming_count} color="#2D9CDB" />
+        <ActivityStat label="Due Today" value={a.due_today_count} color="#FBBF24" />
+        <ActivityStat label="Upcoming" value={a.upcoming_count} color="#38BDF8" />
       </div>
       {Object.keys(a.by_type).length > 0 && (
         <div className="flex flex-wrap gap-2 mb-3">
           {Object.entries(a.by_type).map(([type, count]) => (
-            <span key={type} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(16,24,40,0.04)", color: C.muted }}>
+            <span key={type} className="text-xs px-2.5 py-1 rounded-full" style={{ background: "rgba(255,255,255,0.05)", color: C.muted }}>
               {type} <span style={{ color: C.ink, fontWeight: 600 }}>{count}</span>
             </span>
           ))}
@@ -642,7 +642,7 @@ function ActivitiesCard({ data }: { data: CrmOverview }) {
 
 function ActivityStat({ label, value, color }: { label: string; value: number; color: string }) {
   return (
-    <div className="rounded-lg px-3 py-2 text-center" style={{ background: "rgba(16,24,40,0.03)" }}>
+    <div className="rounded-lg px-3 py-2 text-center" style={{ background: "rgba(255,255,255,0.05)" }}>
       <p className="text-lg font-bold" style={{ color }}>{value}</p>
       <p className="text-[10px]" style={{ color: C.faint }}>{label}</p>
     </div>
@@ -663,11 +663,11 @@ function ContactsCard({ data }: { data: CrmOverview }) {
     { label: "Prospects", value: c.prospects_count },
   ];
   return (
-    <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <h3 className="text-sm font-semibold mb-3">Contacts &amp; Companies</h3>
       <div className="grid grid-cols-2 gap-2 mb-3">
         {stats.map((s) => (
-          <div key={s.label} className="rounded-lg px-3 py-2" style={{ background: "rgba(16,24,40,0.03)" }}>
+          <div key={s.label} className="rounded-lg px-3 py-2" style={{ background: "rgba(255,255,255,0.05)" }}>
             <p className="text-lg font-bold">{s.value}</p>
             <p className="text-[10px]" style={{ color: C.faint }}>{s.label}</p>
           </div>
@@ -729,9 +729,9 @@ function RisksCard({ data }: { data: CrmOverview }) {
   const totalCount = sections.reduce((s, sec) => s + sec.items.length, 0);
 
   return (
-    <div className="rounded-xl p-5" style={{ background: "rgba(255,255,255,0.85)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}` }}>
       <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle size={15} style={{ color: "#DD9A2E" }} />
+        <AlertTriangle size={15} style={{ color: "#FBBF24" }} />
         <h3 className="text-sm font-semibold">Risks / Attention Required</h3>
       </div>
       {totalCount === 0 ? (
@@ -744,7 +744,7 @@ function RisksCard({ data }: { data: CrmOverview }) {
                 <p className="text-xs font-semibold mb-1.5">{sec.title} ({sec.items.length})</p>
                 <div className="flex flex-col gap-1.5">
                   {sec.items.slice(0, 4).map((d) => (
-                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: "#FDF4E8", border: "1px solid #F5DFB8" }}>
+                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: "#3D2E12", border: "1px solid #5C4419" }}>
                       <p className="text-xs font-medium">{d.name} <span style={{ color: C.faint, fontWeight: 400 }}>· {d.company ?? "—"}</span></p>
                       <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>{sec.reason(d)}</p>
                     </div>
@@ -770,7 +770,7 @@ function LimitationsCard({ data }: { data: CrmOverview }) {
   const limitations = data.limitations ?? [];
   if (limitations.length === 0) return null;
   return (
-    <div className="rounded-xl px-5 py-3" style={{ background: "rgba(16,24,40,0.03)", border: `1px solid ${C.border}` }}>
+    <div className="rounded-xl px-5 py-3" style={{ background: "rgba(255,255,255,0.04)", border: `1px solid ${C.border}` }}>
       <p className="text-[11px] font-semibold mb-1" style={{ color: C.muted }}>Data notes</p>
       <ul className="text-[11px] leading-relaxed list-disc pl-4" style={{ color: C.faint }}>
         {limitations.map((l, i) => (
