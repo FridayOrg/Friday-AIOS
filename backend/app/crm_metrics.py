@@ -41,6 +41,12 @@ ACTIVITY_TYPE_LABELS = {"call": "Calls", "meeting": "Meetings", "email": "Emails
 NOTABLE_REVENUE_DROP_PCT = -20.0
 NOTABLE_OVERDUE_ACTIVITIES = 5
 
+# Trailing window for the "Deal Win Rate" Daily Brief card — deliberately
+# NOT tied to the dashboard's selected date-range filter, since a win-rate
+# stat is more meaningful over a rolling window than "since the 1st of the
+# month." Configurable here, not a hidden magic number.
+WIN_RATE_WINDOW_DAYS = 90
+
 
 # ---------------------------------------------------------------------------
 # Parsing helpers — Pipedrive dates are plain "YYYY-MM-DD" or
@@ -207,12 +213,26 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
         elif close_on <= today + timedelta(days=APPROACHING_CLOSE_DAYS):
             approaching.append(d)
 
+    # Open deals expected to close within the current calendar month (for
+    # the "Open Sales Pipeline" Daily Brief card's "expected to close this
+    # month" subtext) — a calendar-month window, not date-range-scoped.
+    month_start = today.replace(day=1)
+    month_end = (
+        date(today.year + 1, 1, 1) if today.month == 12 else date(today.year, today.month + 1, 1)
+    ) - timedelta(days=1)
+    closing_this_month = [
+        d for d in open_deals
+        if (close_on := _parse_date(d.get("expected_close_date"))) and month_start <= close_on <= month_end
+    ]
+
     return {
         "total_open_value": _sum_value(open_deals),
         "total_open_count": len(open_deals),
         "by_stage": stage_rows,
         "approaching_close_count": len(approaching),
         "overdue_close_count": len(overdue),
+        "closing_this_month_value": _sum_value(closing_this_month),
+        "closing_this_month_count": len(closing_this_month),
     }
 
 
@@ -396,6 +416,24 @@ def build_conversion(all_deals: list[dict], start: date, end: date, limitations:
     }
 
 
+def build_win_rate(all_deals: list[dict], today: date, window_days: int = WIN_RATE_WINDOW_DAYS) -> dict:
+    """Win rate over a trailing window ending today (see WIN_RATE_WINDOW_DAYS)
+    for the Daily Brief's "Deal Win Rate" card — won / (won + lost) among
+    deals whose won_time/lost_time falls in the last `window_days` days.
+    rate_pct is None (not 0%) when nothing closed in the window at all."""
+    start = today - timedelta(days=window_days - 1)
+    won = [d for d in all_deals if d.get("status") == "won" and (w := _parse_date(d.get("won_time"))) and start <= w <= today]
+    lost = [d for d in all_deals if d.get("status") == "lost" and (l := _parse_date(d.get("lost_time"))) and start <= l <= today]
+    total = len(won) + len(lost)
+    return {
+        "won_count": len(won),
+        "lost_count": len(lost),
+        "closed_count": total,
+        "rate_pct": round(len(won) / total * 100, 1) if total else None,
+        "window_days": window_days,
+    }
+
+
 def build_forecast(all_deals: list[dict], stages: list[dict], start: date, end: date, limitations: list[str]) -> dict | None:
     """Weighted forecast = sum(value * probability/100) for open deals with
     an expected_close_date in [start, end]. Uses the deal's own
@@ -571,7 +609,12 @@ def build_notable_insight(revenue: dict, risks: dict, activity_metrics: dict) ->
 # ---------------------------------------------------------------------------
 
 def build_overview(
-    range_key: str, custom_start: str | None, custom_end: str | None, trend_period: str, today: date
+    range_key: str,
+    custom_start: str | None,
+    custom_end: str | None,
+    trend_period: str,
+    today: date,
+    revenue_target: float | None = None,
 ) -> dict:
     if not pd.is_configured():
         return {
@@ -606,6 +649,7 @@ def build_overview(
     activity_metrics = build_activities(activities, start, end, today)
     contacts = build_contacts(persons, orgs, start, end)
     conversion = build_conversion(all_deals, start, end, limitations)
+    win_rate = build_win_rate(all_deals, today)
     forecast = build_forecast(all_deals, stages, start, end, limitations)
     trend = build_revenue_trend(all_deals, trend_period, today)
     won_vs_lost = build_won_vs_lost(all_deals, start, end)
@@ -631,6 +675,8 @@ def build_overview(
         "activities": activity_metrics,
         "contacts": contacts,
         "conversion": conversion,
+        "win_rate": win_rate,
+        "revenue_target": revenue_target,
         "forecast": forecast,
         "revenue_trend": trend,
         "won_vs_lost": won_vs_lost,

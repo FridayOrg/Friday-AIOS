@@ -29,6 +29,9 @@ Endpoints:
   GET  /crm/overview    — CEO CRM dashboard data sourced live from Pipedrive
                            (deals, pipeline, activities, contacts, risks, charts);
                            see pipedrive_client.py / crm_metrics.py
+  GET  /settings/revenue-target — the configured monthly revenue target used
+                           by the Daily Brief's Revenue card (defaults if unset)
+  PATCH /settings/revenue-target — sets the monthly revenue target
   POST /calendar/events — creates a real Google Calendar event directly, given
                            full details (see calendar_client.py's create_event /
                            CalendarWriteError)
@@ -346,6 +349,23 @@ def refresh_industry_updates(request: Request):
     return {"status": "ok", "fetched": len(raw_items), "relevant": len(relevant), "stored": stored}
 
 
+REVENUE_TARGET_SETTING_KEY = "monthly_revenue_target"
+DEFAULT_MONTHLY_REVENUE_TARGET = 50000.0
+
+
+def _get_revenue_target() -> float:
+    """Reads the configured monthly revenue target (see PATCH /settings/
+    revenue-target), falling back to DEFAULT_MONTHLY_REVENUE_TARGET if it was
+    never set or the DB isn't reachable — a missing target shouldn't break
+    the whole CRM overview."""
+    try:
+        raw = db.get_setting(REVENUE_TARGET_SETTING_KEY, str(DEFAULT_MONTHLY_REVENUE_TARGET))
+        return float(raw)
+    except Exception as e:
+        logger.warning("Could not read revenue target setting: %s", e)
+        return DEFAULT_MONTHLY_REVENUE_TARGET
+
+
 @app.get("/crm/overview")
 def crm_overview(
     range: str = "month",
@@ -358,10 +378,27 @@ def crm_overview(
     7d|30d|90d|quarter|year. See crm_metrics.build_overview for exactly how
     each field is derived from Pipedrive."""
     try:
-        return crm_metrics.build_overview(range, start, end, trend_period, now().date())
+        return crm_metrics.build_overview(range, start, end, trend_period, now().date(), _get_revenue_target())
     except Exception as e:
         logger.warning("Could not build CRM overview: %s", e)
         return {"configured": crm_metrics.pd.is_configured(), "message": "Failed to build CRM overview.", "error": str(e)}
+
+
+class RevenueTargetRequest(BaseModel):
+    target: float
+
+
+@app.get("/settings/revenue-target")
+def get_revenue_target():
+    return {"target": _get_revenue_target()}
+
+
+@app.patch("/settings/revenue-target")
+def set_revenue_target(req: RevenueTargetRequest):
+    if req.target < 0:
+        raise HTTPException(status_code=400, detail="target must be >= 0")
+    db.set_setting(REVENUE_TARGET_SETTING_KEY, str(req.target))
+    return {"status": "ok", "target": req.target}
 
 
 _SCHEDULE_PROPOSAL_RE = re.compile(r"```schedule-proposal\s*\n(.*?)\n```", re.DOTALL)

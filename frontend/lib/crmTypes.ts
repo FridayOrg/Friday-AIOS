@@ -55,6 +55,8 @@ export interface CrmOverview {
     by_stage: StageRow[];
     approaching_close_count: number;
     overdue_close_count: number;
+    closing_this_month_value: number;
+    closing_this_month_count: number;
   };
   top_deals?: DealRow[];
   risks?: {
@@ -87,6 +89,14 @@ export interface CrmOverview {
     accounts_without_recent_activity: { id: number; name: string; last_activity_date: string | null }[];
   };
   conversion?: { won_count: number; lost_count: number; rate_pct: number } | null;
+  win_rate?: {
+    won_count: number;
+    lost_count: number;
+    closed_count: number;
+    rate_pct: number | null;
+    window_days: number;
+  };
+  revenue_target?: number | null;
   forecast?: { forecast_value: number; included_deal_count: number; excluded_no_probability_count: number } | null;
   revenue_trend?: { period: string; points: { date: string; value: number }[] };
   won_vs_lost?: { month: string; won_value: number; lost_value: number }[];

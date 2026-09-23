@@ -12,10 +12,10 @@ import {
   TrendingUp,
   TrendingDown,
   LayoutGrid,
-  CalendarDays,
   FileText,
   ExternalLink,
   User,
+  Users,
   CalendarPlus,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/data";
@@ -37,6 +37,22 @@ const TILE = {
   retention: { from: "#5B1A46", to: "#6E2159", icon: "#F472B6", iconBg: "#3F1233" },
   burn: { from: "#5A2E12", to: "#6E3A18", icon: "#FB923C", iconBg: "#3D1F0C" },
   calendar: { from: "#0F2A4A", to: "#133A63", icon: "#38BDF8", iconBg: "#0C2038" },
+  leads: { from: "#0C3A42", to: "#125563", icon: "#22D3EE", iconBg: "#0A2A30" },
+};
+
+// ---------------------------------------------------------------------------
+// MOCK DATA — "New Qualified Leads" card only. Pipedrive/the CRM has no lead-
+// qualification tracking yet, so this card intentionally shows hardcoded
+// placeholder numbers rather than fabricating a "live" query against data
+// that doesn't exist. Everything else in the Daily Brief row is real data
+// from GET /api/crm (see crm_metrics.py). Swap this constant out for a real
+// fetch once lead-qualification tracking exists in the CRM.
+// ---------------------------------------------------------------------------
+const MOCK_QUALIFIED_LEADS = {
+  isMock: true as const,
+  count: 18,
+  pctChangeVsLastMonth: 12.5,
+  awaitingFirstContact: 5,
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -173,6 +189,21 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
       .catch(() => setCrm({ configured: false, message: "Could not reach the Friday backend." }))
       .finally(() => setCrmLoading(false));
   }, []);
+
+  // Monthly revenue target (see backend/app/main.py's /settings/revenue-target)
+  // for the Revenue card's "% of target" badge + progress bar. Falls back to
+  // `crm.revenue_target` (also returned inline on the CRM overview response)
+  // if this separate fetch fails, so one flaky request doesn't blank the badge.
+  const [revenueTarget, setRevenueTarget] = useState<number | null>(null);
+
+  useEffect(() => {
+    fetch("/api/settings/revenue-target", { cache: "no-store" })
+      .then((res) => res.json())
+      .then((d) => setRevenueTarget(typeof d.target === "number" ? d.target : null))
+      .catch(() => setRevenueTarget(null));
+  }, []);
+
+  const effectiveRevenueTarget = revenueTarget ?? crm?.revenue_target ?? null;
 
   // Open by default — Quick Access stays expanded; clicking a card's header
   // still toggles it closed if the user wants to collapse it.
@@ -371,71 +402,93 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            <OverviewTile
-              key={glow?.section === "financial" ? `mrr-${glow.ts}` : "mrr"}
-              tile={TILE.revenue}
-              icon={DollarSign}
-              label="Won Revenue (This Month)"
-              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
-              trendPct={crm?.configured ? crm.kpis!.revenue_growth_pct : null}
-              neutral={!crm?.configured || crm.kpis!.revenue_growth_pct === null}
-              trendLabel={crm?.configured ? "vs last month" : crm?.message ?? "Pipedrive not connected"}
-              positive
-              glow={glow?.section === "financial" ? C.teal : undefined}
+            {/* Card 1: New Qualified Leads — MOCK DATA, see MOCK_QUALIFIED_LEADS above */}
+            <BriefTile
+              tile={TILE.leads}
+              icon={Users}
+              label="New Qualified Leads"
+              value={String(MOCK_QUALIFIED_LEADS.count)}
+              badge={{ text: `${MOCK_QUALIFIED_LEADS.pctChangeVsLastMonth}%`, positive: MOCK_QUALIFIED_LEADS.pctChangeVsLastMonth >= 0 }}
+              smallLabel="vs last month"
+              subtext={[`${MOCK_QUALIFIED_LEADS.awaitingFirstContact} awaiting first contact`]}
             />
-            <OverviewTile
+
+            {/* Card 2: Open Sales Pipeline — real Pipedrive data */}
+            <BriefTile
               tile={TILE.deals}
-              icon={Target}
-              label="Open Pipeline"
-              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
-              trendPct={null}
-              neutral
-              trendLabel={
-                crm?.configured
-                  ? `${crm.pipeline?.total_open_count ?? 0} open deal${crm.pipeline?.total_open_count === 1 ? "" : "s"}`
-                  : crm?.message ?? "Pipedrive not connected"
-              }
-              positive
-            />
-            <OverviewTile
-              key={glow?.section === "pipeline" ? `guarantee-${glow.ts}` : "guarantee"}
-              tile={TILE.retention}
               icon={TrendingUp}
-              label="Conversion Rate"
+              label="Open Sales Pipeline"
+              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
+              subtext={
+                crm?.configured
+                  ? [
+                      `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"}`,
+                      `${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
+                    ]
+                  : [crm?.message ?? "Pipedrive not connected"]
+              }
+            />
+
+            {/* Card 3: Deal Win Rate — real Pipedrive data, trailing window (see WIN_RATE_WINDOW_DAYS) */}
+            <BriefTile
+              key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
+              tile={TILE.retention}
+              icon={Target}
+              label="Deal Win Rate"
               value={
                 crmLoading
                   ? "—"
                   : !crm?.configured
                   ? "N/A"
-                  : crm.kpis!.conversion_rate_pct === null
+                  : crm.win_rate?.rate_pct == null
                   ? "N/A"
-                  : `${crm.kpis!.conversion_rate_pct}%`
+                  : `${crm.win_rate.rate_pct}%`
               }
-              trendPct={null}
-              neutral
-              trendLabel={
-                crm?.configured ? (
-                  crm.conversion ? (
-                    <>
-                      <span style={{ color: C.up, fontWeight: 600 }}>{crm.conversion.won_count} won</span>
-                      {" / "}
-                      <span style={{ color: C.down, fontWeight: 600 }}>{crm.conversion.lost_count} lost</span>
-                    </>
-                  ) : (
-                    "no deals won or lost yet this month"
-                  )
-                ) : (
-                  crm?.message ?? "Pipedrive not connected"
-                )
+              smallLabel={crm?.configured && crm.win_rate ? `Last ${crm.win_rate.window_days} days` : undefined}
+              subtext={
+                crm?.configured
+                  ? [
+                      crm.win_rate && crm.win_rate.closed_count > 0
+                        ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
+                        : "no deals closed in this window yet",
+                    ]
+                  : [crm?.message ?? "Pipedrive not connected"]
               }
-              positive
               glow={glow?.section === "pipeline" ? C.teal : undefined}
             />
-            <NextMeetingsTile
-              key={glow?.section === "calendar" ? `next-${glow.ts}` : "next"}
-              tile={TILE.calendar}
-              upcoming={data.upcomingMeetings}
-              glow={glow?.section === "calendar" ? C.teal : undefined}
+
+            {/* Card 4: Revenue Achieved This Month — real Pipedrive data + configurable target */}
+            <BriefTile
+              key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
+              tile={TILE.revenue}
+              icon={DollarSign}
+              label="Revenue Achieved This Month"
+              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
+              badge={
+                crm?.configured && effectiveRevenueTarget
+                  ? {
+                      text: `${Math.round((crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)}% of ${fmtUsd(effectiveRevenueTarget)} target`,
+                      positive: crm.kpis!.won_revenue >= effectiveRevenueTarget,
+                    }
+                  : undefined
+              }
+              progressPct={
+                crm?.configured && effectiveRevenueTarget
+                  ? Math.min(100, (crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)
+                  : undefined
+              }
+              subtext={
+                crm?.configured
+                  ? effectiveRevenueTarget
+                    ? [
+                        crm.kpis!.won_revenue >= effectiveRevenueTarget
+                          ? "Target reached"
+                          : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
+                      ]
+                    : ["No revenue target set"]
+                  : [crm?.message ?? "Pipedrive not connected"]
+              }
+              glow={glow?.section === "financial" ? C.teal : undefined}
             />
           </div>
 
@@ -514,107 +567,79 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 }
 
 // ---------------------------------------------------------------------------
-// OVERVIEW TILE
+// BRIEF TILE — the 4 Daily Brief cards (New Qualified Leads, Open Sales
+// Pipeline, Deal Win Rate, Revenue Achieved This Month). Icon top-right,
+// label top-left, big metric, optional %-change badge (green/red + arrow),
+// optional progress bar (Revenue card only), and 1-2 lines of muted subtext.
 // ---------------------------------------------------------------------------
 
-function OverviewTile({
+function BriefTile({
   tile,
   icon: Icon,
   label,
   value,
-  trendPct,
-  trendLabel,
-  positive,
-  neutral,
+  smallLabel,
+  badge,
+  subtext,
+  progressPct,
   glow,
 }: {
   tile: { from: string; to: string; icon: string; iconBg: string };
   icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   label: string;
   value: string;
-  trendPct: number | null;
-  trendLabel: React.ReactNode;
-  positive: boolean;
-  neutral?: boolean;
+  smallLabel?: string;
+  badge?: { text: string; positive: boolean };
+  subtext: React.ReactNode[];
+  progressPct?: number;
   glow?: string;
 }) {
   const g = glowProps(!!glow, glow ?? "");
   return (
     <div
-      className={`rounded-xl p-4${g.className}`}
+      className={`rounded-xl p-4 flex flex-col${g.className}`}
       style={{ background: `linear-gradient(150deg, ${tile.from}, ${tile.to})`, ...g.style }}
     >
-      <div className="flex items-start justify-between mb-5">
+      <div className="flex items-start justify-between mb-4">
         <p className="text-xs font-medium" style={{ color: C.ink, opacity: 0.75 }}>{label}</p>
-        <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: tile.iconBg }}>
+        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tile.iconBg }}>
           <Icon size={13} style={{ color: tile.icon }} />
         </span>
       </div>
-      <p className="text-2xl font-bold mb-1.5">{value}</p>
-      <div className="flex items-center gap-1 text-xs">
-        {!neutral &&
-          (positive ? (
-            <TrendingUp size={12} style={{ color: C.up }} />
-          ) : (
-            <TrendingDown size={12} style={{ color: C.down }} />
-          ))}
-        {trendPct !== null && (
-          <span className="font-semibold" style={{ color: neutral ? C.muted : positive ? C.up : C.down }}>
-            {trendPct > 0 ? "+" : ""}
-            {trendPct.toFixed(1)}%
+
+      <div className="flex items-center gap-2 flex-wrap mb-1">
+        <p className="text-2xl font-bold">{value}</p>
+        {badge && (
+          <span
+            className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
+            style={{
+              color: badge.positive ? C.up : C.down,
+              background: badge.positive ? "rgba(52,211,153,0.12)" : "rgba(248,113,113,0.12)",
+            }}
+          >
+            {badge.positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+            {badge.text}
           </span>
         )}
-        <span style={{ color: C.muted }}>{trendLabel}</span>
       </div>
-    </div>
-  );
-}
-
-// ---------------------------------------------------------------------------
-// NEXT MEETINGS TILE — replaces the "Today's Spend" tile in the overview row.
-// Shows today's still-to-come meetings; once they're all done, the next day that
-// has meetings. Data (real-clock classified) comes from getDashboardData.
-// ---------------------------------------------------------------------------
-
-function NextMeetingsTile({
-  tile,
-  upcoming,
-  glow,
-}: {
-  tile: { from: string; to: string; icon: string; iconBg: string };
-  upcoming: DashboardData["upcomingMeetings"];
-  glow?: string;
-}) {
-  const g = glowProps(!!glow, glow ?? "");
-  return (
-    <div
-      className={`rounded-xl p-4${g.className}`}
-      style={{ background: `linear-gradient(150deg, ${tile.from}, ${tile.to})`, ...g.style }}
-    >
-      <div className="flex items-start justify-between mb-3">
-        <p className="text-xs font-medium" style={{ color: C.ink, opacity: 0.75 }}>Next meetings</p>
-        <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: tile.iconBg }}>
-          <CalendarDays size={13} style={{ color: tile.icon }} />
-        </span>
-      </div>
-
-      {!upcoming ? (
-        <p className="text-sm font-medium" style={{ color: C.muted }}>No upcoming meetings</p>
-      ) : (
-        <>
-          <p className="text-sm font-bold mb-2">{upcoming.dayLabel}</p>
-          <div className="space-y-1.5">
-            {upcoming.meetings.map((m, i) => (
-              <div key={i} className="flex items-baseline gap-2 text-xs">
-                <span className="tabular-nums shrink-0 w-16" style={{ color: C.muted }}>
-                  {to12h(m.time)}
-                </span>
-                <span className="truncate font-medium" style={{ color: C.ink }}>{m.name}</span>
-              </div>
-            ))}
-          </div>
-        </>
+      {smallLabel && (
+        <p className="text-[11px] mb-1" style={{ color: C.muted }}>{smallLabel}</p>
       )}
+
+      {progressPct !== undefined && (
+        <div className="w-full h-1.5 rounded-full mt-1.5 mb-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+          <div
+            className="h-full rounded-full"
+            style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: C.up }}
+          />
+        </div>
+      )}
+
+      <div className="mt-auto pt-1 flex flex-col gap-0.5">
+        {subtext.map((line, i) => (
+          <p key={i} className="text-xs" style={{ color: C.muted }}>{line}</p>
+        ))}
+      </div>
     </div>
   );
 }
