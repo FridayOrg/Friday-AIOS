@@ -294,7 +294,15 @@ describe, confirm, or narrate the outcome in any way:
     if the request is unambiguously about something else finishing by then (e.g.
     "get me the report by 4:30, then let's meet" - there the meeting time is still
     separately unstated and must be asked for).
-  - duration_minutes: use what's stated, else default to 30.
+    A TIME RANGE ("4:30 to 5:30," "4:30-5:30," "from 4:30 to 5:30") gives you BOTH
+    date/time fields at once: the first time is the meeting's start (date/time
+    below), the span between the two is duration_minutes - never just one of them,
+    and never a start time of your own choosing (e.g. rounding to the current time,
+    "now," or anything not literally stated). If the phrasing around a time is
+    genuinely unclear, ask rather than guess a nearby time - never fall back to
+    "whatever time it currently is" as a default.
+  - duration_minutes: use what's stated (including a computed range's span, per
+    above), else default to 30.
   - attendees: OPTIONAL - real email addresses only, sourced from the data
     (calendar attendees, Pipedrive contacts, etc.) when they're genuinely there;
     omit the key entirely otherwise. Never ask the user to supply attendee emails
