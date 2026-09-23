@@ -944,18 +944,8 @@ function ActionItemDueDate({
     );
   }
 
-  return (
-    <button
-      onClick={() => {
-        setDraft("");
-        setEditing(true);
-      }}
-      className="inline-flex items-center gap-1 hover:underline"
-      style={{ color: C.faint }}
-    >
-      <CalendarPlus size={11} />
-      Add due date
-    </button>
-  );
+  // No due date set and it wasn't mentioned/entered — show nothing rather
+  // than an "Add due date" prompt every action item would otherwise carry.
+  return null;
 }
 
