@@ -6,7 +6,7 @@ BookMySales.ai operates with a lean team of 13 people spanning two office locati
 
 ## 1. Leadership (2 people)
 
-**Richard Coleman, Co-Founder & CEO (Dallas, US)**
+**Paval, Co-Founder & CEO (Dallas, US)**
 Primary: Overall company strategy, enterprise partnerships, US market growth.
 Sub-skills: Fortune 500 sales methodology, client guarantee-fit assessment, executive relationship management.
 
