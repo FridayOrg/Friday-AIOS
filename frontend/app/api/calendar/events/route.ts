@@ -1,10 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-// Proxies to the FastAPI backend's POST /calendar/events (backend/app/main.py) —
-// the one write/action endpoint in this app. Only ever called from
-// ScheduleProposalCard.tsx's "Confirm & Schedule" button, i.e. only after a
-// human has explicitly approved a proposal Ask Friday drafted; nothing here
-// decides on its own to create an event.
+// Proxies to the FastAPI backend's POST /calendar/events (backend/app/main.py).
+// Not used by Ask Friday's own chat flow — the agent schedules a meeting
+// directly server-side the moment it has full details (see main.py's
+// _execute_schedule_proposal), with no separate confirm click. This route
+// stays as a direct way to create an event given full details up front.
 const FRIDAY_API_URL = process.env.FRIDAY_API_URL ?? "http://localhost:8000";
 
 export const dynamic = "force-dynamic";

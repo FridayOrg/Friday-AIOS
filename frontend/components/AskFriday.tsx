@@ -1,9 +1,9 @@
 "use client";
 
 import { useEffect, useRef, useState } from "react";
+import { useRouter } from "next/navigation";
 import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X } from "lucide-react";
 import Markdown from "./Markdown";
-import ScheduleProposalCard, { extractScheduleProposal } from "./ScheduleProposalCard";
 import { useHighlight } from "@/lib/highlight-context";
 
 interface ChatMessage {
@@ -40,21 +40,15 @@ function now() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-// A schedule-proposal fenced block (see ANALYST_HEADER) only ever matches once
-// it's fully streamed in (the regex requires the closing fence), so calling
-// this on every render — including mid-stream — is safe: it just renders as
-// plain markdown until the block completes, then swaps in the confirm card.
-function FridayMessageBody({ text }: { text: string }) {
-  const { cleanText, proposal } = extractScheduleProposal(text);
-  return (
-    <>
-      <Markdown text={cleanText} />
-      {proposal && <ScheduleProposalCard proposal={proposal} />}
-    </>
-  );
-}
+// Scheduling now happens immediately, server-side (see backend/app/main.py's
+// _execute_schedule_proposal) — the agent's reply already IS the final
+// confirmation text by the time it reaches the client, so this just checks
+// for that fixed marker to trigger a dashboard refresh (Calendar card / Next
+// Meetings tile), not to render any special UI of its own.
+const SCHEDULED_MARKER = "Meeting scheduled:";
 
 export default function AskFriday({ onClose }: { onClose?: () => void }) {
+  const router = useRouter();
   const { highlightFromText } = useHighlight();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false); // waiting for the first chunk
@@ -602,6 +596,11 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       state.done = true; // reveal loop finishes catching up on its own, then stops
       pumpSpeech(state.full, true); // speak the final fragment
       highlightFromText(state.full); // match the dashboard against what Friday actually said, not the question
+      if (state.full.includes(SCHEDULED_MARKER)) {
+        // Re-run the dashboard's server-side data fetch so the Calendar card
+        // and Next Meetings tile pick up the just-created event immediately.
+        router.refresh();
+      }
     } catch (err) {
       if ((err as Error)?.name !== "AbortError") {
         state.done = true;
@@ -711,7 +710,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             >
               {m.role === "friday" ? (
                 m.text ? (
-                  <FridayMessageBody text={m.text} />
+                  <Markdown text={m.text} />
                 ) : i === messages.length - 1 && busy ? (
                   <span className="inline-flex gap-1">
                     <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]" />

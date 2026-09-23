@@ -25,12 +25,9 @@ Endpoints:
   GET  /crm/overview    — CEO CRM dashboard data sourced live from Pipedrive
                            (deals, pipeline, activities, contacts, risks, charts);
                            see pipedrive_client.py / crm_metrics.py
-  POST /calendar/events — creates a real Google Calendar event. Only ever called
-                           after a human explicitly confirms a proposal the Analyst
-                           agent drafted in Ask Friday (see calendar_client.py's
-                           create_event / CalendarWriteError) — the only write/
-                           action endpoint in this API, per CLAUDE.md's Action/
-                           Autonomy Model (explicit approval required)
+  POST /calendar/events — creates a real Google Calendar event directly, given
+                           full details (see calendar_client.py's create_event /
+                           CalendarWriteError)
 
 Two agents behind the one chat interface, picked automatically per message by a
 cheap intent-classifier call (llm_client.classify_intent) — the user never has to
@@ -44,15 +41,17 @@ the same context-stuffed prompt and respond; see backend/app/context_loader.py f
 why (and when moving to real tool-calling will make sense: once mock-data files are
 replaced by live connectors).
 
-Every endpoint except one only reads, analyzes, and recommends, per CLAUDE.md's Action/
-Autonomy Model. The sole exception, POST /calendar/events, is a real external write
-(creates a Google Calendar event) — but it is never invoked automatically; it only ever
-fires after a human explicitly confirms a proposal the Analyst agent drafted, matching
-that same model's "Send / update ... requires explicit user approval" rule.
+Scheduling: when the Analyst agent has a complete scheduling request (title, date,
+time), it creates the Google Calendar event directly and immediately - no draft/
+confirm step. This is an explicit, deliberate exception to CLAUDE.md's default
+"externally-visible actions need approval first" rule, made at the founder's own
+request after being told the tradeoff (a wrong date/time/attendee goes out as a real
+invite with nothing to catch it first). See _execute_schedule_proposal below.
 """
 
 import json
 import logging
+import re
 from datetime import datetime, timedelta
 
 import httpx
@@ -142,37 +141,45 @@ class ScheduleEventRequest(BaseModel):
     notes: str | None = None
 
 
-@app.post("/calendar/events")
-def create_calendar_event(req: ScheduleEventRequest):
-    """Creates a real Google Calendar event. Only ever meant to be called after
-    a human explicitly confirms a proposal Ask Friday drafted (see
-    ANALYST_HEADER in context_loader.py and the frontend's schedule-proposal
-    card) — nothing upstream of this endpoint invokes it automatically. Per
-    CLAUDE.md's Action/Autonomy Model, an externally-visible write like this
-    always requires that explicit approval step before it happens."""
+def _schedule_event(req: ScheduleEventRequest) -> dict:
+    """Shared by POST /calendar/events and the agent's auto-schedule path
+    (see _execute_schedule_proposal below) — the actual Google Calendar
+    write, date/time parsing included. Raises ValueError for a bad date/time,
+    calendar_client.CalendarWriteError for anything Google-side."""
     if not GOOGLE_CALENDAR_ID:
-        raise HTTPException(status_code=503, detail="GOOGLE_CALENDAR_ID not configured; cannot create events.")
+        raise calendar_client.CalendarWriteError("GOOGLE_CALENDAR_ID not configured; cannot create events.")
 
     try:
         start = datetime.strptime(f"{req.date} {req.time}", "%Y-%m-%d %H:%M")
     except ValueError:
-        raise HTTPException(status_code=400, detail="Invalid date/time.")
+        raise ValueError("Invalid date/time.")
     start = start.astimezone() if now().tzinfo is None else start.replace(tzinfo=now().tzinfo)
     end = start + timedelta(minutes=req.duration_minutes)
 
+    result = calendar_client.create_event(
+        calendar_id=GOOGLE_CALENDAR_ID,
+        title=req.title,
+        start_iso=start.isoformat(),
+        end_iso=end.isoformat(),
+        attendees=req.attendees,
+        description=req.notes,
+    )
+    return {"start": start, **result}
+
+
+@app.post("/calendar/events")
+def create_calendar_event(req: ScheduleEventRequest):
+    """Creates a real Google Calendar event directly (used by any external
+    caller that already has full details - not exercised by Ask Friday's own
+    chat flow, which schedules inline via _execute_schedule_proposal)."""
     try:
-        result = calendar_client.create_event(
-            calendar_id=GOOGLE_CALENDAR_ID,
-            title=req.title,
-            start_iso=start.isoformat(),
-            end_iso=end.isoformat(),
-            attendees=req.attendees,
-            description=req.notes,
-        )
+        result = _schedule_event(req)
+    except ValueError:
+        raise HTTPException(status_code=400, detail="Invalid date/time.")
     except calendar_client.CalendarWriteError as e:
         raise HTTPException(status_code=502, detail=str(e))
 
-    return {"status": "ok", **result}
+    return {"status": "ok", "id": result["id"], "html_link": result["html_link"]}
 
 
 @app.post("/webhooks/fathom")
@@ -304,6 +311,54 @@ def crm_overview(
         return {"configured": crm_metrics.pd.is_configured(), "message": "Failed to build CRM overview.", "error": str(e)}
 
 
+_SCHEDULE_PROPOSAL_RE = re.compile(r"```schedule-proposal\s*\n(.*?)\n```", re.DOTALL)
+
+
+def _friendly_when(start: datetime) -> str:
+    # %-I isn't portable to Windows' strftime; build it manually instead.
+    hour12 = start.hour % 12 or 12
+    minute = f"{start.minute:02d}"
+    period = "AM" if start.hour < 12 else "PM"
+    return f"{start.strftime('%a, %d %b %Y')} at {hour12}:{minute} {period}"
+
+
+def _execute_schedule_proposal(answer: str) -> str | None:
+    """If `answer` contains a complete schedule-proposal block (see
+    ANALYST_HEADER in context_loader.py), creates the real Google Calendar
+    event right away and returns a deterministic confirmation string to show
+    the user in its place. Returns None if there's no block to act on, so
+    the caller knows to leave `answer` untouched.
+
+    This is the founder's own explicit choice: schedule immediately, no
+    draft/confirm step (see main.py's module docstring). The confirmation
+    text is generated here, not by the LLM, so it's always accurate to what
+    actually got created rather than whatever the model happened to write."""
+    match = _SCHEDULE_PROPOSAL_RE.search(answer)
+    if not match:
+        return None
+
+    try:
+        data = json.loads(match.group(1))
+        req = ScheduleEventRequest(**data)
+    except Exception as e:
+        logger.warning("Could not parse the agent's schedule-proposal block: %s", e)
+        return None
+
+    try:
+        result = _schedule_event(req)
+    except ValueError:
+        return f"I couldn't schedule **{req.title}** — the date/time wasn't valid. Could you try again?"
+    except calendar_client.CalendarWriteError as e:
+        return f"I tried to schedule **{req.title}** but it didn't go through: {e}"
+
+    when = _friendly_when(result["start"])
+    attendee_note = f" with {', '.join(req.attendees)}" if req.attendees else ""
+    return (
+        f"✅ Meeting scheduled: **{req.title}**, {when} ({req.duration_minutes} min){attendee_note}. "
+        f"[View on Google Calendar]({result['html_link']})"
+    )
+
+
 @app.post("/ask", response_model=AskResponse)
 def ask(payload: AskRequest):
     question = payload.question.strip()
@@ -316,6 +371,10 @@ def ask(payload: AskRequest):
         answer = ask_friday(system_prompt, question, history=history)
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM call failed: {e}")
+
+    auto = _execute_schedule_proposal(answer)
+    if auto is not None:
+        answer = auto
     return AskResponse(answer=answer, agent=agent)
 
 
@@ -330,9 +389,31 @@ def ask_stream(payload: AskRequest):
     def event_stream():
         agent, system_prompt = _route(question, history)
         yield f"data: {json.dumps({'agent': agent})}\n\n"
+        full = ""
+        withheld: list[str] = []
+        # A schedule-proposal reply is ONLY a bare fenced block (see
+        # ANALYST_HEADER) - nothing else in this app streams a reply that
+        # opens with a code fence, so that's a safe signal to stop
+        # forwarding chunks live and wait for the whole thing, rather than
+        # ever showing the user raw JSON mid-stream.
+        withholding = False
         try:
             for chunk in ask_friday_stream(system_prompt, question, history=history):
-                yield f"data: {json.dumps({'delta': chunk})}\n\n"
+                full += chunk
+                if not withholding and full.lstrip().startswith("```"):
+                    withholding = True
+                if withholding:
+                    withheld.append(chunk)
+                else:
+                    yield f"data: {json.dumps({'delta': chunk})}\n\n"
+
+            if withholding:
+                auto = _execute_schedule_proposal(full)
+                if auto is not None:
+                    yield f"data: {json.dumps({'delta': auto})}\n\n"
+                else:
+                    for w in withheld:
+                        yield f"data: {json.dumps({'delta': w})}\n\n"
             yield "data: [DONE]\n\n"
         except Exception as e:
             yield f"data: {json.dumps({'error': f'LLM call failed: {e}'})}\n\n"
