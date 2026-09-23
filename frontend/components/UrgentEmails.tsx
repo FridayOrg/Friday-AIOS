@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Mail, RefreshCw, ExternalLink, ArrowRight } from "lucide-react";
+import { Mail, RefreshCw, ExternalLink, ArrowRight, CheckSquare } from "lucide-react";
 
 interface UrgentEmail {
   id: string;
@@ -23,8 +23,31 @@ interface UrgentEmail {
   reason: string;
 }
 
+interface Task {
+  id: string;
+  title: string;
+  due_date: string;
+  priority: string;
+  status: string;
+}
+
+// Same "what needs attention first" ordering as the full /tasks page:
+// overdue before pending, then by priority.
+const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+function topTwoTasks(tasks: Task[]): Task[] {
+  return tasks
+    .slice()
+    .sort((a, b) => {
+      if (a.status === "overdue" && b.status !== "overdue") return -1;
+      if (b.status === "overdue" && a.status !== "overdue") return 1;
+      return (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99);
+    })
+    .slice(0, 2);
+}
+
 export default function UrgentEmails() {
   const [emails, setEmails] = useState<UrgentEmail[]>([]);
+  const [tasks, setTasks] = useState<Task[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -42,6 +65,10 @@ export default function UrgentEmails() {
 
   useEffect(() => {
     load();
+    fetch("/api/tasks", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setTasks(topTwoTasks(d.tasks ?? [])))
+      .catch(() => setTasks([]));
   }, []);
 
   async function handleRefresh() {
@@ -105,6 +132,31 @@ export default function UrgentEmails() {
           )}
         </div>
       </div>
+
+      {tasks.length > 0 && (
+        <div className="flex flex-col gap-2 mt-3">
+          {tasks.map((t) => (
+            <div key={t.id} className="rounded-lg bg-white/5 border border-white/10 px-3 py-2.5">
+              <div className="flex items-start gap-2">
+                <CheckSquare size={13} className="text-slate-400 shrink-0 mt-0.5" />
+                <div className="min-w-0 flex-1">
+                  <p className="text-sm font-medium leading-snug truncate">{t.title}</p>
+                  <div className="flex items-center gap-2 mt-1">
+                    <span
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${
+                        t.status === "overdue" ? "bg-red-500/15 text-red-300" : "bg-white/10 text-slate-300"
+                      }`}
+                    >
+                      {t.status === "overdue" ? "Overdue" : `Due ${t.due_date}`}
+                    </span>
+                  </div>
+                </div>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
+
       <Link
         href="/tasks"
         className="inline-flex items-center gap-1 text-xs font-medium text-[#F472B6] mt-3"
