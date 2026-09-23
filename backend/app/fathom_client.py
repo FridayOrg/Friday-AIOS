@@ -94,11 +94,29 @@ def _extract_meeting(raw: dict) -> dict | None:
     summary = raw.get("default_summary")
     summary_markdown = summary.get("markdown_formatted") if isinstance(summary, dict) else None
 
-    action_items = [
-        text
-        for a in (raw.get("action_items") or [])
-        if a and (text := (a.get("description") or a.get("text") if isinstance(a, dict) else str(a)))
-    ]
+    # Fathom's ActionItem schema (per developers.fathom.ai's OpenAPI spec):
+    # description, user_generated, completed, recording_timestamp,
+    # recording_playback_url, and an assignee {name, email, team} — there is
+    # NO due-date/deadline field at all. owner/owner_email below are real,
+    # sourced data; due_date is deliberately never set here — it's the CEO's
+    # own manually-tracked field (see db.py's update_action_item_due_date),
+    # never fabricated from anything Fathom provides.
+    action_items = []
+    for a in raw.get("action_items") or []:
+        if not a:
+            continue
+        if isinstance(a, dict):
+            text = a.get("description") or a.get("text")
+            if not text:
+                continue
+            assignee = a.get("assignee") if isinstance(a.get("assignee"), dict) else {}
+            action_items.append({
+                "text": text,
+                "owner": assignee.get("name"),
+                "owner_email": assignee.get("email"),
+            })
+        else:
+            action_items.append({"text": str(a), "owner": None, "owner_email": None})
 
     return {
         "recording_id": str(recording_id),

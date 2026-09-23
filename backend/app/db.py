@@ -73,11 +73,54 @@ def init_db() -> None:
         )
 
 
+def _normalize_action_items(raw_items: list) -> list[dict]:
+    """Coerces action items into the stored shape
+    {text, owner, owner_email, due_date}. Handles legacy rows stored before
+    this shape existed (plain strings) transparently."""
+    normalized = []
+    for item in raw_items or []:
+        if isinstance(item, dict):
+            text = item.get("text") or item.get("description")
+            if not text:
+                continue
+            normalized.append({
+                "text": text,
+                "owner": item.get("owner"),
+                "owner_email": item.get("owner_email"),
+                "due_date": item.get("due_date"),
+            })
+        elif item:
+            normalized.append({"text": str(item), "owner": None, "owner_email": None, "due_date": None})
+    return normalized
+
+
 def upsert_meeting_summary(meeting: dict) -> None:
     """Insert a new meeting summary, or update it in place if recording_id
     already exists — handles both a duplicate webhook retry (Fathom may resend
-    the same event) and a manual backfill re-fetching a meeting it already has."""
-    with _connect() as conn, conn.cursor() as cur:
+    the same event) and a manual backfill re-fetching a meeting it already has.
+
+    Fathom's own data never includes a due date for an action item (see
+    fathom_client.py) — due_date is the CEO's own manually-set tracking (see
+    update_action_item_due_date). A re-sync must not silently wipe that out,
+    so incoming action items are matched to the currently-stored ones by their
+    text and any existing due_date carried over."""
+    with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT action_items FROM meeting_summaries WHERE recording_id = %(recording_id)s",
+            {"recording_id": meeting["recording_id"]},
+        )
+        existing = cur.fetchone()
+        due_dates_by_text: dict[str, str] = {
+            item["text"]: item["due_date"]
+            for item in _normalize_action_items(existing["action_items"] if existing else [])
+            if item.get("due_date") and item.get("text")
+        }
+
+        action_items = _normalize_action_items(meeting.get("action_items") or [])
+        for item in action_items:
+            if item["due_date"] is None and item["text"] in due_dates_by_text:
+                item["due_date"] = due_dates_by_text[item["text"]]
+
         cur.execute(
             """
             INSERT INTO meeting_summaries
@@ -100,9 +143,33 @@ def upsert_meeting_summary(meeting: dict) -> None:
                 "started_at": meeting.get("started_at"),
                 "participants": psycopg2.extras.Json(meeting.get("participants") or []),
                 "summary_markdown": meeting.get("summary_markdown"),
-                "action_items": psycopg2.extras.Json(meeting.get("action_items") or []),
+                "action_items": psycopg2.extras.Json(action_items),
             },
         )
+
+
+def update_action_item_due_date(recording_id: str, index: int, due_date: str | None) -> bool:
+    """Sets (or clears, if due_date is None) the manually-tracked due date for
+    one action item, identified by its position in the stored list. Returns
+    False if the meeting or that index doesn't exist. See upsert_meeting_
+    summary's docstring for why this survives a future Fathom re-sync."""
+    with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
+        cur.execute(
+            "SELECT action_items FROM meeting_summaries WHERE recording_id = %(recording_id)s",
+            {"recording_id": recording_id},
+        )
+        row = cur.fetchone()
+        if not row:
+            return False
+        items = _normalize_action_items(row["action_items"])
+        if index < 0 or index >= len(items):
+            return False
+        items[index]["due_date"] = due_date
+        cur.execute(
+            "UPDATE meeting_summaries SET action_items = %(action_items)s WHERE recording_id = %(recording_id)s",
+            {"action_items": psycopg2.extras.Json(items), "recording_id": recording_id},
+        )
+        return True
 
 
 def list_meeting_summaries(limit: int = 20) -> list[dict]:
@@ -124,6 +191,7 @@ def list_meeting_summaries(limit: int = 20) -> list[dict]:
         if r.get("started_at") is not None:
             r["started_at"] = r["started_at"].isoformat()
         r["received_at"] = r["received_at"].isoformat()
+        r["action_items"] = _normalize_action_items(r["action_items"])
     return rows
 
 

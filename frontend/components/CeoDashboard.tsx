@@ -15,6 +15,8 @@ import {
   CalendarDays,
   FileText,
   ExternalLink,
+  User,
+  CalendarPlus,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/data";
 import type { CrmOverview } from "@/lib/crmTypes";
@@ -143,6 +145,19 @@ const to12h = (t: string) => {
   const hr = h % 12 === 0 ? 12 : h % 12;
   return `${hr}:${m.toString().padStart(2, "0")} ${period}`;
 };
+
+const FOUNDER_NAME = "Paval";
+
+// Time-of-day greeting, computed from the server-clock "now" (data.now,
+// already FRIDAY_TZ-correct) rather than the browser's own Date() — keeps it
+// consistent with everything else on this page that's driven by the app's
+// own timezone instead of wherever the viewer happens to be.
+function greetingFor(nowHHMM: string): string {
+  const hour = Number(nowHHMM.split(":")[0]);
+  if (hour < 12) return `Good morning, ${FOUNDER_NAME}`;
+  if (hour < 17) return `Good afternoon, ${FOUNDER_NAME}`;
+  return `Good evening, ${FOUNDER_NAME}`;
+}
 
 // The 2x2 grid below "Daily Brief". Financial Performance / Sales & Guarantee
 // Pipeline / Spend & Notifications live on their own /crm page (see
@@ -299,9 +314,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- HEADER ---------------- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="text-2xl font-bold">CEO Dashboard</h1>
+            <h1 className="text-2xl font-bold">{greetingFor(data.now)}</h1>
             <p className="text-sm mt-0.5" style={{ color: C.muted }}>
-              Strategic overview for BookMySales · {fmtFullDay(data.today)}
+              CEO Dashboard · Strategic overview for BookMySales · {fmtFullDay(data.today)}
             </p>
           </div>
           <div className="flex items-center gap-3">
@@ -754,6 +769,12 @@ function Calendar3DayContent({
 // First bullet point in a Fathom markdown summary, stripped of markdown link/
 // bold syntax — used as the 1-line "key takeaway" (the "## Key Takeaways"
 // section's first bullet is reliably the first bullet in the whole document).
+// Fathom's own bullet text often already starts with its own "Goal:"/
+// "Objective:" label (e.g. "- **Goal:** Use AI to..."); that leading label is
+// stripped here so the card's own "Goal:" heading isn't duplicated
+// ("Goal: Goal: Use AI to...").
+const LEADING_LABEL_RE = /^(goal|objective|takeaway|summary)\s*:\s*/i;
+
 function extractFirstBullet(markdown: string | null): string | null {
   if (!markdown) return null;
   for (const line of markdown.split("\n")) {
@@ -762,6 +783,7 @@ function extractFirstBullet(markdown: string | null): string | null {
       return m[1]
         .replace(/\[([^\]]+)\]\([^)]+\)/g, "$1")
         .replace(/\*\*([^*]+)\*\*/g, "$1")
+        .replace(LEADING_LABEL_RE, "")
         .trim();
     }
   }
@@ -769,6 +791,11 @@ function extractFirstBullet(markdown: string | null): string | null {
 }
 
 function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meetingSummaries"] }) {
+  // Optimistic local overlay for due dates set via the PATCH below, keyed by
+  // "recordingId:index" — avoids re-fetching all meeting summaries just to
+  // reflect one saved date.
+  const [dueDateOverrides, setDueDateOverrides] = useState<Record<string, string | null>>({});
+
   if (summaries.length === 0) {
     return (
       <p className="text-xs leading-relaxed" style={{ color: C.faint }}>
@@ -782,6 +809,8 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
       {summaries.map((m) => {
         const takeaway = extractFirstBullet(m.summary_markdown);
         const action = m.action_items[0] ?? null;
+        const overrideKey = `${m.recording_id}:0`;
+        const dueDate = overrideKey in dueDateOverrides ? dueDateOverrides[overrideKey] : action?.due_date ?? null;
         return (
           <div
             key={m.recording_id}
@@ -798,9 +827,25 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
               </p>
             )}
             {action && (
-              <p className="text-xs mt-1 leading-snug" style={{ color: C.muted }}>
-                <span className="font-medium" style={{ color: C.ink }}>Action:</span> {action}
-              </p>
+              <div className="text-xs mt-1 leading-snug" style={{ color: C.muted }}>
+                <p>
+                  <span className="font-medium" style={{ color: C.ink }}>Action:</span> {action.text}
+                </p>
+                <div className="flex flex-wrap items-center gap-x-3 gap-y-1 mt-1">
+                  {action.owner && (
+                    <span className="inline-flex items-center gap-1" style={{ color: C.faint }}>
+                      <User size={11} />
+                      {action.owner}
+                    </span>
+                  )}
+                  <ActionItemDueDate
+                    recordingId={m.recording_id}
+                    index={0}
+                    dueDate={dueDate}
+                    onSaved={(next) => setDueDateOverrides((prev) => ({ ...prev, [overrideKey]: next }))}
+                  />
+                </div>
+              </div>
             )}
             {m.meeting_url && (
               <a
@@ -817,6 +862,100 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
         );
       })}
     </div>
+  );
+}
+
+// Fathom never provides a due date for an action item (its schema has no
+// such field) — this is the CEO's own manual tracking, saved via
+// PATCH /api/meeting-summaries/{id}/action-items/{index}. Real, editable
+// data the CEO enters, never a value invented from Fathom's own content.
+function ActionItemDueDate({
+  recordingId,
+  index,
+  dueDate,
+  onSaved,
+}: {
+  recordingId: string;
+  index: number;
+  dueDate: string | null;
+  onSaved: (dueDate: string | null) => void;
+}) {
+  const [editing, setEditing] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [draft, setDraft] = useState(dueDate ?? "");
+
+  async function save(value: string | null) {
+    setSaving(true);
+    try {
+      const res = await fetch(`/api/meeting-summaries/${recordingId}/action-items/${index}`, {
+        method: "PATCH",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({ due_date: value }),
+      });
+      if (res.ok) {
+        onSaved(value);
+        setEditing(false);
+      }
+    } finally {
+      setSaving(false);
+    }
+  }
+
+  if (editing) {
+    return (
+      <span className="inline-flex items-center gap-1">
+        <input
+          type="date"
+          value={draft}
+          onChange={(e) => setDraft(e.target.value)}
+          className="text-[11px] rounded border px-1 py-0.5"
+          style={{ borderColor: C.border, color: C.ink }}
+          disabled={saving}
+          autoFocus
+        />
+        <button
+          onClick={() => save(draft || null)}
+          disabled={saving || !draft}
+          className="text-[11px] font-medium disabled:opacity-40"
+          style={{ color: "#6D5BD0" }}
+        >
+          Save
+        </button>
+        <button onClick={() => setEditing(false)} disabled={saving} className="text-[11px]" style={{ color: C.faint }}>
+          Cancel
+        </button>
+      </span>
+    );
+  }
+
+  if (dueDate) {
+    return (
+      <button
+        onClick={() => {
+          setDraft(dueDate);
+          setEditing(true);
+        }}
+        className="inline-flex items-center gap-1 hover:underline"
+        style={{ color: C.faint }}
+      >
+        <CalendarPlus size={11} />
+        Due {fmtDay(dueDate)}
+      </button>
+    );
+  }
+
+  return (
+    <button
+      onClick={() => {
+        setDraft("");
+        setEditing(true);
+      }}
+      className="inline-flex items-center gap-1 hover:underline"
+      style={{ color: C.faint }}
+    >
+      <CalendarPlus size={11} />
+      Add due date
+    </button>
   );
 }
 

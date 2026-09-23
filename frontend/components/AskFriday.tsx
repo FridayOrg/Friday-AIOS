@@ -2,7 +2,7 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X } from "lucide-react";
+import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X, PlayCircle } from "lucide-react";
 import Markdown from "./Markdown";
 import EmailDraftCard, { extractEmailDraft, speakableText } from "./EmailDraftCard";
 import { useHighlight } from "@/lib/highlight-context";
@@ -25,6 +25,13 @@ const SAMPLE_QUESTIONS = [
   "Why should I prioritize the Northgate renewal decision?",
 ];
 
+// Mirrors backend/app/context_loader.py's DAILY_BRIEF_PROMPT exactly — kept
+// as a plain client-side constant (same as SAMPLE_QUESTIONS above) rather
+// than a round-trip to fetch it, since it's just a canned question string.
+const DAILY_BRIEF_PROMPT =
+  "Give me my daily briefing: what do I need to know and pay attention to today, " +
+  "in priority order? Cover meetings, tasks/deadlines, pipeline, and revenue.";
+
 const VOICE_OUT_KEY = "friday_voice_out";
 
 // Voice input: keep listening across natural pauses, and only finish + send once the
@@ -39,6 +46,14 @@ const MAX_INPUT_HEIGHT_PX = 160;
 
 function now() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
+}
+
+const FOUNDER_NAME = "Paval";
+function timeGreeting() {
+  const hour = new Date().getHours();
+  if (hour < 12) return "morning";
+  if (hour < 17) return "afternoon";
+  return "evening";
 }
 
 // Scheduling now happens immediately, server-side (see backend/app/main.py's
@@ -79,6 +94,18 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
   const [speaking, setSpeaking] = useState(false);
   const [voiceOut, setVoiceOut] = useState(false);
   const [voiceNote, setVoiceNote] = useState<string | null>(null);
+
+  // A single, opt-in proactive insight (see backend/app/crm_metrics.py's
+  // build_notable_insight) — the one deliberate exception to "won't
+  // volunteer a briefing until asked." Shown as a dismissible line, never
+  // auto-sent as a chat message; clicking it is what actually asks.
+  const [insight, setInsight] = useState<{ message: string; query: string } | null>(null);
+  useEffect(() => {
+    fetch("/api/crm?range=month", { cache: "no-store" })
+      .then((r) => r.json())
+      .then((d) => setInsight(d?.notable_insight ?? null))
+      .catch(() => setInsight(null));
+  }, []);
 
   const scrollRef = useRef<HTMLDivElement>(null);
   const textareaRef = useRef<HTMLTextAreaElement>(null);
@@ -643,6 +670,19 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
     sendRef.current = send;
   });
 
+  // "Play my brief" — asks the same daily-briefing question a founder would
+  // type, and forces voice output for this one turn regardless of the
+  // persistent voiceOut toggle, without changing that toggle's own state.
+  async function playBrief() {
+    const wasOn = voiceOutRef.current;
+    voiceOutRef.current = true;
+    try {
+      await send(DAILY_BRIEF_PROMPT);
+    } finally {
+      voiceOutRef.current = wasOn;
+    }
+  }
+
   return (
     <aside className="w-full h-full flex flex-col bg-slate-50 border-l border-slate-200">
       <div className="px-6 pt-6 pb-4">
@@ -652,6 +692,15 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             ASK FRIDAY
           </div>
           <div className="flex items-center gap-1">
+            <button
+              onClick={playBrief}
+              disabled={busy}
+              aria-label="Play my brief"
+              title="Play my brief"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-700 hover:bg-slate-200 disabled:opacity-40"
+            >
+              <PlayCircle size={16} />
+            </button>
             <button
               onClick={toggleVoiceOut}
               aria-pressed={voiceOut}
@@ -682,9 +731,38 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         </div>
       </div>
 
+      {insight && (
+        <div className="mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-200 bg-amber-50 px-3 py-2.5 text-sm">
+          <span className="flex-1 text-amber-900">
+            {insight.message.replace(/\s*—\s*want details\?$/, "")}
+            {" — "}
+            <button
+              onClick={() => {
+                const q = insight.query;
+                setInsight(null);
+                send(q);
+              }}
+              className="font-medium underline underline-offset-2"
+            >
+              want details?
+            </button>
+          </span>
+          <button
+            onClick={() => setInsight(null)}
+            aria-label="Dismiss"
+            className="shrink-0 text-amber-400 hover:text-amber-700"
+          >
+            <X size={14} />
+          </button>
+        </div>
+      )}
+
       <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 flex flex-col gap-5">
         {messages.length === 0 && (
           <div className="flex flex-col gap-3 mt-2">
+            <p className="text-sm font-medium text-slate-700">
+              Good {timeGreeting()}, {FOUNDER_NAME}.
+            </p>
             <p className="text-sm text-slate-500">
               Ask me anything about the business. I won&rsquo;t volunteer a briefing
               until you do. A few things you could start with:

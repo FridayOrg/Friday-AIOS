@@ -33,6 +33,14 @@ APPROACHING_CLOSE_DAYS = 7
 TOP_DEALS_LIMIT = 10
 ACTIVITY_TYPE_LABELS = {"call": "Calls", "meeting": "Meetings", "email": "Emails", "task": "Tasks"}
 
+# Thresholds for the single proactive insight line Ask Friday may surface
+# unprompted (see build_notable_insight) — another explicit, tunable
+# assumption, not a hidden magic number. Deliberately conservative: this is
+# the one exception to "never volunteer," so it should only fire for
+# something genuinely worth interrupting for.
+NOTABLE_REVENUE_DROP_PCT = -20.0
+NOTABLE_OVERDUE_ACTIVITIES = 5
+
 
 # ---------------------------------------------------------------------------
 # Parsing helpers — Pipedrive dates are plain "YYYY-MM-DD" or
@@ -520,6 +528,45 @@ def build_deals_by_stage_chart(pipeline: dict) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Proactive insight — the one thing Ask Friday may surface unprompted (see
+# NOTABLE_* thresholds above). Only ever built from metrics this module
+# already computes honestly elsewhere; never a new/fabricated comparison.
+# ---------------------------------------------------------------------------
+
+
+def build_notable_insight(revenue: dict, risks: dict, activity_metrics: dict) -> dict | None:
+    """Picks at most ONE notable signal to surface, most severe first, so the
+    UI never has to juggle competing insights. Returns None when nothing
+    crosses a threshold - "quiet" is the common case, not an error."""
+    overdue_deals = risks["overdue_close_deals"]
+    if overdue_deals:
+        total_value = sum(float(d.get("value") or 0) for d in overdue_deals)
+        return {
+            "message": (
+                f"{len(overdue_deals)} deal{'s' if len(overdue_deals) != 1 else ''} "
+                f"past their expected close date (${total_value:,.0f} total) — want details?"
+            ),
+            "query": "What deals are overdue on their expected close date?",
+        }
+
+    growth = revenue.get("growth_pct")
+    if growth is not None and growth <= NOTABLE_REVENUE_DROP_PCT:
+        return {
+            "message": f"Won revenue is down {abs(growth):.0f}% vs. the previous period — want details?",
+            "query": "Why is revenue down compared to last period?",
+        }
+
+    overdue_activities = activity_metrics["overdue_count"]
+    if overdue_activities >= NOTABLE_OVERDUE_ACTIVITIES:
+        return {
+            "message": f"{overdue_activities} overdue activities in the CRM — want details?",
+            "query": "What activities are overdue right now?",
+        }
+
+    return None
+
+
+# ---------------------------------------------------------------------------
 # Top-level orchestration
 # ---------------------------------------------------------------------------
 
@@ -563,6 +610,7 @@ def build_overview(
     trend = build_revenue_trend(all_deals, trend_period, today)
     won_vs_lost = build_won_vs_lost(all_deals, start, end)
     deals_by_stage = build_deals_by_stage_chart(pipeline)
+    notable_insight = build_notable_insight(revenue, risks, activity_metrics)
 
     return {
         "configured": True,
@@ -588,4 +636,5 @@ def build_overview(
         "won_vs_lost": won_vs_lost,
         "deals_by_stage": deals_by_stage,
         "limitations": limitations,
+        "notable_insight": notable_insight,
     }

@@ -14,6 +14,9 @@ Endpoints:
   GET  /meeting-summaries — stored Fathom meeting summaries, most recent first
   POST /meeting-summaries/refresh — backfill/refresh via Fathom's REST API directly
                            (see fathom_client.py), separate from the webhook path
+  PATCH /meeting-summaries/{recording_id}/action-items/{index} — sets/clears the
+                           CEO's own manually-tracked due date for one action
+                           item; Fathom itself never provides one
   GET  /gmail/urgent    — cached list of inbox emails judged to need an immediate
                            reply (see gmail_client.py / email_urgency.py)
   POST /gmail/refresh    — forces a fresh Gmail fetch + urgency-classification pass
@@ -273,6 +276,22 @@ def refresh_meeting_summaries():
         except Exception as e:
             logger.warning("Failed to store meeting %s: %s", m.get("recording_id"), e)
     return {"status": "ok", "fetched": len(meetings), "stored": stored}
+
+
+class ActionItemDueDateRequest(BaseModel):
+    due_date: str | None = None  # "YYYY-MM-DD", or null to clear it
+
+
+@app.patch("/meeting-summaries/{recording_id}/action-items/{index}")
+def set_action_item_due_date(recording_id: str, index: int, req: ActionItemDueDateRequest):
+    """Sets (or clears) the CEO's own manually-tracked due date for one
+    action item. Fathom never provides a due date itself (see
+    fathom_client.py) - this is the only source of truth for it, and it
+    survives future Fathom re-syncs (see db.py's upsert_meeting_summary)."""
+    ok = db.update_action_item_due_date(recording_id, index, req.due_date)
+    if not ok:
+        raise HTTPException(status_code=404, detail="Action item not found.")
+    return {"status": "ok"}
 
 
 @app.get("/gmail/urgent")

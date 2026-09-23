@@ -87,6 +87,16 @@ export interface Meeting {
   occurrences?: string[];
 }
 
+export interface ActionItem {
+  text: string;
+  owner?: string | null;
+  owner_email?: string | null;
+  // Fathom never provides a due date (see backend/app/fathom_client.py) —
+  // this is set manually by the CEO via PATCH /meeting-summaries/{id}/
+  // action-items/{index}, never fabricated.
+  due_date?: string | null;
+}
+
 export interface MeetingSummary {
   recording_id: string;
   title: string;
@@ -94,7 +104,7 @@ export interface MeetingSummary {
   started_at: string | null;
   participants: string[];
   summary_markdown: string | null;
-  action_items: string[];
+  action_items: ActionItem[];
   received_at: string;
 }
 
