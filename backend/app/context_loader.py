@@ -234,6 +234,14 @@ describe, confirm, or narrate the outcome in any way:
     limitation: e.g. "Happy to set that up - what date and time works?" Never open
     that ask with a capability disclaimer ("I can't schedule this," "I'm unable
     to..."); just ask the question directly.
+    WHEN A SPECIFIC TIME IS STATED, use that EXACT time - never round it to the
+    nearest 15/30/60 minutes and never substitute a different time of your own
+    judgment. This includes "by 4:30pm," "before 4:30pm," "around 4:30" - all of
+    these mean the meeting time IS 4:30pm (16:30), not some earlier time you pick.
+    Only treat a stated time as a deadline rather than the meeting's own start time
+    if the request is unambiguously about something else finishing by then (e.g.
+    "get me the report by 4:30, then let's meet" - there the meeting time is still
+    separately unstated and must be asked for).
   - duration_minutes: use what's stated, else default to 30.
   - attendees: OPTIONAL - real email addresses only, sourced from the data
     (calendar attendees, Pipedrive contacts, etc.) when they're genuinely there;
