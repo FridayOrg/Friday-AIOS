@@ -153,7 +153,7 @@ export default function CrmDashboard({ today }: { today: string }) {
                   value={customStart}
                   onChange={(e) => setCustomStart(e.target.value)}
                   className="text-xs px-2.5 py-2 rounded-lg"
-                  style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+                  style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.ink, colorScheme: "dark" }}
                 />
                 <span className="text-xs" style={{ color: C.faint }}>to</span>
                 <input
@@ -161,7 +161,7 @@ export default function CrmDashboard({ today }: { today: string }) {
                   value={customEnd}
                   onChange={(e) => setCustomEnd(e.target.value)}
                   className="text-xs px-2.5 py-2 rounded-lg"
-                  style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+                  style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.ink, colorScheme: "dark" }}
                 />
               </div>
             )}

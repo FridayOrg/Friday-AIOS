@@ -848,7 +848,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <textarea
             ref={textareaRef}
             rows={1}
-            className="flex-1 bg-transparent text-sm outline-none placeholder:text-slate-400 resize-none py-1"
+            className="flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400 resize-none py-1"
             style={{ maxHeight: MAX_INPUT_HEIGHT_PX, overflowY: "auto" }}
             placeholder={listening ? "Listening… pause when you're done" : "Type or speak a message..."}
             value={input}

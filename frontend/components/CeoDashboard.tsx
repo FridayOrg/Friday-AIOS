@@ -903,7 +903,7 @@ function ActionItemDueDate({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           className="text-[11px] rounded border px-1 py-0.5"
-          style={{ borderColor: C.border, color: C.ink }}
+          style={{ borderColor: C.border, color: C.ink, background: CARD_BG, colorScheme: "dark" }}
           disabled={saving}
           autoFocus
         />
