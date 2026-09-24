@@ -58,6 +58,11 @@ export interface CrmOverview {
     closing_this_month_value: number;
     closing_this_month_count: number;
   };
+  qualified_leads?: {
+    count_this_month: number | null;
+    pct_change_vs_last_month: number | null;
+    awaiting_first_contact: number | null;
+  };
   top_deals?: DealRow[];
   risks?: {
     overdue_close_deals: DealRow[];

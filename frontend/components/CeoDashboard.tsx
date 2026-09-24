@@ -40,21 +40,6 @@ const TILE = {
   leads: { from: "#0C3A42", to: "#125563", icon: "#22D3EE", iconBg: "#0A2A30" },
 };
 
-// ---------------------------------------------------------------------------
-// MOCK DATA — "New Qualified Leads" card only. Pipedrive/the CRM has no lead-
-// qualification tracking yet, so this card intentionally shows hardcoded
-// placeholder numbers rather than fabricating a "live" query against data
-// that doesn't exist. Everything else in the Daily Brief row is real data
-// from GET /api/crm (see crm_metrics.py). Swap this constant out for a real
-// fetch once lead-qualification tracking exists in the CRM.
-// ---------------------------------------------------------------------------
-const MOCK_QUALIFIED_LEADS = {
-  isMock: true as const,
-  count: 18,
-  pctChangeVsLastMonth: 12.5,
-  awaitingFirstContact: 5,
-};
-
 const TYPE_LABEL: Record<string, string> = {
   approval_needed: "Approval needed",
   escalation: "Escalation",
@@ -402,15 +387,38 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: New Qualified Leads — MOCK DATA, see MOCK_QUALIFIED_LEADS above */}
+            {/* Card 1: New Qualified Leads — real Pipedrive data (see crm_metrics.build_qualified_leads;
+                "qualified" = a deal that has progressed past the pipeline's first stage, since
+                Pipedrive has no dedicated lead-qualification field on this account) */}
             <BriefTile
               tile={TILE.leads}
               icon={Users}
               label="New Qualified Leads"
-              value={String(MOCK_QUALIFIED_LEADS.count)}
-              badge={{ text: `${MOCK_QUALIFIED_LEADS.pctChangeVsLastMonth}%`, positive: MOCK_QUALIFIED_LEADS.pctChangeVsLastMonth >= 0 }}
-              smallLabel="vs last month"
-              subtext={[`${MOCK_QUALIFIED_LEADS.awaitingFirstContact} awaiting first contact`]}
+              value={
+                crmLoading
+                  ? "—"
+                  : !crm?.configured || crm.qualified_leads?.count_this_month == null
+                  ? "N/A"
+                  : String(crm.qualified_leads.count_this_month)
+              }
+              badge={
+                crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null
+                  ? {
+                      text: `${crm.qualified_leads.pct_change_vs_last_month}%`,
+                      positive: crm.qualified_leads.pct_change_vs_last_month >= 0,
+                    }
+                  : undefined
+              }
+              smallLabel={crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null ? "vs last month" : undefined}
+              subtext={
+                crm?.configured
+                  ? [
+                      crm.qualified_leads?.awaiting_first_contact != null
+                        ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
+                        : "No leads data available",
+                    ]
+                  : [crm?.message ?? "Pipedrive not connected"]
+              }
             />
 
             {/* Card 2: Open Sales Pipeline — real Pipedrive data */}
