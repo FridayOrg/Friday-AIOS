@@ -101,6 +101,8 @@ export interface CrmOverview {
   revenue_trend?: { period: string; points: { date: string; value: number }[] };
   won_vs_lost?: { month: string; won_value: number; lost_value: number }[];
   deals_by_stage?: { stage_name: string; count: number; value: number }[];
+  deals_by_owner?: { owner: string; value: number; count: number }[];
+  lost_reasons?: { reason: string; count: number; value: number }[];
   limitations?: string[];
 }
 

@@ -566,6 +566,55 @@ def build_deals_by_stage_chart(pipeline: dict) -> list[dict]:
 
 
 # ---------------------------------------------------------------------------
+# Deals by owner (rep leaderboard chart) — ALL open deals, not just the
+# TOP_DEALS_LIMIT-capped top_deals table, so the ranking is complete.
+# ---------------------------------------------------------------------------
+
+def build_deals_by_owner(all_deals: list[dict]) -> list[dict]:
+    """Open deal value + count grouped by owner (Pipedrive's user_id, expanded
+    name), sorted by value descending. Deals with no owner set are grouped
+    under "Unassigned" rather than dropped, so the total always reconciles
+    with pipeline.total_open_value."""
+    open_deals = [d for d in all_deals if d.get("status") == "open"]
+    by_owner: dict[str, dict] = {}
+    for d in open_deals:
+        owner = _linked_name(d.get("user_id")) or d.get("owner_name") or "Unassigned"
+        row = by_owner.setdefault(owner, {"owner": owner, "value": 0.0, "count": 0})
+        row["value"] += float(d.get("value") or 0)
+        row["count"] += 1
+    rows = sorted(by_owner.values(), key=lambda r: r["value"], reverse=True)
+    for r in rows:
+        r["value"] = round(r["value"], 2)
+    return rows
+
+
+# ---------------------------------------------------------------------------
+# Lost deal reasons (donut chart) — Pipedrive's own `lost_reason` field on
+# lost deals, grouped and counted; never inferred or guessed.
+# ---------------------------------------------------------------------------
+
+def build_lost_reasons(all_deals: list[dict], start: date, end: date) -> list[dict]:
+    """Lost deals whose lost_time falls in [start, end], grouped by Pipedrive's
+    lost_reason field. Deals lost with no reason recorded are grouped under
+    "Not specified" rather than dropped, so counts reconcile with the total
+    lost-deal count for the period."""
+    lost_deals = [
+        d for d in all_deals
+        if d.get("status") == "lost" and (lt := _parse_date(d.get("lost_time"))) and start <= lt <= end
+    ]
+    by_reason: dict[str, dict] = {}
+    for d in lost_deals:
+        reason = (d.get("lost_reason") or "").strip() or "Not specified"
+        row = by_reason.setdefault(reason, {"reason": reason, "count": 0, "value": 0.0})
+        row["count"] += 1
+        row["value"] += float(d.get("value") or 0)
+    rows = sorted(by_reason.values(), key=lambda r: r["count"], reverse=True)
+    for r in rows:
+        r["value"] = round(r["value"], 2)
+    return rows
+
+
+# ---------------------------------------------------------------------------
 # Proactive insight — the one thing Ask Friday may surface unprompted (see
 # NOTABLE_* thresholds above). Only ever built from metrics this module
 # already computes honestly elsewhere; never a new/fabricated comparison.
@@ -654,6 +703,8 @@ def build_overview(
     trend = build_revenue_trend(all_deals, trend_period, today)
     won_vs_lost = build_won_vs_lost(all_deals, start, end)
     deals_by_stage = build_deals_by_stage_chart(pipeline)
+    deals_by_owner = build_deals_by_owner(all_deals)
+    lost_reasons = build_lost_reasons(all_deals, start, end)
     notable_insight = build_notable_insight(revenue, risks, activity_metrics)
 
     return {
@@ -681,6 +732,8 @@ def build_overview(
         "revenue_trend": trend,
         "won_vs_lost": won_vs_lost,
         "deals_by_stage": deals_by_stage,
+        "deals_by_owner": deals_by_owner,
+        "lost_reasons": lost_reasons,
         "limitations": limitations,
         "notable_insight": notable_insight,
     }
