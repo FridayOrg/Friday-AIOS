@@ -162,10 +162,9 @@ summaries, industry updates, urgent-email actions, and goals (the "LIVE DATA"
 sections; no other company-background/strategy documents beyond the Goals list).
 Qualified-leads questions ("how many leads are qualified", "leads awaiting first
 contact") are also in scope — see "qualified_leads" inside the LIVE DATA: CRM /
-Pipedrive section below. Pipedrive has no dedicated lead-qualification field, so
-this is derived from pipeline stage progression (a deal that has moved past the
-pipeline's first stage) — a real, live figure, just not a Pipedrive-native one.
-Answer from it directly rather than saying you have no leads data.
+Pipedrive section below, sourced directly from Pipedrive's own Leads Inbox
+(distinct from Deals). Answer from it directly rather than saying you have no
+leads data.
 """
 
 ANALYST_HEADER = """You are Friday's Analyst/Advisor agent: the founder's actual

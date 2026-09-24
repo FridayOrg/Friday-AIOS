@@ -237,47 +237,37 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
 
 
 # ---------------------------------------------------------------------------
-# Qualified leads (Daily Brief card) — Pipedrive's own Leads Inbox is unused
-# on this account (checked directly against /leads: always empty), so there
-# is no dedicated "lead" object or qualification field to read. Instead this
-# uses the pipeline's own stage design as the qualification signal: every
-# deal starts in the pipeline's first stage (its lowest order_nr, e.g. "Lead
-# generation") and only advances once it's been worked — so "qualified" =
-# a deal that has moved past that first stage. This is a business-defined
-# proxy, not a Pipedrive-native field, so it's called out explicitly here
-# rather than assumed to be authoritative the way stage/value/date fields are.
+# Qualified leads (Daily Brief card) — sourced from Pipedrive's actual Leads
+# Inbox (GET /leads, see pipedrive_client.get_leads), not derived/proxied
+# from deals. A "lead" only exists as this object before someone has decided
+# it's worth turning into a deal, so every non-archived lead in the inbox is
+# being treated as "qualified" for this purpose — Pipedrive itself has no
+# separate qualified/unqualified flag on a lead (checked: leadLabels on this
+# account are Hot/Warm/Cold, not a qualification field), so "qualified" here
+# means "captured as an active Pipedrive lead," not a stricter distinction.
 # ---------------------------------------------------------------------------
 
-def build_qualified_leads(all_deals: list[dict], stages: list[dict], start: date, end: date) -> dict:
-    """count_this_month: deals added (add_time) in [start, end] whose current
-    stage is past the pipeline's first stage — i.e. they've been qualified/
-    worked, regardless of whether they later won, lost, or are still open.
-    pct_change_vs_last_month: vs. the immediately preceding period of equal
-    length (None if nothing qualified last period — undefined, not 0%).
-    awaiting_first_contact: OPEN deals still sitting in the first stage with
-    no last_activity_date recorded yet — i.e. raw leads nobody has touched."""
-    if not stages:
-        return {"count_this_month": None, "pct_change_vs_last_month": None, "awaiting_first_contact": None}
+def build_qualified_leads(all_leads: list[dict], start: date, end: date) -> dict:
+    """count_this_month: non-archived leads whose add_time falls in
+    [start, end]. pct_change_vs_last_month: vs. the immediately preceding
+    period of equal length (None if nothing was added last period —
+    undefined, not 0%). awaiting_first_contact: non-archived leads with no
+    next_activity_id set — i.e. nobody has scheduled a first touch yet."""
+    active = [ld for ld in all_leads if not ld.get("is_archived")]
 
-    first_stage_id = min(stages, key=lambda s: s["order_nr"])["id"]
-
-    def added_in(d: dict, s: date, e: date) -> bool:
-        added = _parse_date(d.get("add_time"))
+    def added_in(ld: dict, s: date, e: date) -> bool:
+        added = _parse_date(ld.get("add_time"))
         return added is not None and s <= added <= e
 
-    qualified = [d for d in all_deals if d.get("stage_id") != first_stage_id]
-    qualified_this_month = [d for d in qualified if added_in(d, start, end)]
+    this_month = [ld for ld in active if added_in(ld, start, end)]
     prev_start, prev_end = _previous_period(start, end)
-    qualified_prev_month = [d for d in qualified if added_in(d, prev_start, prev_end)]
+    prev_month = [ld for ld in active if added_in(ld, prev_start, prev_end)]
 
-    open_deals = [d for d in all_deals if d.get("status") == "open"]
-    awaiting_first_contact = [
-        d for d in open_deals if d.get("stage_id") == first_stage_id and not d.get("last_activity_date")
-    ]
+    awaiting_first_contact = [ld for ld in active if not ld.get("next_activity_id")]
 
     return {
-        "count_this_month": len(qualified_this_month),
-        "pct_change_vs_last_month": _pct_change(len(qualified_this_month), len(qualified_prev_month)),
+        "count_this_month": len(this_month),
+        "pct_change_vs_last_month": _pct_change(len(this_month), len(prev_month)),
         "awaiting_first_contact": len(awaiting_first_contact),
     }
 
@@ -730,6 +720,7 @@ def build_overview(
     activities = pd.get_activities()
     persons = pd.get_persons()
     orgs = pd.get_organizations()
+    all_leads = pd.get_leads()
 
     if not all_deals and not stages:
         limitations.append(
@@ -739,7 +730,7 @@ def build_overview(
 
     revenue = build_revenue(all_deals, start, end, limitations)
     pipeline = build_pipeline(all_deals, stages, today)
-    qualified_leads = build_qualified_leads(all_deals, stages, start, end)
+    qualified_leads = build_qualified_leads(all_leads, start, end)
     top_deals = build_top_deals(all_deals, stages, today)
     risks = build_risks(all_deals, stages, today)
     activity_metrics = build_activities(activities, start, end, today)

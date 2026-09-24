@@ -387,9 +387,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: New Qualified Leads — real Pipedrive data (see crm_metrics.build_qualified_leads;
-                "qualified" = a deal that has progressed past the pipeline's first stage, since
-                Pipedrive has no dedicated lead-qualification field on this account) */}
+            {/* Card 1: New Qualified Leads — real data from Pipedrive's Leads Inbox
+                (see crm_metrics.build_qualified_leads / pipedrive_client.get_leads),
+                not the Deals pipeline */}
             <BriefTile
               tile={TILE.leads}
               icon={Users}

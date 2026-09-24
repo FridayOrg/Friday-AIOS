@@ -98,5 +98,13 @@ def get_persons() -> list[dict]:
     return _get_paginated("persons")
 
 
+def get_leads() -> list[dict]:
+    """Pipedrive's Leads Inbox — distinct from /deals: a lead is a
+    not-yet-qualified-into-a-deal prospect (id is a UUID string, not an
+    int). Returns both archived and active leads; callers filter as
+    needed."""
+    return _get_paginated("leads", {"archived_status": "all"})
+
+
 def get_organizations() -> list[dict]:
     return _get_paginated("organizations")
