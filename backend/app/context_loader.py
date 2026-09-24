@@ -139,7 +139,7 @@ Response style: always short and scannable, never long prose:
   these together?" or "Happy to brainstorm through these if you'd like." Never phrase
   it as a rejection or a rule ("that's outside my scope", "please ask a separate
   question"); it should read like an open door, not a boundary.
-- If the question isn't about schedule/tasks/pipeline/revenue/spend/CRM/meetings/
+- If the question isn't about schedule/tasks/pipeline/revenue/spend/CRM/leads/meetings/
   goals/industry updates/actions at all (company background, team/employees, product
   strategy narrative, customers, anything that would live in a company-background
   context doc rather than this operational/live data), don't just say you don't have
@@ -160,6 +160,11 @@ Below is the operational data you have access to: calendar, tasks, pipeline,
 revenue/spend (mock/static files below), plus real-time CRM/Pipedrive, meeting
 summaries, industry updates, urgent-email actions, and goals (the "LIVE DATA"
 sections; no other company-background/strategy documents beyond the Goals list).
+Qualified-leads questions ("how many leads are qualified", "leads awaiting first
+contact") are also in scope — see the "MOCK DATA: New Qualified Leads" section
+below; the CRM doesn't track lead qualification yet, so that section is
+deliberately mock/placeholder data, not a live Pipedrive figure. Answer from it
+directly rather than saying you have no leads data.
 """
 
 ANALYST_HEADER = """You are Friday's Analyst/Advisor agent: the founder's actual
@@ -424,6 +429,29 @@ def _industry_updates_section() -> str:
     return "## LIVE DATA: Industry Updates, today (JSON)\n\n" + json.dumps(updates, indent=2, default=str)
 
 
+# "New Qualified Leads" is MOCK DATA ONLY — Pipedrive/the CRM has no lead-
+# qualification tracking yet (see crm_metrics.py's docstring: every real CRM
+# figure is derived honestly from Pipedrive, and this is the one deliberate
+# exception). Mirrors the same hardcoded numbers the dashboard's Daily Brief
+# card shows (frontend/components/CeoDashboard.tsx's MOCK_QUALIFIED_LEADS) so
+# a chat answer and the dashboard never disagree. Swap both out together once
+# lead-qualification tracking exists in the CRM.
+MOCK_QUALIFIED_LEADS = {
+    "count_this_month": 18,
+    "pct_change_vs_last_month": 12.5,
+    "awaiting_first_contact": 5,
+}
+
+
+def _qualified_leads_section() -> str:
+    return (
+        "## MOCK DATA: New Qualified Leads (JSON) — NOT from Pipedrive; the CRM has no "
+        "lead-qualification field yet, so this is a placeholder until that tracking exists. "
+        "Still answer questions about qualified leads using these numbers rather than saying "
+        "the data doesn't exist.\n\n" + json.dumps(MOCK_QUALIFIED_LEADS, indent=2)
+    )
+
+
 def _urgent_emails_section() -> str:
     """Live Gmail inbox items judged to need an immediate reply — the same
     data the dashboard's Actions/"Needs Your Reply" card shows."""
@@ -463,6 +491,7 @@ def _live_data_blob() -> str:
     return "\n\n---\n\n".join(
         [
             _crm_section(),
+            _qualified_leads_section(),
             _meeting_summaries_section(),
             _industry_updates_section(),
             _urgent_emails_section(),
