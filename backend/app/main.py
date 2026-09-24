@@ -32,6 +32,11 @@ Endpoints:
   GET  /settings/revenue-target — the configured monthly revenue target used
                            by the Daily Brief's Revenue card (defaults if unset)
   PATCH /settings/revenue-target — sets the monthly revenue target
+  GET  /settings/leads-prior-period — the CEO-entered prior-period leads count
+                           used for the Daily Brief's leads %-change (null if unset;
+                           Pipedrive's Leads Inbox can't reconstruct this once a
+                           lead is deleted/converted, see crm_metrics.py)
+  PATCH /settings/leads-prior-period — sets the prior-period leads count
   POST /calendar/events — creates a real Google Calendar event directly, given
                            full details (see calendar_client.py's create_event /
                            CalendarWriteError)
@@ -366,6 +371,25 @@ def _get_revenue_target() -> float:
         return DEFAULT_MONTHLY_REVENUE_TARGET
 
 
+LEADS_PRIOR_PERIOD_SETTING_KEY = "leads_prior_period_count"
+
+
+def _get_leads_prior_period() -> int | None:
+    """Reads the CEO-entered "leads in the prior period" baseline (see PATCH
+    /settings/leads-prior-period). Unlike the revenue target, this has no
+    sensible default — Pipedrive's Leads Inbox only reflects leads that
+    still exist right now (deleted/converted ones are gone from /leads
+    entirely), so without this manually-recorded figure the prior-period
+    comparison is left undefined (None) rather than computed from an
+    undercounted live read. See crm_metrics.build_qualified_leads."""
+    try:
+        raw = db.get_setting(LEADS_PRIOR_PERIOD_SETTING_KEY)
+        return int(raw) if raw is not None else None
+    except Exception as e:
+        logger.warning("Could not read leads prior-period setting: %s", e)
+        return None
+
+
 @app.get("/crm/overview")
 def crm_overview(
     range: str = "month",
@@ -378,7 +402,9 @@ def crm_overview(
     7d|30d|90d|quarter|year. See crm_metrics.build_overview for exactly how
     each field is derived from Pipedrive."""
     try:
-        return crm_metrics.build_overview(range, start, end, trend_period, now().date(), _get_revenue_target())
+        return crm_metrics.build_overview(
+            range, start, end, trend_period, now().date(), _get_revenue_target(), _get_leads_prior_period()
+        )
     except Exception as e:
         logger.warning("Could not build CRM overview: %s", e)
         return {"configured": crm_metrics.pd.is_configured(), "message": "Failed to build CRM overview.", "error": str(e)}
@@ -399,6 +425,23 @@ def set_revenue_target(req: RevenueTargetRequest):
         raise HTTPException(status_code=400, detail="target must be >= 0")
     db.set_setting(REVENUE_TARGET_SETTING_KEY, str(req.target))
     return {"status": "ok", "target": req.target}
+
+
+class LeadsPriorPeriodRequest(BaseModel):
+    count: int
+
+
+@app.get("/settings/leads-prior-period")
+def get_leads_prior_period():
+    return {"count": _get_leads_prior_period()}
+
+
+@app.patch("/settings/leads-prior-period")
+def set_leads_prior_period(req: LeadsPriorPeriodRequest):
+    if req.count < 0:
+        raise HTTPException(status_code=400, detail="count must be >= 0")
+    db.set_setting(LEADS_PRIOR_PERIOD_SETTING_KEY, str(req.count))
+    return {"status": "ok", "count": req.count}
 
 
 _SCHEDULE_PROPOSAL_RE = re.compile(r"```schedule-proposal\s*\n(.*?)\n```", re.DOTALL)

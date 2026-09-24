@@ -247,12 +247,22 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
 # means "captured as an active Pipedrive lead," not a stricter distinction.
 # ---------------------------------------------------------------------------
 
-def build_qualified_leads(all_leads: list[dict], start: date, end: date) -> dict:
+def build_qualified_leads(
+    all_leads: list[dict], start: date, end: date, prior_period_count_override: int | None = None
+) -> dict:
     """count_this_month: non-archived leads whose add_time falls in
     [start, end]. pct_change_vs_last_month: vs. the immediately preceding
     period of equal length (None if nothing was added last period —
     undefined, not 0%). awaiting_first_contact: non-archived leads with no
-    next_activity_id set — i.e. nobody has scheduled a first touch yet."""
+    next_activity_id set — i.e. nobody has scheduled a first touch yet.
+
+    prior_period_count_override: Pipedrive's Leads Inbox only reflects leads
+    that still exist right now — once a lead is deleted or converted to a
+    deal, it's gone from /leads entirely, so a prior period's count can't be
+    reconstructed from live data once that's happened. When set (see
+    main.py's /settings/leads-prior-period, a CEO-entered figure, not a
+    live Pipedrive read), that manually-recorded number is used for the
+    comparison instead of the (likely undercounted) live-computed one."""
     active = [ld for ld in all_leads if not ld.get("is_archived")]
 
     def added_in(ld: dict, s: date, e: date) -> bool:
@@ -260,14 +270,17 @@ def build_qualified_leads(all_leads: list[dict], start: date, end: date) -> dict
         return added is not None and s <= added <= e
 
     this_month = [ld for ld in active if added_in(ld, start, end)]
-    prev_start, prev_end = _previous_period(start, end)
-    prev_month = [ld for ld in active if added_in(ld, prev_start, prev_end)]
+    if prior_period_count_override is not None:
+        prev_month_count = prior_period_count_override
+    else:
+        prev_start, prev_end = _previous_period(start, end)
+        prev_month_count = len([ld for ld in active if added_in(ld, prev_start, prev_end)])
 
     awaiting_first_contact = [ld for ld in active if not ld.get("next_activity_id")]
 
     return {
         "count_this_month": len(this_month),
-        "pct_change_vs_last_month": _pct_change(len(this_month), len(prev_month)),
+        "pct_change_vs_last_month": _pct_change(len(this_month), prev_month_count),
         "awaiting_first_contact": len(awaiting_first_contact),
     }
 
@@ -700,6 +713,7 @@ def build_overview(
     trend_period: str,
     today: date,
     revenue_target: float | None = None,
+    leads_prior_period_override: int | None = None,
 ) -> dict:
     if not pd.is_configured():
         return {
@@ -730,7 +744,7 @@ def build_overview(
 
     revenue = build_revenue(all_deals, start, end, limitations)
     pipeline = build_pipeline(all_deals, stages, today)
-    qualified_leads = build_qualified_leads(all_leads, start, end)
+    qualified_leads = build_qualified_leads(all_leads, start, end, leads_prior_period_override)
     top_deals = build_top_deals(all_deals, stages, today)
     risks = build_risks(all_deals, stages, today)
     activity_metrics = build_activities(activities, start, end, today)
