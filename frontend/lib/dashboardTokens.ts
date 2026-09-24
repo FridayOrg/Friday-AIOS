@@ -5,47 +5,49 @@ import type React from "react";
 // Spend & Notifications moved into) — kept in one place so both pages render
 // risk/status/priority colors and the chat-driven glow highlight identically.
 
-// Dark navy theme — the one color combination in use across the whole app
-// (Dashboard, CRM, Goals, top nav, Ask Friday). PAGE_BG/PANEL_BG/CARD_BG give
-// the layered dark surfaces (page darkest, panel/nav a touch lighter, cards
-// lighter still), CARD_BORDER is the subtle light-on-dark hairline every
-// card uses, and C.* are the text/status colors tuned for contrast against
-// those dark surfaces — swap any of these to re-theme everywhere at once.
-export const PAGE_BG = "#0B1220";
+// Light SaaS-analytics theme — the CRM page (components/CrmDashboard.tsx) is
+// the single source of truth this was copied from. PAGE_BG/PANEL_BG/CARD_BG
+// give the layered light surfaces (page off-white, panel/nav stays dark navy
+// by its own explicit styling, cards white), CARD_BORDER is the subtle
+// hairline every card uses, and C.* are the text/status colors tuned for
+// contrast against those light surfaces — swap any of these to re-theme
+// everywhere at once. Note: the top nav and Ask Friday panel deliberately do
+// NOT import this file — they keep their own hardcoded dark navy styling.
+export const PAGE_BG = "#F5F6F8";
 export const PANEL_BG = "#0F172A";
-export const CARD_BG = "#141E33";
-export const CARD_BORDER = "rgba(255,255,255,0.08)";
+export const CARD_BG = "#FFFFFF";
+export const CARD_BORDER = "#E5E7EB";
 
 export const C = {
-  ink: "#F1F5F9",
-  muted: "#94A3B8",
-  faint: "#64748B",
+  ink: "#1F2937",
+  muted: "#4B5563",
+  faint: "#9CA3AF",
   border: CARD_BORDER,
-  teal: "#22D3EE",
-  up: "#34D399",
-  down: "#F87171",
+  teal: "#0EA5E9",
+  up: "#2BAF6A",
+  down: "#EF6B6B",
 };
 
 const STATUS: Record<string, { color: string; label: string }> = {
-  guarantee_met: { color: "#34D399", label: "Guarantee met" },
-  on_track: { color: "#38BDF8", label: "On track" },
-  ramping: { color: "#FBBF24", label: "Ramping" },
+  guarantee_met: { color: "#2BAF6A", label: "Guarantee met" },
+  on_track: { color: "#3B82F6", label: "On track" },
+  ramping: { color: "#F59E0B", label: "Ramping" },
 };
 export const statusOf = (k: string) => STATUS[k] ?? { color: C.muted, label: k };
 
 const RISK: Record<string, { color: string; label: string }> = {
-  none: { color: "#34D399", label: "No risk" },
-  low: { color: "#94A3B8", label: "Low risk" },
-  medium: { color: "#FBBF24", label: "Medium risk" },
-  high: { color: "#F87171", label: "High risk" },
+  none: { color: "#2BAF6A", label: "No risk" },
+  low: { color: "#9CA3AF", label: "Low risk" },
+  medium: { color: "#F59E0B", label: "Medium risk" },
+  high: { color: "#EF6B6B", label: "High risk" },
 };
 export const riskOf = (k: string) => RISK[k] ?? { color: C.muted, label: k };
 
 const PRIORITY: Record<string, { color: string; label: string }> = {
-  critical: { color: "#F87171", label: "Critical" },
-  high: { color: "#FBBF24", label: "High" },
-  medium: { color: "#94A3B8", label: "Medium" },
-  low: { color: "#94A3B8", label: "Low" },
+  critical: { color: "#EF6B6B", label: "Critical" },
+  high: { color: "#F59E0B", label: "High" },
+  medium: { color: "#9CA3AF", label: "Medium" },
+  low: { color: "#9CA3AF", label: "Low" },
 };
 export const priorityOf = (k: string) => PRIORITY[k] ?? { color: C.faint, label: k };
 

@@ -16,14 +16,14 @@ interface Task {
 }
 
 const STATUS_STYLE: Record<string, string> = {
-  overdue: "bg-red-500/15 text-red-300",
-  pending: "bg-amber-500/15 text-amber-300",
+  overdue: "bg-red-100 text-red-700",
+  pending: "bg-amber-100 text-amber-700",
 };
 
 const PRIORITY_STYLE: Record<string, string> = {
-  high: "bg-red-500/15 text-red-300",
-  medium: "bg-amber-500/15 text-amber-300",
-  low: "bg-white/10 text-slate-300",
+  high: "bg-red-100 text-red-700",
+  medium: "bg-amber-100 text-amber-700",
+  low: "bg-gray-100 text-slate-600",
 };
 
 // Overdue tasks always surface first, then by priority — same "what needs
@@ -49,8 +49,8 @@ function FilterPill({
       onClick={onClick}
       className={`text-xs font-medium px-3 py-1.5 rounded-full capitalize transition-colors ${
         active
-          ? "bg-sky-500/15 text-sky-300"
-          : "bg-white/5 text-slate-400 border border-white/10 hover:bg-white/10"
+          ? "bg-sky-50 text-sky-700"
+          : "bg-white text-slate-500 border border-gray-200 hover:bg-gray-50"
       }`}
     >
       {children}
@@ -84,14 +84,14 @@ export default function TasksPage() {
   }, [tasks, statusFilter, priorityFilter]);
 
   return (
-    <div className="p-8 max-w-4xl mx-auto">
+    <div className="p-8 max-w-4xl mx-auto min-h-full bg-[#F5F6F8]">
       <div className="flex items-center gap-2 mb-6">
-        <CheckSquare size={22} className="text-sky-400" />
-        <h1 className="text-2xl font-bold text-white">Tasks</h1>
+        <CheckSquare size={22} className="text-sky-600" />
+        <h1 className="text-2xl font-bold text-slate-900">Tasks</h1>
       </div>
 
       {loading ? (
-        <p className="text-sm text-slate-400">Loading tasks…</p>
+        <p className="text-sm text-slate-500">Loading tasks…</p>
       ) : (
         <>
           <div className="flex flex-col gap-2 mb-5">
@@ -101,7 +101,7 @@ export default function TasksPage() {
                   {s}
                 </FilterPill>
               ))}
-              <span className="hidden sm:inline w-px h-4 bg-white/10 mx-1" />
+              <span className="hidden sm:inline w-px h-4 bg-gray-200 mx-1" />
               {PRIORITY_FILTERS.map((p) => (
                 <FilterPill key={p} active={priorityFilter === p} onClick={() => setPriorityFilter(p)}>
                   {p === "all" ? "all priority" : p}
@@ -112,34 +112,34 @@ export default function TasksPage() {
 
           <div className="flex flex-col gap-3">
             {visibleTasks.length === 0 && (
-              <p className="text-sm text-slate-400">No tasks match these filters.</p>
+              <p className="text-sm text-slate-500">No tasks match these filters.</p>
             )}
             {visibleTasks.map((t) => (
               <div
                 key={t.id}
-                className="bg-[#141E33] rounded-2xl border border-white/10 p-5 flex flex-col gap-2"
+                className="bg-white rounded-2xl border border-gray-200 shadow-sm p-5 flex flex-col gap-2"
               >
                 <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
-                  <h3 className="text-sm font-semibold text-white">{t.title}</h3>
+                  <h3 className="text-sm font-semibold text-slate-900">{t.title}</h3>
                   <div className="flex items-center gap-2 shrink-0">
                     <span
                       className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
-                        PRIORITY_STYLE[t.priority] ?? "bg-white/10 text-slate-300"
+                        PRIORITY_STYLE[t.priority] ?? "bg-gray-100 text-slate-600"
                       }`}
                     >
                       {t.priority}
                     </span>
                     <span
                       className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
-                        STATUS_STYLE[t.status] ?? "bg-white/10 text-slate-300"
+                        STATUS_STYLE[t.status] ?? "bg-gray-100 text-slate-600"
                       }`}
                     >
                       {t.status}
                     </span>
                   </div>
                 </div>
-                <p className="text-sm text-slate-300">{t.description}</p>
-                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-400 mt-1">
+                <p className="text-sm text-slate-600">{t.description}</p>
+                <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1">
                   <span>Due {t.due_date}</span>
                   {t.related_client && <span>Client: {t.related_client}</span>}
                   {t.raised_by && <span>Raised by {t.raised_by}</span>}

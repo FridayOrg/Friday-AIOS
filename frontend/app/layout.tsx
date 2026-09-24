@@ -25,7 +25,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       className={`${geistSans.variable} ${geistMono.variable} h-full antialiased`}
       suppressHydrationWarning
     >
-      <body className="h-full bg-[#0B1220] text-slate-100" suppressHydrationWarning>
+      <body className="h-full bg-[#F5F6F8] text-slate-900" suppressHydrationWarning>
         <AppShell>{children}</AppShell>
       </body>
     </html>

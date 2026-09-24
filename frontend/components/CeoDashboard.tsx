@@ -27,17 +27,16 @@ import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
 
 // ---------------------------------------------------------------------------
-// TOKENS — shared dark palette from lib/dashboardTokens; TILE stays local
-// since its gradients are specific to these 4 Daily Brief stat cards.
+// TOKENS — shared light palette from lib/dashboardTokens; TILE stays local
+// since its icon-badge colors are specific to these 4 Daily Brief stat cards
+// (white card + small colored icon badge, matching the CRM page's KPI cards).
 // ---------------------------------------------------------------------------
 
 const TILE = {
-  revenue: { from: "#0F3D3A", to: "#134E3F", icon: "#34D399", iconBg: "#0F2E2A" },
-  deals: { from: "#2E1F5E", to: "#3B2A73", icon: "#A78BFA", iconBg: "#241A4A" },
-  retention: { from: "#5B1A46", to: "#6E2159", icon: "#F472B6", iconBg: "#3F1233" },
-  burn: { from: "#5A2E12", to: "#6E3A18", icon: "#FB923C", iconBg: "#3D1F0C" },
-  calendar: { from: "#0F2A4A", to: "#133A63", icon: "#38BDF8", iconBg: "#0C2038" },
-  leads: { from: "#0C3A42", to: "#125563", icon: "#22D3EE", iconBg: "#0A2A30" },
+  revenue: { iconBg: "rgba(43,175,106,0.12)", icon: "#2BAF6A" },
+  deals: { iconBg: "rgba(59,130,246,0.12)", icon: "#3B82F6" },
+  retention: { iconBg: "rgba(245,158,11,0.12)", icon: "#F59E0B" },
+  leads: { iconBg: "rgba(139,92,246,0.12)", icon: "#8B5CF6" },
 };
 
 const TYPE_LABEL: Record<string, string> = {
@@ -133,23 +132,23 @@ function greetingFor(nowHHMM: string): string {
 // Pipeline / Spend & Notifications live on their own /crm page (see
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
-  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "#3F1233", iconColor: "#F472B6" },
-  { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "#0C2038", iconColor: "#38BDF8" },
+  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "rgba(239,107,107,0.12)", iconColor: "#EF6B6B" },
+  { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "rgba(59,130,246,0.12)", iconColor: "#3B82F6" },
   {
     key: "industry",
     title: "Industry Updates",
     subtitle: "Latest news and trends shaping the industry",
     icon: FileText,
-    iconBg: "#0C2038",
-    iconColor: "#38BDF8",
+    iconBg: "rgba(59,130,246,0.12)",
+    iconColor: "#3B82F6",
   },
   {
     key: "meetings",
     title: "Meeting Summary",
     subtitle: "Key meetings and important takeaways",
     icon: FileText,
-    iconBg: "#241A4A",
-    iconColor: "#A78BFA",
+    iconBg: "rgba(139,92,246,0.12)",
+    iconColor: "#8B5CF6",
   },
 ] as const;
 
@@ -279,7 +278,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         minHeight: "100%",
         fontFamily: "'Inter', system-ui, sans-serif",
         color: C.ink,
-        background: `linear-gradient(135deg, ${PAGE_BG} 0%, #0D1526 50%, ${PAGE_BG} 100%)`,
+        background: PAGE_BG,
       }}
     >
       <style>{`
@@ -308,7 +307,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             <div className="relative">
               <div
                 className="flex items-center gap-2 px-3.5 py-2 rounded-lg text-sm"
-                style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+                style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
               >
                 <Search size={15} style={{ color: C.faint }} />
                 <input
@@ -348,7 +347,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       <button
                         key={i}
                         onClick={() => jumpToSection(r.section)}
-                        className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-white/5"
+                        className="w-full text-left px-4 py-2.5 flex items-center justify-between gap-3 hover:bg-gray-50"
                         style={{
                           borderBottom:
                             i < searchResults.length - 1 ? `1px solid ${C.border}` : "none",
@@ -377,10 +376,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#0F2E2A" }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(14,165,233,0.12)" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
             <h2 className="text-sm font-semibold">Daily Brief</h2>
@@ -505,10 +504,10 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
           <div className="flex items-center gap-2 mb-4">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "#0F2E2A" }}>
+            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(14,165,233,0.12)" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
             <h2 className="text-sm font-semibold">Quick Access</h2>
@@ -521,7 +520,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 id={`section-${c.key}`}
                 className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
                 style={{
-                  background: "rgba(20,30,51,0.7)",
+                  background: "#F9FAFB",
                   border: `1px solid ${C.border}`,
                   ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
                 }}
@@ -592,7 +591,7 @@ function BriefTile({
   progressPct,
   glow,
 }: {
-  tile: { from: string; to: string; icon: string; iconBg: string };
+  tile: { iconBg: string; icon: string };
   icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   label: string;
   value: string;
@@ -606,10 +605,10 @@ function BriefTile({
   return (
     <div
       className={`rounded-xl p-4 flex flex-col${g.className}`}
-      style={{ background: `linear-gradient(150deg, ${tile.from}, ${tile.to})`, ...g.style }}
+      style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...g.style }}
     >
       <div className="flex items-start justify-between mb-4">
-        <p className="text-xs font-medium" style={{ color: C.ink, opacity: 0.75 }}>{label}</p>
+        <p className="text-xs font-medium" style={{ color: C.muted }}>{label}</p>
         <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tile.iconBg }}>
           <Icon size={13} style={{ color: tile.icon }} />
         </span>
@@ -635,7 +634,7 @@ function BriefTile({
       )}
 
       {progressPct !== undefined && (
-        <div className="w-full h-1.5 rounded-full mt-1.5 mb-2 overflow-hidden" style={{ background: "rgba(255,255,255,0.1)" }}>
+        <div className="w-full h-1.5 rounded-full mt-1.5 mb-2 overflow-hidden" style={{ background: "#E5E7EB" }}>
           <div
             className="h-full rounded-full"
             style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: C.up }}
@@ -716,7 +715,7 @@ function Calendar3DayContent({
                     <div
                       key={isGlow ? `${i}-${glow?.ts}` : i}
                       className={`rounded-lg px-3 py-2.5${g.className}`}
-                      style={{ background: "#122238", border: "1px solid #1E3A5F", opacity: done ? 0.55 : 1, ...g.style }}
+                      style={{ background: "#EFF6FF", border: "1px solid #DBEAFE", opacity: done ? 0.55 : 1, ...g.style }}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
@@ -734,7 +733,7 @@ function Calendar3DayContent({
                         {live && (
                           <span
                             className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "#3A1414", color: C.down }}
+                            style={{ background: "#FEE2E2", color: C.down }}
                           >
                             now
                           </span>
@@ -742,7 +741,7 @@ function Calendar3DayContent({
                         {isNext && !live && (
                           <span
                             className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "#0F2E2A", color: C.teal }}
+                            style={{ background: "rgba(14,165,233,0.12)", color: C.teal }}
                           >
                             next
                           </span>
@@ -817,7 +816,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
           <div
             key={m.recording_id}
             className="rounded-lg px-3 py-2.5"
-            style={{ background: "#1E1738", border: "1px solid #332759" }}
+            style={{ background: "#F5F3FF", border: "1px solid #E4DBFA" }}
           >
             <p className="text-sm font-medium leading-snug">{m.title}</p>
             <p className="text-xs mt-0.5" style={{ color: C.faint }}>
@@ -855,7 +854,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs mt-2 font-medium"
-                style={{ color: "#A78BFA" }}
+                style={{ color: "#7C3AED" }}
               >
                 Watch recording <ExternalLink size={11} />
               </a>
@@ -911,7 +910,7 @@ function ActionItemDueDate({
           value={draft}
           onChange={(e) => setDraft(e.target.value)}
           className="text-[11px] rounded border px-1 py-0.5"
-          style={{ borderColor: C.border, color: C.ink, background: CARD_BG, colorScheme: "dark" }}
+          style={{ borderColor: C.border, color: C.ink, background: CARD_BG, colorScheme: "light" }}
           disabled={saving}
           autoFocus
         />
@@ -919,7 +918,7 @@ function ActionItemDueDate({
           onClick={() => save(draft || null)}
           disabled={saving || !draft}
           className="text-[11px] font-medium disabled:opacity-40"
-          style={{ color: "#A78BFA" }}
+          style={{ color: "#7C3AED" }}
         >
           Save
         </button>

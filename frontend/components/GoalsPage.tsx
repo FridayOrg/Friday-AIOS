@@ -12,7 +12,7 @@ export default function GoalsPage({ goals }: { goals: string[] }) {
         minHeight: "100%",
         fontFamily: "'Inter', system-ui, sans-serif",
         color: C.ink,
-        background: `linear-gradient(135deg, ${PAGE_BG} 0%, #0D1526 50%, ${PAGE_BG} 100%)`,
+        background: PAGE_BG,
       }}
     >
       <style>{`@import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');`}</style>
@@ -26,7 +26,7 @@ export default function GoalsPage({ goals }: { goals: string[] }) {
 
         <div
           className="rounded-2xl p-5"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}` }}
+          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
           {goals.length === 0 ? (
             <p className="text-sm" style={{ color: C.faint }}>No goals found in strategy.md.</p>
@@ -36,7 +36,7 @@ export default function GoalsPage({ goals }: { goals: string[] }) {
                 <li key={i} className="flex items-start gap-3">
                   <span
                     className="mt-0.5 shrink-0 w-7 h-7 rounded-full flex items-center justify-center text-xs font-semibold"
-                    style={{ background: "#0F2E2A", color: C.teal }}
+                    style={{ background: "rgba(14,165,233,0.12)", color: C.teal }}
                   >
                     {i + 1}
                   </span>

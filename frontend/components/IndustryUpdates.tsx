@@ -55,29 +55,29 @@ export default function IndustryUpdates() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1 text-xs text-slate-400 hover:text-slate-200 disabled:opacity-50"
+          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
         >
           <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
           Refresh
         </button>
       </div>
       {loading ? (
-        <p className="text-xs text-slate-400 pt-1">Checking for updates...</p>
+        <p className="text-xs text-slate-500 pt-1">Checking for updates...</p>
       ) : updates.length === 0 ? (
-        <p className="text-xs text-slate-400 pt-1">No significant updates today yet.</p>
+        <p className="text-xs text-slate-500 pt-1">No significant updates today yet.</p>
       ) : (
         <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
           {updates.map((u) => (
-            <div key={u.url} className="rounded-lg bg-[#0C2038] border border-[#1E3A5F] px-3 py-2.5">
-              <p className="text-sm font-medium leading-snug">{u.title}</p>
+            <div key={u.url} className="rounded-lg bg-[#EFF6FF] border border-[#DBEAFE] px-3 py-2.5">
+              <p className="text-sm font-medium leading-snug text-slate-800">{u.title}</p>
               {u.content && (
-                <p className="text-xs text-slate-400 mt-1 leading-snug line-clamp-2">{u.content}</p>
+                <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
               )}
               <a
                 href={u.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs mt-2 text-[#38BDF8] font-medium"
+                className="inline-flex items-center gap-1 text-xs mt-2 text-[#2563EB] font-medium"
               >
                 View full article <ExternalLink size={11} />
               </a>
