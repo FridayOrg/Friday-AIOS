@@ -132,7 +132,7 @@ const GRID_CARDS = [
   { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "rgba(59,130,246,0.12)", iconColor: "#3B82F6" },
   {
     key: "industry",
-    title: "Industry Updates",
+    title: "Industry News & Trends",
     subtitle: "Latest news and trends shaping the industry",
     icon: FileText,
     iconBg: "rgba(59,130,246,0.12)",
@@ -374,7 +374,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           className="rounded-2xl p-5 mb-4"
           style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 pb-4 mb-4 border-b" style={{ borderColor: C.border }}>
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(14,165,233,0.12)" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
@@ -493,7 +493,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           className="rounded-2xl p-5 mb-4"
           style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
-          <div className="flex items-center gap-2 mb-4">
+          <div className="flex items-center gap-2 pb-4 mb-4 border-b" style={{ borderColor: C.border }}>
             <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(14,165,233,0.12)" }}>
               <LayoutGrid size={14} style={{ color: C.teal }} />
             </span>
@@ -692,10 +692,7 @@ function Calendar3DayContent({
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: pStyle.color }} />
                           <span
                             className="text-sm font-semibold truncate"
-                            style={{
-                              color: m.priority === "critical" ? C.down : C.ink,
-                              textDecoration: done ? "line-through" : "none",
-                            }}
+                            style={{ color: m.priority === "critical" ? C.down : C.ink }}
                           >
                             {m.name}
                           </span>
@@ -825,7 +822,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
                 className="inline-flex items-center gap-1 text-xs mt-2 font-medium"
                 style={{ color: ACCENT_BLUE }}
               >
-                Watch recording <ExternalLink size={11} />
+                Meeting notes <ExternalLink size={11} />
               </a>
             )}
           </div>
