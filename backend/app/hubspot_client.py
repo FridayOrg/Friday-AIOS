@@ -410,8 +410,17 @@ def get_leads() -> list[dict]:
     real per-contact engagement association (non-null placeholder string) so
     crm_metrics.build_qualified_leads's "awaiting first contact" check
     (not ld.get("next_activity_id")) reflects whether any task/call/meeting
-    is actually associated with that contact."""
-    raw = _get_paginated("/crm/v3/objects/contacts", {"properties": "createdate,lifecyclestage"})
+    is actually associated with that contact.
+
+    add_time prefers the account's custom `lead_created_date` property over
+    the standard `createdate` system field when set — this account backdates
+    when a contact was actually sourced as a lead via that custom property
+    (verified directly against the account: createdate is always the day the
+    record was synced into HubSpot, but lead_created_date has a real spread
+    across months), so using createdate here would make every month-over-
+    month leads comparison meaningless. Falls back to createdate for any
+    contact that doesn't have the custom property set."""
+    raw = _get_paginated("/crm/v3/objects/contacts", {"properties": "createdate,lifecyclestage,lead_created_date"})
     qualified = [c for c in raw if (c.get("properties") or {}).get("lifecyclestage") in QUALIFIED_LIFECYCLE_STAGES]
     if not qualified:
         return []
@@ -425,9 +434,10 @@ def get_leads() -> list[dict]:
     for c in qualified:
         cid = str(c["id"])
         contacted = cid in has_task or cid in has_call or cid in has_meeting
+        props = c.get("properties") or {}
         leads.append({
             "id": c["id"],
-            "add_time": (c.get("properties") or {}).get("createdate"),
+            "add_time": props.get("lead_created_date") or props.get("createdate"),
             "is_archived": False,
             "next_activity_id": "has-engagement" if contacted else None,
         })
