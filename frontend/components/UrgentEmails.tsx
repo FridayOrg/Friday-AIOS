@@ -11,7 +11,7 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { Mail, RefreshCw, ExternalLink, ArrowRight, CheckSquare } from "lucide-react";
+import { RefreshCw, ExternalLink, ArrowRight } from "lucide-react";
 
 interface UrgentEmail {
   id: string;
@@ -83,74 +83,60 @@ export default function UrgentEmails() {
 
   return (
     <div>
-      <div className="rounded-xl overflow-hidden bg-[#FEF2F2] border border-[#FECACA]">
-        <div className="flex items-center justify-between px-4 py-3">
-          <div className="flex items-center gap-2.5">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center bg-[#FEE2E2] shrink-0">
-              <Mail size={13} className="text-[#DC2626]" />
-            </span>
-            <span className="text-sm font-semibold text-slate-800">Needs Your Reply</span>
-          </div>
-          <button
-            onClick={handleRefresh}
-            disabled={refreshing}
-            className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-          >
-            <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-            Refresh
-          </button>
-        </div>
-        <div className="px-4 pb-4 pt-0.5 border-t border-[#FECACA]">
-          {loading ? (
-            <p className="text-xs text-slate-500 pt-2">Checking your inbox...</p>
-          ) : emails.length === 0 ? (
-            <p className="text-xs text-slate-500 pt-2">
-              Nothing needs an immediate reply right now.
-            </p>
-          ) : (
-            <div className="flex flex-col gap-2 pt-2 max-h-56 overflow-y-auto">
-              {emails.map((e) => (
-                <div key={e.id} className="rounded-lg bg-white border border-[#FECACA] px-3 py-2.5">
-                  <div className="flex items-start justify-between gap-2">
-                    <div className="min-w-0">
-                      <p className="text-sm font-medium leading-snug truncate text-slate-800">{e.subject}</p>
-                      <p className="text-xs text-slate-500 mt-0.5 truncate">{e.sender}</p>
-                      <p className="text-xs text-slate-500 mt-1 leading-snug">{e.reason}</p>
-                    </div>
-                    <a
-                      href={e.gmail_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 inline-flex items-center gap-1 text-xs text-sky-600 mt-0.5"
-                    >
-                      <ExternalLink size={12} />
-                    </a>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
+      <div className="flex items-center justify-between mb-1">
+        <span className="text-xs font-medium text-slate-500">Needs Your Reply</span>
+        <button
+          onClick={handleRefresh}
+          disabled={refreshing}
+          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+        >
+          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
+          Refresh
+        </button>
       </div>
+      {loading ? (
+        <p className="text-xs text-slate-500 pt-2">Checking your inbox...</p>
+      ) : emails.length === 0 ? (
+        <p className="text-xs text-slate-500 pt-2">
+          Nothing needs an immediate reply right now.
+        </p>
+      ) : (
+        <div className="flex flex-col max-h-56 overflow-y-auto">
+          {emails.map((e) => (
+            <div key={e.id} className="py-2.5 border-b border-gray-100 last:border-b-0">
+              <div className="flex items-start justify-between gap-2">
+                <div className="min-w-0">
+                  <p className="text-sm font-semibold leading-snug truncate text-slate-900">{e.subject}</p>
+                  <p className="text-xs text-slate-500 mt-0.5 truncate">{e.sender}</p>
+                  <p className="text-xs text-slate-500 mt-1 leading-snug">{e.reason}</p>
+                </div>
+                <a
+                  href={e.gmail_url}
+                  target="_blank"
+                  rel="noreferrer"
+                  className="shrink-0 inline-flex items-center gap-1 text-xs text-blue-600 mt-0.5"
+                >
+                  <ExternalLink size={12} />
+                </a>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
       {tasks.length > 0 && (
-        <div className="flex flex-col gap-2 mt-3">
+        <div className="flex flex-col mt-1">
           {tasks.map((t) => (
-            <div key={t.id} className="rounded-lg bg-white border border-gray-200 px-3 py-2.5">
-              <div className="flex items-start gap-2">
-                <CheckSquare size={13} className="text-slate-400 shrink-0 mt-0.5" />
-                <div className="min-w-0 flex-1">
-                  <p className="text-sm font-medium leading-snug truncate text-slate-800">{t.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <span
-                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${
-                        t.status === "overdue" ? "bg-red-100 text-red-700" : "bg-gray-100 text-slate-600"
-                      }`}
-                    >
-                      {t.status === "overdue" ? "Overdue" : `Due ${t.due_date}`}
-                    </span>
-                  </div>
-                </div>
+            <div key={t.id} className="py-2.5 border-b border-gray-100 last:border-b-0">
+              <p className="text-sm font-semibold leading-snug truncate text-slate-900">{t.title}</p>
+              <div className="flex items-center gap-2 mt-1">
+                <span
+                  className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${
+                    t.status === "overdue" ? "bg-red-100 text-red-700" : "bg-gray-100 text-slate-600"
+                  }`}
+                >
+                  {t.status === "overdue" ? "Overdue" : `Due ${t.due_date}`}
+                </span>
               </div>
             </div>
           ))}
@@ -159,7 +145,7 @@ export default function UrgentEmails() {
 
       <Link
         href="/tasks"
-        className="inline-flex items-center gap-1 text-xs font-medium text-[#DC2626] mt-3"
+        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 mt-3"
       >
         View more <ArrowRight size={12} />
       </Link>

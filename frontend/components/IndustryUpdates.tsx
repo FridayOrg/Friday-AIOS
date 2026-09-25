@@ -66,10 +66,10 @@ export default function IndustryUpdates() {
       ) : updates.length === 0 ? (
         <p className="text-xs text-slate-500 pt-1">No significant updates today yet.</p>
       ) : (
-        <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
+        <div className="flex flex-col max-h-56 overflow-y-auto">
           {updates.map((u) => (
-            <div key={u.url} className="rounded-lg bg-[#EFF6FF] border border-[#DBEAFE] px-3 py-2.5">
-              <p className="text-sm font-medium leading-snug text-slate-800">{u.title}</p>
+            <div key={u.url} className="py-2.5 border-b border-gray-100 last:border-b-0">
+              <p className="text-sm font-semibold leading-snug text-slate-900">{u.title}</p>
               {u.content && (
                 <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
               )}
@@ -77,7 +77,7 @@ export default function IndustryUpdates() {
                 href={u.url}
                 target="_blank"
                 rel="noreferrer"
-                className="inline-flex items-center gap-1 text-xs mt-2 text-[#2563EB] font-medium"
+                className="inline-flex items-center gap-1 text-xs mt-2 text-blue-600 font-medium"
               >
                 View full article <ExternalLink size={11} />
               </a>

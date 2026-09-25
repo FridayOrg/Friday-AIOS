@@ -663,7 +663,7 @@ function Calendar3DayContent({
         return (
           <div key={day.iso}>
             <div className="flex items-baseline gap-1.5 mb-1.5">
-              <span className="text-xs font-semibold" style={{ color: isToday ? C.teal : C.ink }}>
+              <span className="text-xs font-semibold" style={{ color: isToday ? ACCENT_BLUE : C.ink }}>
                 {dayLabel(day.iso).top}
               </span>
               <span className="text-[11px]" style={{ color: C.faint }}>{dayLabel(day.iso).bottom}</span>
@@ -671,7 +671,7 @@ function Calendar3DayContent({
             {day.meetings.length === 0 ? (
               <div className="text-xs pb-1" style={{ color: C.faint }}>No meetings</div>
             ) : (
-              <div className="flex flex-col gap-2">
+              <div className="flex flex-col">
                 {day.meetings.map((m, i) => {
                   const pStyle = priorityOf(m.priority);
                   const status = day.iso < today ? "done" : statuses[i];
@@ -684,14 +684,14 @@ function Calendar3DayContent({
                   return (
                     <div
                       key={isGlow ? `${i}-${glow?.ts}` : i}
-                      className={`rounded-lg px-3 py-2.5${g.className}`}
-                      style={{ background: "#EFF6FF", border: "1px solid #DBEAFE", opacity: done ? 0.55 : 1, ...g.style }}
+                      className={`py-2 border-b border-gray-100 last:border-b-0${g.className}`}
+                      style={{ opacity: done ? 0.55 : 1, ...g.style }}
                     >
                       <div className="flex items-center justify-between gap-2">
                         <div className="flex items-center gap-2 min-w-0">
                           <span className="w-1.5 h-1.5 rounded-full shrink-0" style={{ background: pStyle.color }} />
                           <span
-                            className="text-sm font-medium truncate"
+                            className="text-sm font-semibold truncate"
                             style={{
                               color: m.priority === "critical" ? C.down : C.ink,
                               textDecoration: done ? "line-through" : "none",
@@ -711,13 +711,13 @@ function Calendar3DayContent({
                         {isNext && !live && (
                           <span
                             className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(14,165,233,0.12)", color: C.teal }}
+                            style={{ background: "rgba(37,99,235,0.1)", color: ACCENT_BLUE }}
                           >
                             next
                           </span>
                         )}
                       </div>
-                      <p className="text-xs mt-1" style={{ color: C.faint }}>
+                      <p className="text-xs mt-0.5" style={{ color: C.faint }}>
                         {to12h(m.time)}
                         {done && " · done"}
                       </p>
@@ -776,7 +776,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
   }
 
   return (
-    <div className="flex flex-col gap-2 max-h-56 overflow-y-auto">
+    <div className="flex flex-col max-h-56 overflow-y-auto">
       {summaries.map((m) => {
         const takeaway = extractFirstBullet(m.summary_markdown);
         const action = m.action_items[0] ?? null;
@@ -785,10 +785,9 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
         return (
           <div
             key={m.recording_id}
-            className="rounded-lg px-3 py-2.5"
-            style={{ background: "#F5F3FF", border: "1px solid #E4DBFA" }}
+            className="py-2.5 border-b border-gray-100 last:border-b-0"
           >
-            <p className="text-sm font-medium leading-snug">{m.title}</p>
+            <p className="text-sm font-semibold leading-snug text-slate-900">{m.title}</p>
             <p className="text-xs mt-0.5" style={{ color: C.faint }}>
               {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
             </p>
@@ -824,7 +823,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
                 target="_blank"
                 rel="noreferrer"
                 className="inline-flex items-center gap-1 text-xs mt-2 font-medium"
-                style={{ color: "#7C3AED" }}
+                style={{ color: ACCENT_BLUE }}
               >
                 Watch recording <ExternalLink size={11} />
               </a>
@@ -888,7 +887,7 @@ function ActionItemDueDate({
           onClick={() => save(draft || null)}
           disabled={saving || !draft}
           className="text-[11px] font-medium disabled:opacity-40"
-          style={{ color: "#7C3AED" }}
+          style={{ color: ACCENT_BLUE }}
         >
           Save
         </button>
