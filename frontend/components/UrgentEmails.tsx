@@ -11,7 +11,6 @@
 
 import { useEffect, useState } from "react";
 import Link from "next/link";
-import { RefreshCw, ExternalLink, ArrowRight } from "lucide-react";
 
 interface UrgentEmail {
   id: string;
@@ -88,10 +87,9 @@ export default function UrgentEmails() {
         <button
           onClick={handleRefresh}
           disabled={refreshing}
-          className="flex items-center gap-1 text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
+          className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
         >
-          <RefreshCw size={12} className={refreshing ? "animate-spin" : ""} />
-          Refresh
+          {refreshing ? "Refreshing…" : "Refresh"}
         </button>
       </div>
       {loading ? (
@@ -106,7 +104,7 @@ export default function UrgentEmails() {
             <div key={e.id} className="py-2.5 border-b border-gray-100 last:border-b-0">
               <div className="flex items-start justify-between gap-2">
                 <div className="min-w-0">
-                  <p className="text-sm font-semibold leading-snug truncate text-slate-900">{e.subject}</p>
+                  <p className="text-[13px] font-medium leading-snug truncate text-slate-900">{e.subject}</p>
                   <p className="text-xs text-slate-500 mt-0.5 truncate">{e.sender}</p>
                   <p className="text-xs text-slate-500 mt-1 leading-snug">{e.reason}</p>
                 </div>
@@ -114,9 +112,9 @@ export default function UrgentEmails() {
                   href={e.gmail_url}
                   target="_blank"
                   rel="noreferrer"
-                  className="shrink-0 inline-flex items-center gap-1 text-xs text-blue-600 mt-0.5"
+                  className="shrink-0 text-xs text-blue-600 mt-0.5"
                 >
-                  <ExternalLink size={12} />
+                  Open
                 </a>
               </div>
             </div>
@@ -128,7 +126,7 @@ export default function UrgentEmails() {
         <div className="flex flex-col mt-1">
           {tasks.map((t) => (
             <div key={t.id} className="py-2.5 border-b border-gray-100 last:border-b-0">
-              <p className="text-sm font-semibold leading-snug truncate text-slate-900">{t.title}</p>
+              <p className="text-[13px] font-medium leading-snug truncate text-slate-900">{t.title}</p>
               <div className="flex items-center gap-2 mt-1">
                 <span
                   className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full capitalize ${
@@ -145,9 +143,9 @@ export default function UrgentEmails() {
 
       <Link
         href="/tasks"
-        className="inline-flex items-center gap-1 text-xs font-medium text-blue-600 mt-3"
+        className="inline-block text-xs font-medium text-blue-600 mt-3"
       >
-        View more <ArrowRight size={12} />
+        View more →
       </Link>
     </div>
   );
