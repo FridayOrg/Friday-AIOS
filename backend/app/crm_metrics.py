@@ -1,12 +1,19 @@
-"""Derives CEO-facing CRM metrics from raw Pipedrive data (pipedrive_client.py).
+"""Derives CEO-facing CRM metrics from raw CRM data. Was originally written
+against Pipedrive (pipedrive_client.py); now sourced from HubSpot
+(hubspot_client.py) instead — both modules expose the identical function
+names/dict shapes (see hubspot_client.py's module docstring for exactly how
+each HubSpot field was mapped onto Pipedrive's original shape), so this file
+itself needed no changes beyond the one import line. Docstrings below still
+say "Pipedrive" in places; read that as "the CRM client module" — the field
+names themselves (status, stage_id, won_time, etc.) are what's authoritative.
 
-Every number here is computed directly from real Pipedrive fields — nothing
-is fabricated. Where Pipedrive doesn't give us what we'd need for a metric
-(e.g. deal-level probability unset, or multiple currencies mixed together),
-that metric comes back as `null` with a plain-English reason in
-`limitations`, rather than a guessed value. See MODULE-level docstrings on
-each function for exactly which Pipedrive field(s) it reads and how it's
-calculated — that doubles as the "how is this metric calculated" answer.
+Every number here is computed directly from real CRM fields — nothing is
+fabricated. Where the CRM doesn't give us what we'd need for a metric (e.g.
+deal-level probability unset, or multiple currencies mixed together), that
+metric comes back as `null` with a plain-English reason in `limitations`,
+rather than a guessed value. See MODULE-level docstrings on each function for
+exactly which field(s) it reads and how it's calculated — that doubles as the
+"how is this metric calculated" answer.
 
 Two explicit, documented assumptions (both configurable constants below,
 not hidden magic numbers):
@@ -14,8 +21,9 @@ not hidden magic numbers):
     account is considered "stalled" / "without recent activity".
   APPROACHING_CLOSE_DAYS — how close to expected_close_date counts as
     "approaching" for the risk section.
-Pipedrive has no built-in definition of "stalled" or "approaching" — these
-are reporting thresholds, called out here so they're easy to find and tune.
+Neither Pipedrive nor HubSpot has a built-in definition of "stalled" or
+"approaching" — these are reporting thresholds, called out here so they're
+easy to find and tune.
 """
 
 from __future__ import annotations
@@ -24,7 +32,7 @@ import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from . import pipedrive_client as pd
+from . import hubspot_client as pd
 
 logger = logging.getLogger(__name__)
 
@@ -517,9 +525,8 @@ def build_forecast(all_deals: list[dict], stages: list[dict], start: date, end: 
     if included == 0:
         limitations.append(
             "Sales forecast unavailable: none of the deals with an expected close date in "
-            "this range have a probability set on the deal or its stage. Set deal_probability "
-            "on each pipeline stage in Pipedrive, or set probability on individual deals, to "
-            "enable this."
+            "this range have a probability set on their pipeline stage. Set a probability on "
+            "each deal stage in HubSpot's pipeline settings to enable this."
         )
         return None
 
@@ -719,8 +726,8 @@ def build_overview(
         return {
             "configured": False,
             "message": (
-                "Pipedrive is not configured — set PIPEDRIVE_API_TOKEN and PIPEDRIVE_DOMAIN "
-                "in the backend environment to enable live CRM data."
+                "HubSpot is not configured — set HUBSPOT_ACCESS_TOKEN in the backend "
+                "environment to enable live CRM data."
             ),
         }
 
@@ -738,8 +745,8 @@ def build_overview(
 
     if not all_deals and not stages:
         limitations.append(
-            "No data returned from Pipedrive for deals/stages — check the API token's "
-            "permissions or whether the account actually has deals."
+            "No data returned from HubSpot for deals/pipeline stages — check the access "
+            "token's scopes or whether the account actually has deals."
         )
 
     revenue = build_revenue(all_deals, start, end, limitations)

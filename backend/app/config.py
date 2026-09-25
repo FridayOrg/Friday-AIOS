@@ -136,6 +136,13 @@ INDUSTRY_UPDATES_REFRESH_SECRET = os.environ.get("INDUSTRY_UPDATES_REFRESH_SECRE
 PIPEDRIVE_API_TOKEN = os.environ.get("PIPEDRIVE_API_TOKEN")
 PIPEDRIVE_DOMAIN = os.environ.get("PIPEDRIVE_DOMAIN")
 
+# HubSpot (see hubspot_client.py) — replaced Pipedrive as the CEO/CRM
+# dashboard's data source. HUBSPOT_ACCESS_TOKEN: a Service Key / Private App
+# access token (starts with "pat-"), created in the HubSpot account itself
+# under Settings > Integrations > Private Apps (or "Service Keys"), scoped to
+# read access on deals/contacts/companies/owners/tasks/calls/meetings.
+HUBSPOT_ACCESS_TOKEN = os.environ.get("HUBSPOT_ACCESS_TOKEN")
+
 # See backend/prototype/friday_cli.py for the history of why this specific model:
 # gemini-3.6-flash hits a hard 20 requests/day free-tier wall; gemini-3.1-flash-lite
 # handles rapid full-context calls without that daily lockout. Also used for the

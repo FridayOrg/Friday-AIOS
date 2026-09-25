@@ -26,9 +26,9 @@ Endpoints:
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
-  GET  /crm/overview    — CEO CRM dashboard data sourced live from Pipedrive
+  GET  /crm/overview    — CEO CRM dashboard data sourced live from HubSpot
                            (deals, pipeline, activities, contacts, risks, charts);
-                           see pipedrive_client.py / crm_metrics.py
+                           see hubspot_client.py / crm_metrics.py
   GET  /settings/revenue-target — the configured monthly revenue target used
                            by the Daily Brief's Revenue card (defaults if unset)
   PATCH /settings/revenue-target — sets the monthly revenue target
