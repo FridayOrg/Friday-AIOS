@@ -370,122 +370,125 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         </div>
 
         {/* ---------------- DAILY BRIEF ---------------- */}
-        <div
-          className="rounded-2xl p-5 mb-4"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
-        >
-          <div className="flex items-center gap-2 pb-4 mb-4 border-b" style={{ borderColor: C.border }}>
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center" style={{ background: "rgba(14,165,233,0.12)" }}>
-              <LayoutGrid size={14} style={{ color: C.teal }} />
-            </span>
-            <h2 className="text-sm font-semibold">Daily Brief</h2>
-          </div>
+        <div className="flex items-center gap-2 mb-4">
+          <span className="w-6 h-6 rounded-lg flex items-center justify-center" style={{ background: ACCENT_BLUE }}>
+            <LayoutGrid size={13} className="text-white" />
+          </span>
+          <h2 className="text-sm font-semibold">Daily Brief</h2>
+        </div>
 
-          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
-            {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
-                (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
-                not the Deals pipeline */}
-            <BriefTile
-              label="New Qualified Leads"
-              value={
-                crmLoading
-                  ? "—"
-                  : !crm?.configured || crm.qualified_leads?.count_this_month == null
-                  ? "N/A"
-                  : String(crm.qualified_leads.count_this_month)
-              }
-              badge={
-                crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null
-                  ? {
-                      text: `${crm.qualified_leads.pct_change_vs_last_month}%`,
-                      positive: crm.qualified_leads.pct_change_vs_last_month >= 0,
-                    }
-                  : undefined
-              }
-              smallLabel={crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null ? "vs last month" : undefined}
-              subtext={
-                crm?.configured
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+          {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
+              (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
+              not the Deals pipeline */}
+          <BriefTile
+            label="New Qualified Leads"
+            value={
+              crmLoading
+                ? "—"
+                : !crm?.configured || crm.qualified_leads?.count_this_month == null
+                ? "N/A"
+                : String(crm.qualified_leads.count_this_month)
+            }
+            badge={
+              crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null
+                ? {
+                    text: `${crm.qualified_leads.pct_change_vs_last_month}%`,
+                    positive: crm.qualified_leads.pct_change_vs_last_month >= 0,
+                  }
+                : undefined
+            }
+            subtext={
+              crm?.configured
+                ? [
+                    crm.qualified_leads?.awaiting_first_contact != null
+                      ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
+                      : "No leads data available",
+                  ]
+                : [crm?.message ?? "HubSpot not connected"]
+            }
+          />
+
+          {/* Card 2: Open Sales Pipeline — real HubSpot data. No badge: there's no
+              stored historical pipeline value to compute a genuine %-change from. */}
+          <BriefTile
+            label="Open Sales Pipeline"
+            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
+            subtext={
+              crm?.configured
+                ? [
+                    `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"} · ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
+                  ]
+                : [crm?.message ?? "HubSpot not connected"]
+            }
+          />
+
+          {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see
+              WIN_RATE_WINDOW_DAYS). No badge: no prior-window win rate is
+              computed to compare against yet. */}
+          <BriefTile
+            key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
+            label="Deal Win Rate"
+            value={
+              crmLoading
+                ? "—"
+                : !crm?.configured
+                ? "N/A"
+                : crm.win_rate?.rate_pct == null
+                ? "N/A"
+                : `${crm.win_rate.rate_pct}%`
+            }
+            subtext={
+              crm?.configured
+                ? [
+                    crm.win_rate
+                      ? `Last ${crm.win_rate.window_days} days · ${
+                          crm.win_rate.closed_count > 0
+                            ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
+                            : "no deals closed in this window yet"
+                        }`
+                      : "no win-rate data available",
+                  ]
+                : [crm?.message ?? "HubSpot not connected"]
+            }
+            glow={glow?.section === "pipeline" ? C.teal : undefined}
+          />
+
+          {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable
+              target. Badge is month-over-month revenue growth (kpis.revenue_growth_pct);
+              the target %/progress bar/remaining are shown separately below it. */}
+          <BriefTile
+            key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
+            label="Revenue Achieved This Month"
+            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
+            badge={
+              crm?.configured && crm.kpis!.revenue_growth_pct != null
+                ? { text: `${crm.kpis!.revenue_growth_pct}%`, positive: crm.kpis!.revenue_growth_pct >= 0 }
+                : undefined
+            }
+            progressLabel={
+              crm?.configured && effectiveRevenueTarget
+                ? `${Math.round((crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)}% of ${fmtUsd(effectiveRevenueTarget)} target`
+                : undefined
+            }
+            progressPct={
+              crm?.configured && effectiveRevenueTarget
+                ? Math.min(100, (crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)
+                : undefined
+            }
+            subtext={
+              crm?.configured
+                ? effectiveRevenueTarget
                   ? [
-                      crm.qualified_leads?.awaiting_first_contact != null
-                        ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
-                        : "No leads data available",
+                      crm.kpis!.won_revenue >= effectiveRevenueTarget
+                        ? "Target reached"
+                        : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
                     ]
-                  : [crm?.message ?? "HubSpot not connected"]
-              }
-            />
-
-            {/* Card 2: Open Sales Pipeline — real HubSpot data */}
-            <BriefTile
-              label="Open Sales Pipeline"
-              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
-              subtext={
-                crm?.configured
-                  ? [
-                      `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"} · ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
-                    ]
-                  : [crm?.message ?? "HubSpot not connected"]
-              }
-            />
-
-            {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see WIN_RATE_WINDOW_DAYS) */}
-            <BriefTile
-              key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
-              label="Deal Win Rate"
-              value={
-                crmLoading
-                  ? "—"
-                  : !crm?.configured
-                  ? "N/A"
-                  : crm.win_rate?.rate_pct == null
-                  ? "N/A"
-                  : `${crm.win_rate.rate_pct}%`
-              }
-              smallLabel={crm?.configured && crm.win_rate ? `Last ${crm.win_rate.window_days} days` : undefined}
-              subtext={
-                crm?.configured
-                  ? [
-                      crm.win_rate && crm.win_rate.closed_count > 0
-                        ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
-                        : "no deals closed in this window yet",
-                    ]
-                  : [crm?.message ?? "HubSpot not connected"]
-              }
-              glow={glow?.section === "pipeline" ? C.teal : undefined}
-            />
-
-            {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable target */}
-            <BriefTile
-              key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
-              label="Revenue Achieved This Month"
-              value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
-              badge={
-                crm?.configured && effectiveRevenueTarget
-                  ? {
-                      text: `${Math.round((crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)}% of ${fmtUsd(effectiveRevenueTarget)} target`,
-                      positive: crm.kpis!.won_revenue >= effectiveRevenueTarget,
-                    }
-                  : undefined
-              }
-              progressPct={
-                crm?.configured && effectiveRevenueTarget
-                  ? Math.min(100, (crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)
-                  : undefined
-              }
-              subtext={
-                crm?.configured
-                  ? effectiveRevenueTarget
-                    ? [
-                        crm.kpis!.won_revenue >= effectiveRevenueTarget
-                          ? "Target reached"
-                          : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
-                      ]
-                    : ["No revenue target set"]
-                  : [crm?.message ?? "HubSpot not connected"]
-              }
-              glow={glow?.section === "financial" ? C.teal : undefined}
-            />
-          </div>
-
+                  : ["No revenue target set"]
+                : [crm?.message ?? "HubSpot not connected"]
+            }
+            glow={glow?.section === "financial" ? C.teal : undefined}
+          />
         </div>
 
         {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
@@ -569,42 +572,45 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 function BriefTile({
   label,
   value,
-  smallLabel,
   badge,
-  subtext,
+  progressLabel,
   progressPct,
+  subtext,
   glow,
 }: {
   label: string;
   value: string;
-  smallLabel?: string;
   badge?: { text: string; positive: boolean };
-  subtext: React.ReactNode[];
+  progressLabel?: string;
   progressPct?: number;
+  subtext: React.ReactNode[];
   glow?: string;
 }) {
   const g = glowProps(!!glow, glow ?? "");
   return (
-    <div className={`flex-1 min-w-0 px-5 py-1 first:pl-0 last:pr-0${g.className}`} style={g.style}>
-      <p className="text-xs font-medium mb-2" style={{ color: ACCENT_BLUE }}>{label}</p>
+    <div
+      className={`rounded-xl p-5${g.className}`}
+      style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...g.style }}
+    >
+      <p className="text-sm font-semibold mb-2" style={{ color: C.ink }}>{label}</p>
 
-      <p className="text-2xl font-bold" style={{ color: C.ink }}>{value}</p>
+      <p className="text-3xl font-bold" style={{ color: C.ink }}>{value}</p>
 
       {badge && (
         <p
-          className="inline-flex items-center gap-1 text-xs font-medium mt-1"
+          className="inline-flex items-center gap-1 text-xs font-semibold mt-1.5"
           style={{ color: badge.positive ? ACCENT_UP : ACCENT_DOWN }}
         >
           {badge.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
           {badge.text}
         </p>
       )}
-      {smallLabel && (
-        <p className="text-[11px] mt-0.5" style={{ color: C.faint }}>{smallLabel}</p>
-      )}
 
+      {progressLabel && (
+        <p className="text-xs mt-2" style={{ color: C.muted }}>{progressLabel}</p>
+      )}
       {progressPct !== undefined && (
-        <div className="w-full h-1.5 rounded-full mt-2 mb-1 overflow-hidden" style={{ background: "#E5E7EB" }}>
+        <div className="w-full h-1.5 rounded-full mt-1.5 mb-1 overflow-hidden" style={{ background: "#E5E7EB" }}>
           <div
             className="h-full rounded-full"
             style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: ACCENT_UP }}
@@ -612,7 +618,7 @@ function BriefTile({
         </div>
       )}
 
-      <div className="mt-1.5 flex flex-col gap-0.5">
+      <div className="mt-2 flex flex-col gap-0.5">
         {subtext.map((line, i) => (
           <p key={i} className="text-xs" style={{ color: C.muted }}>{line}</p>
         ))}
