@@ -1,15 +1,15 @@
 "use client";
 
-// The CRM page (/crm) — a CEO-facing view built entirely from live Pipedrive
+// The CRM page (/crm) — a CEO-facing view built entirely from live HubSpot
 // data (backend/app/crm_metrics.py via GET /api/crm -> backend's
 // /crm/overview). Self-contained client widget, same convention as
 // IndustryUpdates.tsx/UrgentEmails.tsx: fetches its own data rather than
 // going through lib/data.ts, so this stays fully isolated from the existing
 // mock-data dashboard plumbing.
 //
-// Every number rendered here traces back to a specific Pipedrive field —
+// Every number rendered here traces back to a specific HubSpot field —
 // see crm_metrics.py's per-function docstrings for the exact calculation.
-// Metrics Pipedrive can't support (e.g. forecast with no probability set)
+// Metrics HubSpot can't support (e.g. forecast with no probability set)
 // come back as null from the backend and are rendered as "Not available"
 // rather than a fabricated 0 — never silently coerced to zero here either.
 
@@ -186,7 +186,7 @@ export default function CrmDashboard({ today }: { today: string }) {
           <div>
             <h1 className="text-2xl font-bold">CRM</h1>
             <p className="text-sm mt-0.5" style={{ color: C.muted }}>
-              Pipedrive-powered CEO view · {fmtFullDay(today)}
+              HubSpot-powered CEO view · {fmtFullDay(today)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -237,7 +237,7 @@ export default function CrmDashboard({ today }: { today: string }) {
           </div>
         ) : !data?.configured ? (
           <div className="rounded-xl px-5 py-8 text-sm text-center" style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.faint }}>
-            {data?.message ?? "Pipedrive is not configured."}
+            {data?.message ?? "HubSpot is not configured."}
           </div>
         ) : (
           <div className="flex flex-col gap-4">
@@ -635,7 +635,7 @@ function ForecastCard({ data }: { data: CrmOverview }) {
         </>
       ) : (
         <p className="text-sm" style={{ color: C.faint }}>
-          Not available — no open deals in this range have a probability set on the deal or its Pipedrive stage.
+          Not available — no open deals in this range have a probability set on their HubSpot deal stage.
         </p>
       )}
     </div>

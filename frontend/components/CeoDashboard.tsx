@@ -159,7 +159,7 @@ const GRID_CARDS = [
 export default function CeoDashboard({ data }: { data: DashboardData }) {
   const { tasks, calendar, meetingSummaries } = data;
 
-  // Daily Brief's revenue/pipeline/conversion tiles are real Pipedrive data
+  // Daily Brief's revenue/pipeline/conversion tiles are real HubSpot data
   // (see backend/app/crm_metrics.py via GET /api/crm), fetched client-side —
   // same self-contained-widget pattern as IndustryUpdates/UrgentEmails —
   // rather than the mock revenue.json/pipeline.json this used to read.
@@ -386,8 +386,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           </div>
 
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {/* Card 1: New Qualified Leads — real data from Pipedrive's Leads Inbox
-                (see crm_metrics.build_qualified_leads / pipedrive_client.get_leads),
+            {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
+                (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
                 not the Deals pipeline */}
             <BriefTile
               tile={TILE.leads}
@@ -416,11 +416,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                         ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
                         : "No leads data available",
                     ]
-                  : [crm?.message ?? "Pipedrive not connected"]
+                  : [crm?.message ?? "HubSpot not connected"]
               }
             />
 
-            {/* Card 2: Open Sales Pipeline — real Pipedrive data */}
+            {/* Card 2: Open Sales Pipeline — real HubSpot data */}
             <BriefTile
               tile={TILE.deals}
               icon={TrendingUp}
@@ -432,11 +432,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"}`,
                       `${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
                     ]
-                  : [crm?.message ?? "Pipedrive not connected"]
+                  : [crm?.message ?? "HubSpot not connected"]
               }
             />
 
-            {/* Card 3: Deal Win Rate — real Pipedrive data, trailing window (see WIN_RATE_WINDOW_DAYS) */}
+            {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see WIN_RATE_WINDOW_DAYS) */}
             <BriefTile
               key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
               tile={TILE.retention}
@@ -459,12 +459,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                         ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
                         : "no deals closed in this window yet",
                     ]
-                  : [crm?.message ?? "Pipedrive not connected"]
+                  : [crm?.message ?? "HubSpot not connected"]
               }
               glow={glow?.section === "pipeline" ? C.teal : undefined}
             />
 
-            {/* Card 4: Revenue Achieved This Month — real Pipedrive data + configurable target */}
+            {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable target */}
             <BriefTile
               key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
               tile={TILE.revenue}
@@ -493,7 +493,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                           : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
                       ]
                     : ["No revenue target set"]
-                  : [crm?.message ?? "Pipedrive not connected"]
+                  : [crm?.message ?? "HubSpot not connected"]
               }
               glow={glow?.section === "financial" ? C.teal : undefined}
             />

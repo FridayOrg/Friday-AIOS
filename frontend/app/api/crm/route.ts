@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
 
 // Thin proxy to the FastAPI backend's GET /crm/overview (backend/app/main.py,
-// data derived in backend/app/crm_metrics.py from live Pipedrive data) — same
+// data derived in backend/app/crm_metrics.py from live HubSpot data) — same
 // pattern as the other app/api/*/route.ts files. Forwards the date-filter
 // query params straight through; the backend does all the range math.
 const FRIDAY_API_URL = process.env.FRIDAY_API_URL ?? "http://localhost:8000";

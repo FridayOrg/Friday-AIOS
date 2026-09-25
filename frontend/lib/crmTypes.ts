@@ -1,6 +1,6 @@
 // Mirrors backend/app/crm_metrics.py's build_overview() response shape
 // exactly — see that file's docstrings for how each field is calculated
-// from Pipedrive data. Keeping these types in one place (rather than inline
+// from HubSpot data. Keeping these types in one place (rather than inline
 // in CrmDashboard.tsx) so the API route and every chart/table component
 // agree on the shape.
 

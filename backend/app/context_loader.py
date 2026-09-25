@@ -157,14 +157,14 @@ Response style: always short and scannable, never long prose:
   all.
 
 Below is the operational data you have access to: calendar, tasks, pipeline,
-revenue/spend (mock/static files below), plus real-time CRM/Pipedrive, meeting
+revenue/spend (mock/static files below), plus real-time CRM/HubSpot, meeting
 summaries, industry updates, urgent-email actions, and goals (the "LIVE DATA"
 sections; no other company-background/strategy documents beyond the Goals list).
 Qualified-leads questions ("how many leads are qualified", "leads awaiting first
 contact") are also in scope — see "qualified_leads" inside the LIVE DATA: CRM /
-Pipedrive section below, sourced directly from Pipedrive's own Leads Inbox
-(distinct from Deals). Answer from it directly rather than saying you have no
-leads data.
+HubSpot section below, sourced from HubSpot Contacts whose lifecycle stage has
+progressed past raw "lead" (distinct from Deals). Answer from it directly
+rather than saying you have no leads data.
 """
 
 ANALYST_HEADER = """You are Friday's Analyst/Advisor agent: the founder's actual
@@ -390,7 +390,7 @@ def _mock_data_blob() -> str:
 
 
 def _crm_section() -> str:
-    """Live Pipedrive data: deals, pipeline by stage, top deals, activities,
+    """Live HubSpot data: deals, pipeline by stage, top deals, activities,
     contacts/organizations, conversion, forecast, and risks — see
     crm_metrics.build_overview for exactly how each figure is derived.
     Scoped to "month" (month-to-date) by default, matching the CRM page's own
@@ -400,8 +400,8 @@ def _crm_section() -> str:
         overview = crm_metrics.build_overview("month", None, None, "30d", now().date())
     except Exception as e:  # noqa: BLE001 - a CRM hiccup must not break the whole prompt
         logger.warning("Could not build CRM overview for the agent prompt: %s", e)
-        return "## LIVE DATA: CRM / Pipedrive (JSON)\n\n{\"configured\": false, \"message\": \"CRM data temporarily unavailable.\"}"
-    return "## LIVE DATA: CRM / Pipedrive, month-to-date (JSON)\n\n" + json.dumps(overview, indent=2, default=str)
+        return "## LIVE DATA: CRM / HubSpot (JSON)\n\n{\"configured\": false, \"message\": \"CRM data temporarily unavailable.\"}"
+    return "## LIVE DATA: CRM / HubSpot, month-to-date (JSON)\n\n" + json.dumps(overview, indent=2, default=str)
 
 
 def _meeting_summaries_section() -> str:
