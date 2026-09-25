@@ -15,20 +15,6 @@
 
 import { useEffect, useMemo, useState } from "react";
 import {
-  RefreshCw,
-  TrendingUp,
-  TrendingDown,
-  DollarSign,
-  Target,
-  CheckCircle2,
-  Percent,
-  Clock,
-  Users,
-  AlertTriangle,
-  ChevronDown,
-  ChevronRight,
-} from "lucide-react";
-import {
   ResponsiveContainer,
   AreaChart,
   ComposedChart,
@@ -222,11 +208,10 @@ export default function CrmDashboard({ today }: { today: string }) {
             <button
               onClick={handleRefresh}
               disabled={refreshing}
-              className="flex items-center gap-1.5 text-xs font-medium px-3 py-2 rounded-lg disabled:opacity-50"
+              className="text-xs font-medium px-3 py-2 rounded-lg disabled:opacity-50"
               style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.muted }}
             >
-              <RefreshCw size={13} className={refreshing ? "animate-spin" : ""} />
-              Refresh
+              {refreshing ? "Refreshing…" : "Refresh"}
             </button>
           </div>
         </div>
@@ -296,8 +281,6 @@ function KpiRow({ data }: { data: CrmOverview }) {
       label: "Won Revenue",
       value: fmtCurrency(k.won_revenue),
       change: fmtPct(k.revenue_growth_pct),
-      icon: DollarSign,
-      bg: "rgba(43,175,106,0.12)",
       fg: C.up,
       spark: trendPoints,
     },
@@ -305,40 +288,30 @@ function KpiRow({ data }: { data: CrmOverview }) {
       label: "Open Pipeline",
       value: fmtCurrency(k.open_pipeline_value),
       change: null,
-      icon: Target,
-      bg: "rgba(59,130,246,0.12)",
       fg: C.blue,
     },
     {
       label: "Deals Won",
       value: String(k.deals_won),
       change: null,
-      icon: CheckCircle2,
-      bg: "rgba(43,175,106,0.12)",
       fg: C.up,
     },
     {
       label: "Conversion Rate",
       value: k.conversion_rate_pct === null ? "Not available" : `${k.conversion_rate_pct}%`,
       change: null,
-      icon: Percent,
-      bg: "rgba(245,158,11,0.12)",
       fg: C.orange,
     },
     {
       label: "Activities Due",
       value: String(k.activities_due),
       change: null,
-      icon: Clock,
-      bg: "rgba(239,107,107,0.12)",
       fg: C.down,
     },
     {
       label: "New Contacts",
       value: String(k.new_contacts),
       change: null,
-      icon: Users,
-      bg: "rgba(59,130,246,0.12)",
       fg: C.blue,
     },
   ];
@@ -352,22 +325,19 @@ function KpiRow({ data }: { data: CrmOverview }) {
           style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
           <div className="flex items-center justify-between">
-            <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.bg }}>
-              <c.icon size={14} style={{ color: c.fg }} />
-            </span>
+            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: c.fg }}>{c.label}</p>
             {c.change && (
               <span
                 className="flex items-center gap-0.5 text-[11px] font-medium"
                 style={{ color: c.change.startsWith("+") ? C.up : C.down }}
               >
-                {c.change.startsWith("+") ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
+                <span aria-hidden>{c.change.startsWith("+") ? "↑" : "↓"}</span>
                 {c.change}
               </span>
             )}
           </div>
           <div>
             <p className="text-lg font-bold leading-tight">{c.value}</p>
-            <p className="text-[11px] mt-0.5" style={{ color: C.faint }}>{c.label}</p>
           </div>
           {c.spark && c.spark.length > 1 && (
             <div className="h-8 -mx-1">
@@ -621,8 +591,7 @@ function ForecastCard({ data }: { data: CrmOverview }) {
   const f = data.forecast;
   return (
     <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}>
-      <div className="flex items-center gap-2 mb-1">
-        <Target size={14} style={{ color: C.blue }} />
+      <div className="mb-1">
         <h3 className="text-sm font-semibold">Sales Forecast</h3>
       </div>
       {f ? (
@@ -695,7 +664,7 @@ function DealRowItem({ deal, expanded, onToggle }: { deal: DealRow; expanded: bo
         style={{ borderBottom: expanded ? "none" : `1px solid ${C.border}` }}
       >
         <td className="px-5 py-2.5 font-medium whitespace-nowrap flex items-center gap-1.5">
-          {expanded ? <ChevronDown size={13} style={{ color: C.faint }} /> : <ChevronRight size={13} style={{ color: C.faint }} />}
+          <span aria-hidden className="text-xs" style={{ color: C.faint }}>{expanded ? "▾" : "▸"}</span>
           {deal.name ?? "—"}
         </td>
         <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{deal.company ?? "—"}</td>
@@ -860,8 +829,7 @@ function RisksCard({ data }: { data: CrmOverview }) {
 
   return (
     <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}>
-      <div className="flex items-center gap-2 mb-3">
-        <AlertTriangle size={15} style={{ color: C.orange }} />
+      <div className="mb-3">
         <h3 className="text-sm font-semibold">Risks / Attention Required</h3>
       </div>
       {totalCount === 0 ? (
