@@ -566,10 +566,10 @@ function BriefTile({
 
       {badge && (
         <p
-          className="inline-flex items-center justify-center gap-1 text-xs font-semibold mt-1.5"
+          className="inline-flex items-center justify-center gap-1 text-base font-semibold mt-1.5"
           style={{ color: badge.positive ? ACCENT_UP : ACCENT_DOWN }}
         >
-          <span aria-hidden className="text-base leading-none">{badge.positive ? "↑" : "↓"}</span>
+          <span aria-hidden className="leading-none">{badge.positive ? "↑" : "↓"}</span>
           {badge.text}
         </p>
       )}
