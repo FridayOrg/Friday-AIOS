@@ -5,8 +5,6 @@ import {
   Search,
   X,
   ChevronDown,
-  DollarSign,
-  Target,
   AlertCircle,
   CalendarClock,
   TrendingUp,
@@ -15,7 +13,6 @@ import {
   FileText,
   ExternalLink,
   User,
-  Users,
   CalendarPlus,
 } from "lucide-react";
 import type { DashboardData } from "@/lib/data";
@@ -27,17 +24,16 @@ import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
 
 // ---------------------------------------------------------------------------
-// TOKENS — shared light palette from lib/dashboardTokens; TILE stays local
-// since its icon-badge colors are specific to these 4 Daily Brief stat cards
-// (white card + small colored icon badge, matching the CRM page's KPI cards).
+// TOKENS — shared light palette from lib/dashboardTokens for page/card
+// background and body text. ACCENT_* stay local to this file (not written
+// into dashboardTokens.ts) since this blue-header color format is specific
+// to the Dashboard page only — CRM/Goals/Company/Tasks/Profile keep their
+// existing look.
 // ---------------------------------------------------------------------------
 
-const TILE = {
-  revenue: { iconBg: "rgba(43,175,106,0.12)", icon: "#2BAF6A" },
-  deals: { iconBg: "rgba(59,130,246,0.12)", icon: "#3B82F6" },
-  retention: { iconBg: "rgba(245,158,11,0.12)", icon: "#F59E0B" },
-  leads: { iconBg: "rgba(139,92,246,0.12)", icon: "#8B5CF6" },
-};
+const ACCENT_BLUE = "#2563EB";
+const ACCENT_UP = "#16A34A";
+const ACCENT_DOWN = "#DC2626";
 
 const TYPE_LABEL: Record<string, string> = {
   approval_needed: "Approval needed",
@@ -385,13 +381,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             <h2 className="text-sm font-semibold">Daily Brief</h2>
           </div>
 
-          <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+          <div className="flex flex-col sm:flex-row divide-y sm:divide-y-0 sm:divide-x divide-gray-200">
             {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
                 (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
                 not the Deals pipeline */}
             <BriefTile
-              tile={TILE.leads}
-              icon={Users}
               label="New Qualified Leads"
               value={
                 crmLoading
@@ -422,15 +416,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
             {/* Card 2: Open Sales Pipeline — real HubSpot data */}
             <BriefTile
-              tile={TILE.deals}
-              icon={TrendingUp}
               label="Open Sales Pipeline"
               value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
               subtext={
                 crm?.configured
                   ? [
-                      `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"}`,
-                      `${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
+                      `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"} · ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
                     ]
                   : [crm?.message ?? "HubSpot not connected"]
               }
@@ -439,8 +430,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see WIN_RATE_WINDOW_DAYS) */}
             <BriefTile
               key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
-              tile={TILE.retention}
-              icon={Target}
               label="Deal Win Rate"
               value={
                 crmLoading
@@ -467,8 +456,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable target */}
             <BriefTile
               key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
-              tile={TILE.revenue}
-              icon={DollarSign}
               label="Revenue Achieved This Month"
               value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
               badge={
@@ -520,32 +507,31 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 id={`section-${c.key}`}
                 className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
                 style={{
-                  background: "#F9FAFB",
+                  background: CARD_BG,
                   border: `1px solid ${C.border}`,
                   ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
                 }}
               >
               <button
                 onClick={() => toggleGridCard(c.key)}
-                className="w-full flex items-center justify-between px-5 py-4"
+                className="w-full flex items-center justify-between px-5 py-3.5"
+                style={{ background: ACCENT_BLUE }}
               >
                 <div className="flex items-center gap-3">
-                  <span className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0" style={{ background: c.iconBg }}>
-                    <c.icon size={15} style={{ color: c.iconColor }} />
-                  </span>
+                  <c.icon size={16} className="text-white shrink-0" />
                   <div className="flex flex-col items-start">
                     <div className="flex items-center gap-2">
-                      <span className="text-sm font-semibold">{c.title}</span>
+                      <span className="text-sm font-semibold text-white">{c.title}</span>
                     </div>
                     {c.subtitle && (
-                      <span className="text-xs" style={{ color: C.faint }}>{c.subtitle}</span>
+                      <span className="text-[11px] text-white/75">{c.subtitle}</span>
                     )}
                   </div>
                 </div>
                 <ChevronDown
                   size={16}
+                  className="text-white"
                   style={{
-                    color: C.faint,
                     transform: gridOpen[c.key] ? "rotate(180deg)" : "rotate(0deg)",
                     transition: "transform 0.2s ease",
                   }}
@@ -581,8 +567,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 // ---------------------------------------------------------------------------
 
 function BriefTile({
-  tile,
-  icon: Icon,
   label,
   value,
   smallLabel,
@@ -591,8 +575,6 @@ function BriefTile({
   progressPct,
   glow,
 }: {
-  tile: { iconBg: string; icon: string };
-  icon: React.ComponentType<{ size?: number; style?: React.CSSProperties }>;
   label: string;
   value: string;
   smallLabel?: string;
@@ -603,46 +585,34 @@ function BriefTile({
 }) {
   const g = glowProps(!!glow, glow ?? "");
   return (
-    <div
-      className={`rounded-xl p-4 flex flex-col${g.className}`}
-      style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...g.style }}
-    >
-      <div className="flex items-start justify-between mb-4">
-        <p className="text-xs font-medium" style={{ color: C.muted }}>{label}</p>
-        <span className="w-7 h-7 rounded-lg flex items-center justify-center shrink-0" style={{ background: tile.iconBg }}>
-          <Icon size={13} style={{ color: tile.icon }} />
-        </span>
-      </div>
+    <div className={`flex-1 min-w-0 px-5 py-1 first:pl-0 last:pr-0${g.className}`} style={g.style}>
+      <p className="text-xs font-medium mb-2" style={{ color: ACCENT_BLUE }}>{label}</p>
 
-      <div className="flex items-center gap-2 flex-wrap mb-1">
-        <p className="text-2xl font-bold">{value}</p>
-        {badge && (
-          <span
-            className="inline-flex items-center gap-0.5 text-[11px] font-semibold px-1.5 py-0.5 rounded-full"
-            style={{
-              color: badge.positive ? C.up : C.down,
-              background: badge.positive ? "rgba(52,211,153,0.12)" : "rgba(248,113,113,0.12)",
-            }}
-          >
-            {badge.positive ? <TrendingUp size={11} /> : <TrendingDown size={11} />}
-            {badge.text}
-          </span>
-        )}
-      </div>
+      <p className="text-2xl font-bold" style={{ color: C.ink }}>{value}</p>
+
+      {badge && (
+        <p
+          className="inline-flex items-center gap-1 text-xs font-medium mt-1"
+          style={{ color: badge.positive ? ACCENT_UP : ACCENT_DOWN }}
+        >
+          {badge.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          {badge.text}
+        </p>
+      )}
       {smallLabel && (
-        <p className="text-[11px] mb-1" style={{ color: C.muted }}>{smallLabel}</p>
+        <p className="text-[11px] mt-0.5" style={{ color: C.faint }}>{smallLabel}</p>
       )}
 
       {progressPct !== undefined && (
-        <div className="w-full h-1.5 rounded-full mt-1.5 mb-2 overflow-hidden" style={{ background: "#E5E7EB" }}>
+        <div className="w-full h-1.5 rounded-full mt-2 mb-1 overflow-hidden" style={{ background: "#E5E7EB" }}>
           <div
             className="h-full rounded-full"
-            style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: C.up }}
+            style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: ACCENT_UP }}
           />
         </div>
       )}
 
-      <div className="mt-auto pt-1 flex flex-col gap-0.5">
+      <div className="mt-1.5 flex flex-col gap-0.5">
         {subtext.map((line, i) => (
           <p key={i} className="text-xs" style={{ color: C.muted }}>{line}</p>
         ))}
