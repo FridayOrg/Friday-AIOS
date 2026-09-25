@@ -671,26 +671,26 @@ function Calendar3DayContent({
                             {m.name}
                           </span>
                         </div>
-                        {live && (
-                          <span
-                            className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "#FEE2E2", color: C.down }}
-                          >
-                            now
-                          </span>
-                        )}
-                        {isNext && !live && (
-                          <span
-                            className="shrink-0 text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
-                            style={{ background: "rgba(37,99,235,0.1)", color: ACCENT_BLUE }}
-                          >
-                            next
-                          </span>
-                        )}
+                        <div className="flex items-center gap-2 shrink-0">
+                          <span className="text-xs" style={{ color: C.faint }}>{to12h(m.time)}</span>
+                          {live && (
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                              style={{ background: "#FEE2E2", color: C.down }}
+                            >
+                              now
+                            </span>
+                          )}
+                          {isNext && !live && (
+                            <span
+                              className="text-[10px] font-semibold px-1.5 py-0.5 rounded-full"
+                              style={{ background: "rgba(37,99,235,0.1)", color: ACCENT_BLUE }}
+                            >
+                              next
+                            </span>
+                          )}
+                        </div>
                       </div>
-                      <p className="text-xs mt-0.5" style={{ color: C.faint }}>
-                        {to12h(m.time)}
-                      </p>
                     </div>
                   );
                 })}
@@ -757,10 +757,12 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
             key={m.recording_id}
             className="py-2.5 border-b border-gray-100 last:border-b-0"
           >
-            <p className="text-[13px] font-medium leading-snug text-slate-900">{m.title}</p>
-            <p className="text-xs mt-0.5" style={{ color: C.faint }}>
-              {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
-            </p>
+            <div className="flex items-start justify-between gap-2">
+              <p className="text-[13px] font-medium leading-snug text-slate-900 truncate">{m.title}</p>
+              <span className="text-xs shrink-0" style={{ color: C.faint }}>
+                {m.started_at ? fmtDay(m.started_at.slice(0, 10)) : fmtDay(m.received_at.slice(0, 10))}
+              </span>
+            </div>
             {takeaway && (
               <p className="text-xs mt-1.5 leading-snug" style={{ color: C.muted }}>
                 <span className="font-medium" style={{ color: C.ink }}>Goal:</span> {takeaway}

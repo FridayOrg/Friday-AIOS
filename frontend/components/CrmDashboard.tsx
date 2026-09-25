@@ -253,10 +253,7 @@ export default function CrmDashboard({ today }: { today: string }) {
 
             <TopDealsCard data={data} expandedDeal={expandedDeal} setExpandedDeal={setExpandedDeal} />
 
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-4">
-              <ActivitiesCard data={data} />
-              <ContactsCard data={data} />
-            </div>
+            <ActivitiesCard data={data} />
 
             <RisksCard data={data} />
 
@@ -308,16 +305,10 @@ function KpiRow({ data }: { data: CrmOverview }) {
       change: null,
       fg: C.down,
     },
-    {
-      label: "New Contacts",
-      value: String(k.new_contacts),
-      change: null,
-      fg: C.blue,
-    },
   ];
 
   return (
-    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-6 gap-3">
+    <div className="grid grid-cols-2 sm:grid-cols-3 xl:grid-cols-5 gap-3">
       {cards.map((c) => (
         <div
           key={c.label}
@@ -748,48 +739,6 @@ function ActivityStat({ label, value, color }: { label: string; value: number; c
 // ---------------------------------------------------------------------------
 // CONTACTS / COMPANIES
 // ---------------------------------------------------------------------------
-
-function ContactsCard({ data }: { data: CrmOverview }) {
-  const c = data.contacts;
-  if (!c) return null;
-  const stats = [
-    { label: "New Contacts", value: c.new_contacts_count },
-    { label: "New Organizations", value: c.new_organizations_count },
-    { label: "Active Customers", value: c.active_customers_count },
-    { label: "Prospects", value: c.prospects_count },
-  ];
-  return (
-    <div className="rounded-xl p-5" style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}>
-      <h3 className="text-sm font-semibold mb-3">Contacts &amp; Companies</h3>
-      <div className="grid grid-cols-2 gap-2 mb-3">
-        {stats.map((s) => (
-          <div key={s.label} className="rounded-lg px-3 py-2" style={{ background: "#F9FAFB" }}>
-            <p className="text-lg font-bold">{s.value}</p>
-            <p className="text-[10px]" style={{ color: C.faint }}>{s.label}</p>
-          </div>
-        ))}
-      </div>
-      {c.accounts_without_recent_activity_count > 0 && (
-        <div>
-          <p className="text-xs font-medium mb-1.5" style={{ color: C.muted }}>
-            Accounts without recent activity ({c.accounts_without_recent_activity_count})
-          </p>
-          <div className="flex flex-col gap-1 max-h-28 overflow-y-auto">
-            {c.accounts_without_recent_activity.slice(0, 6).map((o) => (
-              <div key={o.id} className="flex items-center justify-between text-xs">
-                <span className="flex items-center gap-1.5 truncate pr-2" style={{ color: C.ink }}>
-                  <Avatar name={o.name} color="#9CA3AF" />
-                  {o.name}
-                </span>
-                <span className="shrink-0" style={{ color: C.faint }}>{fmtDate(o.last_activity_date) || "No activity"}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-      )}
-    </div>
-  );
-}
 
 // ---------------------------------------------------------------------------
 // RISKS / ATTENTION REQUIRED
