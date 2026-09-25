@@ -7,8 +7,8 @@ import {
   ChevronDown,
   AlertCircle,
   CalendarClock,
-  TrendingUp,
-  TrendingDown,
+  ArrowUp,
+  ArrowDown,
   LayoutGrid,
   FileText,
   ExternalLink,
@@ -589,7 +589,7 @@ function BriefTile({
   const g = glowProps(!!glow, glow ?? "");
   return (
     <div
-      className={`rounded-xl p-5${g.className}`}
+      className={`rounded-xl p-5 text-center${g.className}`}
       style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)", ...g.style }}
     >
       <p className="text-sm font-semibold mb-2" style={{ color: C.ink }}>{label}</p>
@@ -598,10 +598,10 @@ function BriefTile({
 
       {badge && (
         <p
-          className="inline-flex items-center gap-1 text-xs font-semibold mt-1.5"
+          className="inline-flex items-center justify-center gap-1 text-xs font-semibold mt-1.5"
           style={{ color: badge.positive ? ACCENT_UP : ACCENT_DOWN }}
         >
-          {badge.positive ? <TrendingUp size={12} /> : <TrendingDown size={12} />}
+          {badge.positive ? <ArrowUp size={12} /> : <ArrowDown size={12} />}
           {badge.text}
         </p>
       )}
