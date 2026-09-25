@@ -34,9 +34,11 @@ Endpoints:
   PATCH /settings/revenue-target — sets the monthly revenue target
   GET  /settings/leads-prior-period — the CEO-entered prior-period leads count
                            used for the Daily Brief's leads %-change (null if unset;
-                           Pipedrive's Leads Inbox can't reconstruct this once a
-                           lead is deleted/converted, see crm_metrics.py)
+                           the CRM source's lead data can't reliably be reconstructed
+                           for a past period once records change, see crm_metrics.py)
   PATCH /settings/leads-prior-period — sets the prior-period leads count
+  DELETE /settings/leads-prior-period — clears it back to unset (e.g. after a
+                           CRM source switch invalidates a previously-recorded count)
   POST /calendar/events — creates a real Google Calendar event directly, given
                            full details (see calendar_client.py's create_event /
                            CalendarWriteError)
@@ -442,6 +444,14 @@ def set_leads_prior_period(req: LeadsPriorPeriodRequest):
         raise HTTPException(status_code=400, detail="count must be >= 0")
     db.set_setting(LEADS_PRIOR_PERIOD_SETTING_KEY, str(req.count))
     return {"status": "ok", "count": req.count}
+
+
+@app.delete("/settings/leads-prior-period")
+def clear_leads_prior_period():
+    """Resets the baseline back to unset (None) — e.g. after switching CRM
+    sources invalidates a previously-recorded count from the old source."""
+    db.delete_setting(LEADS_PRIOR_PERIOD_SETTING_KEY)
+    return {"status": "ok", "count": None}
 
 
 _SCHEDULE_PROPOSAL_RE = re.compile(r"```schedule-proposal\s*\n(.*?)\n```", re.DOTALL)

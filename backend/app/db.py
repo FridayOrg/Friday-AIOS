@@ -224,6 +224,14 @@ def set_setting(key: str, value: str) -> None:
         )
 
 
+def delete_setting(key: str) -> None:
+    """Clears a setting entirely (as opposed to overwriting it with a new
+    value) — e.g. resetting the leads prior-period baseline back to "unset"
+    when it no longer applies (a CRM source switch invalidates it)."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM app_settings WHERE key = %(key)s", {"key": key})
+
+
 def upsert_industry_update(item: dict) -> None:
     """Insert a new industry update, or update it in place if this url was
     already stored — handles the same item turning up again on the next
