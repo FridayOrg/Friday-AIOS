@@ -722,7 +722,6 @@ function Calendar3DayContent({
                       </div>
                       <p className="text-xs mt-0.5" style={{ color: C.faint }}>
                         {to12h(m.time)}
-                        {done && " · done"}
                       </p>
                     </div>
                   );
