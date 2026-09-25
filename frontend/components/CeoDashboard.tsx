@@ -128,12 +128,12 @@ function greetingFor(nowHHMM: string): string {
 // Pipeline / Spend & Notifications live on their own /crm page (see
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
-  { key: "tasks", title: "Actions", subtitle: null, icon: AlertCircle, iconBg: "rgba(239,107,107,0.12)", iconColor: "#EF6B6B" },
+  { key: "tasks", title: "My Actions", subtitle: null, icon: AlertCircle, iconBg: "rgba(239,107,107,0.12)", iconColor: "#EF6B6B" },
   { key: "calendar", title: "Calendar", subtitle: null, icon: CalendarClock, iconBg: "rgba(59,130,246,0.12)", iconColor: "#3B82F6" },
   {
     key: "industry",
     title: "Industry News & Trends",
-    subtitle: "Latest news and trends shaping the industry",
+    subtitle: null,
     icon: FileText,
     iconBg: "rgba(59,130,246,0.12)",
     iconColor: "#3B82F6",
@@ -141,7 +141,7 @@ const GRID_CARDS = [
   {
     key: "meetings",
     title: "Meeting Summary",
-    subtitle: "Key meetings and important takeaways",
+    subtitle: null,
     icon: FileText,
     iconBg: "rgba(139,92,246,0.12)",
     iconColor: "#8B5CF6",
