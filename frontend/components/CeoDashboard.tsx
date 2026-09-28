@@ -5,7 +5,7 @@ import type { DashboardData } from "@/lib/data";
 import type { CrmOverview } from "@/lib/crmTypes";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
-import { C, PAGE_BG, CARD_BG, statusOf, riskOf, priorityOf } from "@/lib/dashboardTokens";
+import { C, PAGE_BG, CARD_BG, priorityOf } from "@/lib/dashboardTokens";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
 
@@ -25,6 +25,15 @@ const ACCENT_DOWN = "#DC2626";
 // a flat/AI-generated look, without being heavy.
 const CARD_SHADOW = "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)";
 
+// Daily Brief card accents (label + double border) — the same hues the CRM
+// page's charts use (see CrmDashboard.tsx's STAGE_COLORS).
+const BRIEF_ACCENT = {
+  violet: "#8B5CF6",
+  amber: "#F59E0B",
+  pink: "#EF6B6B",
+  green: "#2BAF6A",
+} as const;
+
 const TYPE_LABEL: Record<string, string> = {
   approval_needed: "Approval needed",
   escalation: "Escalation",
@@ -33,11 +42,9 @@ const TYPE_LABEL: Record<string, string> = {
 };
 
 // ---------------------------------------------------------------------------
-// CHAT-DRIVEN HIGHLIGHT — a question in Ask Friday ("what tasks are due today?")
-// expands + glows the matching card here. `statusKey` is the raw risk/status/priority
-// value from the matched entity; the glow color reuses the same maps the card itself
-// renders with (green/amber/red), so "highlighted" always matches what the card
-// already means by that color.
+// CHAT-DRIVEN HIGHLIGHT — a question in Ask Friday ("what meetings do I have
+// today?") expands the matching card and flashes it with a golden glow for
+// ~2.5s, which then fades away on its own (see .glow-flash below).
 // ---------------------------------------------------------------------------
 
 interface Glow {
@@ -46,33 +53,17 @@ interface Glow {
   ts: number;
 }
 
-function glowColorFor(section: string, statusKey?: string): string {
-  if (!statusKey) return C.teal;
-  switch (section) {
-    case "financial":
-      return riskOf(statusKey).color;
-    case "pipeline":
-      return statusOf(statusKey).color;
-    case "tasks":
-      return statusKey === "overdue" ? C.down : priorityOf(statusKey).color;
-    case "calendar":
-      return priorityOf(statusKey).color;
-    default:
-      return C.teal;
-  }
-}
+const GLOW_GOLD = "#EAB308";
 
-/** Glow className + CSS-var color for one element; pass a per-render key suffix so
- * the animation restarts even when the same card is highlighted twice in a row.
- * Two layers: `glow-pulse` is a one-shot entrance flash (plays once regardless of how
- * long the class stays applied), `glow-active` is a plain static ring that holds for
- * as long as this item is the active highlight — cleared only by the next question or
- * a manual collapse (see the effect and toggleSection/toggleAll below), not a timer. */
-function glowProps(active: boolean, color: string): { className: string; style: React.CSSProperties } {
+/** Glow className + CSS-var color for one element. Callers also key the element
+ * by the glow's `ts` so the flash restarts even when the same card is
+ * highlighted twice in a row. The animation only paints box-shadow, so the
+ * element keeps its own border, radius and shadow before and after it. */
+function glowProps(active: boolean): { className: string; style: React.CSSProperties } {
   if (!active) return { className: "", style: {} };
   return {
-    className: " glow-pulse glow-active",
-    style: { ["--glow" as unknown as string]: `${color}80` } as React.CSSProperties,
+    className: " glow-flash",
+    style: { ["--glow" as unknown as string]: GLOW_GOLD } as React.CSSProperties,
   };
 }
 
@@ -183,8 +174,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
       document.getElementById(`section-${target.section}`)?.scrollIntoView({ behavior: "smooth", block: "start" });
     }, 80);
 
-    // No auto-clear timer: the glow stays until the next question overwrites it (a
-    // new `target` re-runs this effect and replaces `glow`), not on a fixed clock.
+    // The flash fades out by itself (CSS animation, ~2.6s); a new question
+    // replaces `glow` with a new ts, which restarts it.
     setGlow({ section: target.section, itemIds: target.itemIds, ts: target.ts });
 
     return () => clearTimeout(scrollTimer);
@@ -257,13 +248,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700;800&display=swap');
         .expand-panel { animation: expandIn 0.25s ease-out; overflow: hidden; }
         @keyframes expandIn { from { opacity: 0; transform: translateY(-4px); } to { opacity: 1; transform: translateY(0); } }
-        .glow-pulse { animation: glowPulse 1.3s ease-out; border-radius: inherit; }
-        @keyframes glowPulse {
-          0% { box-shadow: 0 0 0 0 var(--glow); }
-          25% { box-shadow: 0 0 22px 4px var(--glow); }
-          100% { box-shadow: 0 0 0 2px var(--glow); }
+        .glow-flash { animation: glowFlash 2.6s ease-in-out; }
+        @keyframes glowFlash {
+          0% { box-shadow: 0 0 0 0 transparent; }
+          12%, 70% { box-shadow: 0 0 0 2px var(--glow), 0 0 18px 3px color-mix(in srgb, var(--glow) 45%, transparent); }
+          100% { box-shadow: 0 0 0 0 transparent; }
         }
-        .glow-active { box-shadow: 0 0 0 2px var(--glow); border-radius: inherit; }
       `}</style>
 
       <div className="max-w-6xl mx-auto px-6 py-6">
@@ -310,7 +300,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   }}
                 >
                   {searchResults.length === 0 ? (
-                    <div className="px-4 py-3 text-sm" style={{ color: C.faint }}>
+                    <div className="px-4 py-3 text-xs" style={{ color: C.faint }}>
                       No matches for &ldquo;{query}&rdquo;.
                     </div>
                   ) : (
@@ -325,7 +315,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                         }}
                       >
                         <span className="min-w-0">
-                          <span className="block text-sm truncate" style={{ color: C.ink }}>
+                          <span className="block text-[13px] font-medium truncate" style={{ color: C.ink }}>
                             {r.label}
                           </span>
                           <span className="block text-[11px]" style={{ color: C.faint }}>
@@ -345,16 +335,19 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         </div>
 
         {/* ---------------- DAILY BRIEF ---------------- */}
-        <div className="mb-4">
-          <h2 className="text-[19px] font-bold tracking-tight">Daily Brief</h2>
-        </div>
+        <div
+          className="rounded-2xl p-5 mb-4"
+          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: CARD_SHADOW }}
+        >
+          <h2 className="text-[19px] font-bold tracking-tight mb-4">Daily Brief</h2>
 
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-4">
+        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
               (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
               not the Deals pipeline */}
           <BriefTile
             label="New Qualified Leads"
+            accent={BRIEF_ACCENT.violet}
             value={
               crmLoading
                 ? "—"
@@ -385,6 +378,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               stored historical pipeline value to compute a genuine %-change from. */}
           <BriefTile
             label="Open Sales Pipeline"
+            accent={BRIEF_ACCENT.amber}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
             subtext={
               crm?.configured
@@ -401,6 +395,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           <BriefTile
             key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
             label="Deal Win Rate"
+            accent={BRIEF_ACCENT.pink}
             value={
               crmLoading
                 ? "—"
@@ -423,7 +418,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   ]
                 : [crm?.message ?? "HubSpot not connected"]
             }
-            glow={glow?.section === "pipeline" ? C.teal : undefined}
+            glow={glow?.section === "pipeline"}
           />
 
           {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable
@@ -432,6 +427,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           <BriefTile
             key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
             label="Revenue Achieved This Month"
+            accent={BRIEF_ACCENT.green}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
             badge={
               crm?.configured && crm.kpis!.revenue_growth_pct != null
@@ -459,8 +455,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   : ["No revenue target set"]
                 : [crm?.message ?? "HubSpot not connected"]
             }
-            glow={glow?.section === "financial" ? C.teal : undefined}
+            glow={glow?.section === "financial"}
           />
+        </div>
         </div>
 
         {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
@@ -477,12 +474,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               <div
                 key={glow?.section === c.key ? `${c.key}-${glow.ts}` : c.key}
                 id={`section-${c.key}`}
-                className={`rounded-xl overflow-hidden scroll-mt-6${glow?.section === c.key ? " glow-pulse" : ""}`}
+                className={`rounded-xl overflow-hidden scroll-mt-6${glowProps(glow?.section === c.key).className}`}
                 style={{
                   background: CARD_BG,
                   border: `1px solid ${C.border}`,
                   boxShadow: CARD_SHADOW,
-                  ...(glow?.section === c.key ? glowProps(true, C.teal).style : {}),
+                  ...glowProps(glow?.section === c.key).style,
                 }}
               >
               <button
@@ -510,7 +507,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               </button>
               {gridOpen[c.key] && (
                 <div
-                  className="expand-panel px-5 pb-5 pt-1 overflow-y-auto"
+                  className="expand-panel px-5 pb-5 pt-1 overflow-y-auto overflow-x-hidden"
                   style={{ borderTop: `1px solid ${C.border}`, maxHeight: 420 }}
                 >
                   {c.key === "tasks" && <UrgentEmails />}
@@ -532,13 +529,15 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 
 // ---------------------------------------------------------------------------
 // BRIEF TILE — the 4 Daily Brief cards (New Qualified Leads, Open Sales
-// Pipeline, Deal Win Rate, Revenue Achieved This Month). Icon top-right,
-// label top-left, big metric, optional %-change badge (green/red + arrow),
-// optional progress bar (Revenue card only), and 1-2 lines of muted subtext.
+// Pipeline, Deal Win Rate, Revenue Achieved This Month). Centered: colored
+// label, big metric, optional %-change badge (green/red + arrow), optional
+// progress bar (Revenue card only), and muted subtext. Double border in the
+// card's accent color: the card's own 1px border plus a 1px inner line.
 // ---------------------------------------------------------------------------
 
 function BriefTile({
   label,
+  accent,
   value,
   badge,
   progressLabel,
@@ -547,26 +546,33 @@ function BriefTile({
   glow,
 }: {
   label: string;
+  accent: string;
   value: string;
   badge?: { text: string; positive: boolean };
   progressLabel?: string;
   progressPct?: number;
   subtext: React.ReactNode[];
-  glow?: string;
+  glow?: boolean;
 }) {
-  const g = glowProps(!!glow, glow ?? "");
+  const g = glowProps(!!glow);
   return (
     <div
-      className={`rounded-xl p-5 text-center${g.className}`}
-      style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: CARD_SHADOW, ...g.style }}
+      className={`relative rounded-xl px-5 py-6 text-center flex flex-col items-center${g.className}`}
+      style={{ background: CARD_BG, border: `1px solid ${accent}`, ...g.style }}
     >
-      <p className="text-xs font-semibold uppercase tracking-wide mb-2" style={{ color: C.ink }}>{label}</p>
+      <div
+        aria-hidden
+        className="absolute pointer-events-none rounded-lg"
+        style={{ inset: 3, border: `1px solid ${accent}` }}
+      />
 
-      <p className="text-[31px] font-bold tracking-tighter" style={{ color: C.ink }}>{value}</p>
+      <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: accent }}>{label}</p>
+
+      <p className="text-[31px] font-extrabold leading-tight tracking-tight" style={{ color: C.ink }}>{value}</p>
 
       {badge && (
         <p
-          className="inline-flex items-center justify-center gap-1 text-base font-semibold mt-1.5"
+          className="inline-flex items-center justify-center gap-1 text-[15px] font-semibold mt-1.5"
           style={{ color: badge.positive ? ACCENT_UP : ACCENT_DOWN }}
         >
           <span aria-hidden className="leading-none">{badge.positive ? "↑" : "↓"}</span>
@@ -578,7 +584,7 @@ function BriefTile({
         <p className="text-xs mt-2" style={{ color: C.muted }}>{progressLabel}</p>
       )}
       {progressPct !== undefined && (
-        <div className="w-full h-1.5 rounded-full mt-1.5 mb-1 overflow-hidden" style={{ background: "#E5E7EB" }}>
+        <div className="w-full h-1.5 rounded-full mt-2 mb-1 overflow-hidden" style={{ background: "#E5E7EB" }}>
           <div
             className="h-full rounded-full"
             style={{ width: `${Math.max(0, Math.min(100, progressPct))}%`, background: ACCENT_UP }}
@@ -586,9 +592,9 @@ function BriefTile({
         </div>
       )}
 
-      <div className="mt-2 flex flex-col gap-0.5">
+      <div className="mt-2 flex flex-col gap-0.5 max-w-[240px]">
         {subtext.map((line, i) => (
-          <p key={i} className="text-xs" style={{ color: C.muted }}>{line}</p>
+          <p key={i} className="text-xs leading-snug" style={{ color: C.muted }}>{line}</p>
         ))}
       </div>
     </div>
@@ -626,7 +632,7 @@ function Calendar3DayContent({
   };
 
   return (
-    <div className="flex flex-col gap-3 pt-2 max-h-56 overflow-y-auto">
+    <div className="flex flex-col gap-3 pt-2 max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">
       {daysNext3.map((day) => {
         const isToday = day.iso === today;
         const statuses = day.meetings.map(
@@ -654,11 +660,11 @@ function Calendar3DayContent({
                   const isNext = i === nextIdx;
                   const meetingId = `${day.iso}|${m.time}|${m.name}`;
                   const isGlow = glow?.section === "calendar" && !!glow.itemIds?.includes(meetingId);
-                  const g = glowProps(isGlow, isGlow ? glowColorFor("calendar", m.priority) : "");
+                  const g = glowProps(isGlow);
                   return (
                     <div
                       key={isGlow ? `${i}-${glow?.ts}` : i}
-                      className={`py-2 border-b border-gray-100 last:border-b-0${g.className}`}
+                      className={`py-2 row-separator${isGlow ? " rounded-md px-2 -mx-2" : ""}${g.className}`}
                       style={{ opacity: done ? 0.55 : 1, ...g.style }}
                     >
                       <div className="flex items-center justify-between gap-2">
@@ -746,7 +752,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
   }
 
   return (
-    <div className="flex flex-col max-h-56 overflow-y-auto">
+    <div className="flex flex-col max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">
       {summaries.map((m) => {
         const takeaway = extractFirstBullet(m.summary_markdown);
         const action = m.action_items[0] ?? null;
@@ -755,7 +761,7 @@ function MeetingSummariesContent({ summaries }: { summaries: DashboardData["meet
         return (
           <div
             key={m.recording_id}
-            className="py-2.5 border-b border-gray-100 last:border-b-0"
+            className="py-2.5 row-separator"
           >
             <div className="flex items-start justify-between gap-2">
               <p className="text-[13px] font-medium leading-snug text-slate-900 truncate">{m.title}</p>

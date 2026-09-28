@@ -64,9 +64,9 @@ export default function IndustryUpdates() {
       ) : updates.length === 0 ? (
         <p className="text-xs text-slate-500 pt-1">No significant updates today yet.</p>
       ) : (
-        <div className="flex flex-col max-h-56 overflow-y-auto">
+        <div className="flex flex-col max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">
           {updates.map((u) => (
-            <div key={u.url} className="py-2.5 border-b border-gray-100 last:border-b-0">
+            <div key={u.url} className="py-2.5 row-separator">
               <p className="text-[13px] font-medium leading-snug text-slate-900">{u.title}</p>
               {u.content && (
                 <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>

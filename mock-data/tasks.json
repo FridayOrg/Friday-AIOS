@@ -32,7 +32,7 @@
       "related_client": "Northgate Financial Advisory",
       "description": "Northgate met their guarantee (11/10 meetings) and wants to renew. Client Success has drafted standard post-launch pricing terms, but this is the company's first-ever renewal. CEO input requested on whether to offer any founding-cohort loyalty terms as a precedent-setting decision.",
       "due_date": "2026-09-15",
-      "priority": "high",
+      "priority": "medium",
       "status": "pending"
     },
     {
@@ -51,7 +51,7 @@
       "raised_by": "Alistair Hume (COO)",
       "description": "Several second-cohort prospects are through fit assessment. Standard post-launch pricing structure has been drafted but not yet finalized or approved by CEO, blocking onboarding of next cohort.",
       "due_date": "2026-09-14",
-      "priority": "high",
+      "priority": "medium",
       "status": "pending"
     },
     {

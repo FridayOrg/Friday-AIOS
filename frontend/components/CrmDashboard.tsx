@@ -16,7 +16,6 @@
 import { useEffect, useMemo, useState } from "react";
 import {
   ResponsiveContainer,
-  AreaChart,
   ComposedChart,
   Area,
   Line,
@@ -271,7 +270,6 @@ export default function CrmDashboard({ today }: { today: string }) {
 
 function KpiRow({ data }: { data: CrmOverview }) {
   const k = data.kpis!;
-  const trendPoints = data.revenue_trend?.points ?? [];
 
   const cards = [
     {
@@ -279,7 +277,6 @@ function KpiRow({ data }: { data: CrmOverview }) {
       value: fmtCurrency(k.won_revenue),
       change: fmtPct(k.revenue_growth_pct),
       fg: C.up,
-      spark: trendPoints,
     },
     {
       label: "Open Pipeline",
@@ -312,38 +309,19 @@ function KpiRow({ data }: { data: CrmOverview }) {
       {cards.map((c) => (
         <div
           key={c.label}
-          className="rounded-xl p-4 flex flex-col gap-2"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
+          className="rounded-xl px-4 py-5 flex flex-col items-center justify-center gap-2 text-center"
+          style={{ background: CARD_BG, border: `1px solid ${c.fg}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}
         >
-          <div className="flex items-center justify-between">
-            <p className="text-[11px] font-semibold uppercase tracking-wide" style={{ color: c.fg }}>{c.label}</p>
-            {c.change && (
-              <span
-                className="flex items-center gap-0.5 text-[11px] font-medium"
-                style={{ color: c.change.startsWith("+") ? C.up : C.down }}
-              >
-                <span aria-hidden>{c.change.startsWith("+") ? "↑" : "↓"}</span>
-                {c.change}
-              </span>
-            )}
-          </div>
-          <div>
-            <p className="text-lg font-bold leading-tight">{c.value}</p>
-          </div>
-          {c.spark && c.spark.length > 1 && (
-            <div className="h-8 -mx-1">
-              <ResponsiveContainer width="100%" height="100%">
-                <AreaChart data={c.spark} margin={{ top: 0, right: 0, bottom: 0, left: 0 }}>
-                  <defs>
-                    <linearGradient id="kpiSpark" x1="0" y1="0" x2="0" y2="1">
-                      <stop offset="0%" stopColor={c.fg} stopOpacity={0.3} />
-                      <stop offset="100%" stopColor={c.fg} stopOpacity={0} />
-                    </linearGradient>
-                  </defs>
-                  <Area type="monotone" dataKey="value" stroke={c.fg} strokeWidth={1.5} fill="url(#kpiSpark)" />
-                </AreaChart>
-              </ResponsiveContainer>
-            </div>
+          <p className="text-[13px] font-semibold uppercase tracking-wide" style={{ color: c.fg }}>{c.label}</p>
+          <p className="text-3xl font-bold leading-tight">{c.value}</p>
+          {c.change && (
+            <span
+              className="flex items-center gap-1 text-sm font-medium"
+              style={{ color: c.change.startsWith("+") ? C.up : C.down }}
+            >
+              <span aria-hidden>{c.change.startsWith("+") ? "↑" : "↓"}</span>
+              {c.change}
+            </span>
           )}
         </div>
       ))}

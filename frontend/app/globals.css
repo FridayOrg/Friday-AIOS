@@ -24,3 +24,46 @@ body {
   color: var(--foreground);
   font-family: Arial, Helvetica, sans-serif;
 }
+
+/* Shared list-row separator (Quick Access cards: My Actions, Calendar,
+   Industry News, Meeting Summary) — a bit more visible than a flat
+   border-gray-100 hairline, faded out at both ends rather than a solid
+   edge-to-edge line. Drawn as a background gradient (not a border) so it
+   can fade; `row-separator:last-child` drops it the same way
+   `last:border-b-0` used to. */
+.row-separator {
+  background-image: linear-gradient(
+    to right,
+    transparent 0%,
+    rgba(15, 23, 42, 0.14) 12%,
+    rgba(15, 23, 42, 0.14) 88%,
+    transparent 100%
+  );
+  background-position: bottom;
+  background-size: 100% 1px;
+  background-repeat: no-repeat;
+}
+.row-separator:last-child {
+  background-image: none;
+}
+
+/* Thin scrollbars everywhere — the page's own right-side scrollbar and every
+   card's internal overflow-y-auto list (My Actions, Calendar, Industry News,
+   Meeting Summary). Width only; scrolling itself is unchanged. */
+* {
+  scrollbar-width: thin; /* Firefox */
+}
+::-webkit-scrollbar {
+  width: 4px; /* halved again, per follow-up feedback */
+  height: 4px;
+}
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+::-webkit-scrollbar-thumb {
+  background: rgba(15, 23, 42, 0.22);
+  border-radius: 999px;
+}
+::-webkit-scrollbar-thumb:hover {
+  background: rgba(15, 23, 42, 0.32);
+}
