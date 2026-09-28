@@ -43,7 +43,10 @@ Pipedrive's, so these are real translations, not guesses left undocumented):
 from __future__ import annotations
 
 import logging
+import threading
+import time
 from collections import defaultdict
+from concurrent.futures import ThreadPoolExecutor
 from datetime import datetime, timezone
 
 import httpx
@@ -55,6 +58,21 @@ logger = logging.getLogger(__name__)
 _BASE_URL = "https://api.hubapi.com"
 _TIMEOUT_SECONDS = 20
 _PAGE_LIMIT = 100
+
+# One pooled client for every HubSpot call: keeps the TLS connection alive
+# between requests instead of paying a fresh DNS + TLS handshake (~1s from
+# the backend) on each of the ~20 calls one CRM overview needs.
+_client = httpx.Client(timeout=_TIMEOUT_SECONDS)
+
+# Independent HubSpot calls run concurrently, capped well under HubSpot's
+# private-app burst limit (100 requests / 10s).
+_MAX_PARALLEL = 8
+
+# How long a fetched snapshot is served as-is. Past that, the stale copy is
+# still returned immediately while a background refresh runs, up to
+# _SNAPSHOT_MAX_STALE_SECONDS — after which a caller waits for fresh data.
+_SNAPSHOT_TTL_SECONDS = 120
+_SNAPSHOT_MAX_STALE_SECONDS = 30 * 60
 
 # Lifecycle stages (HubSpot's own contact property `lifecyclestage`) that
 # count as a "qualified" lead for the Daily Brief card — everything past the
@@ -87,7 +105,7 @@ def _get_paginated(path: str, params: dict | None = None) -> list[dict]:
         if after:
             p["after"] = after
         try:
-            response = httpx.get(f"{_BASE_URL}{path}", headers=_headers(), params=p, timeout=_TIMEOUT_SECONDS)
+            response = _client.get(f"{_BASE_URL}{path}", headers=_headers(), params=p)
             response.raise_for_status()
         except httpx.HTTPStatusError as e:
             logger.warning("HubSpot API error %s for %s: %s", e.response.status_code, path, e.response.text[:200])
@@ -106,7 +124,7 @@ def _get_paginated(path: str, params: dict | None = None) -> list[dict]:
     return items
 
 
-def get_stages() -> list[dict]:
+def _fetch_stages() -> list[dict]:
     """Flattened stages across every deal pipeline in the account (an account
     can have more than one; Pipedrive's /stages wasn't scoped to a single
     pipeline either). Pipedrive-shaped: {id, name, order_nr, deal_probability,
@@ -114,7 +132,7 @@ def get_stages() -> list[dict]:
     if not is_configured():
         return []
     try:
-        response = httpx.get(f"{_BASE_URL}/crm/v3/pipelines/deals", headers=_headers(), timeout=_TIMEOUT_SECONDS)
+        response = _client.get(f"{_BASE_URL}/crm/v3/pipelines/deals", headers=_headers())
         response.raise_for_status()
     except httpx.HTTPError as e:
         logger.warning("Could not fetch HubSpot deal pipelines: %s", e)
@@ -148,42 +166,22 @@ def _owner_names() -> dict[str, str]:
     return names
 
 
-def _company_names() -> dict[str, str]:
-    companies = _get_paginated("/crm/v3/objects/companies", {"properties": "name"})
-    return {str(c["id"]): (c.get("properties") or {}).get("name") or "Unnamed company" for c in companies}
-
-
-def _deal_company_associations(deal_ids: list[str] | None = None) -> dict[str, str]:
-    """deal_id -> company_id, via the batch Associations API (one call for
-    every deal at once, not one call per deal). Callers that already have the
-    deal id list (get_deals) should pass it in to skip re-fetching every deal
-    a second time just for its id."""
-    return _batch_associations("deals", "companies", deal_ids)
-
-
-def _batch_associations(from_type: str, to_type: str, object_ids: list[str] | None = None) -> dict[str, str]:
+def _batch_associations(from_type: str, to_type: str, object_ids: list[str]) -> dict[str, str]:
     """First associated `to_type` id for each `from_type` id, via HubSpot's
-    batch read endpoint. If object_ids isn't given, fetches every object of
-    from_type first (id-only) to build the batch. Returns {} on any failure
-    -- a missing association link is treated the same as "none set", never
-    guessed."""
-    if not is_configured():
-        return {}
-    if object_ids is None:
-        objs = _get_paginated(f"/crm/v3/objects/{from_type}", {"properties": "hs_object_id"})
-        object_ids = [str(o["id"]) for o in objs]
-    if not object_ids:
+    batch read endpoint (one call per 100 ids, not one call per object).
+    Returns {} on any failure -- a missing association link is treated the
+    same as "none set", never guessed."""
+    if not is_configured() or not object_ids:
         return {}
 
     result: dict[str, str] = {}
     for i in range(0, len(object_ids), _PAGE_LIMIT):
         batch = object_ids[i:i + _PAGE_LIMIT]
         try:
-            response = httpx.post(
+            response = _client.post(
                 f"{_BASE_URL}/crm/v4/associations/{from_type}/{to_type}/batch/read",
                 headers=_headers(),
                 json={"inputs": [{"id": oid} for oid in batch]},
-                timeout=_TIMEOUT_SECONDS,
             )
             response.raise_for_status()
         except httpx.HTTPError as e:
@@ -197,7 +195,26 @@ def _batch_associations(from_type: str, to_type: str, object_ids: list[str] | No
     return result
 
 
-def _deal_activity_dates(deal_ids: list[str]) -> dict[str, dict[str, str | None]]:
+# (object type, timestamp property, status property) for the engagement types
+# last/next activity dates are derived from. Tasks are fetched with the extra
+# properties get_activities() needs too, so they're only fetched once.
+_ENGAGEMENT_TYPES = (
+    ("tasks", "hs_timestamp", "hs_task_status"),
+    ("calls", "hs_timestamp", None),
+    ("meetings", "hs_timestamp", None),
+)
+_ENGAGEMENT_PROPERTIES = {
+    "tasks": "hs_task_subject,hs_task_status,hs_timestamp,hs_task_type",
+    "calls": "hs_timestamp",
+    "meetings": "hs_timestamp",
+}
+
+
+def _deal_activity_dates(
+    deal_ids: list[str],
+    engagements_by_type: dict[str, list[dict]],
+    engagement_deal_assoc: dict[str, dict[str, str]],
+) -> dict[str, dict[str, str | None]]:
     """deal_id -> {last_activity_date, next_activity_date} (YYYY-MM-DD or
     None), derived from Tasks/Calls/Meetings associated with each deal.
     HubSpot has no such field on the deal record itself (Pipedrive does) —
@@ -210,16 +227,11 @@ def _deal_activity_dates(deal_ids: list[str]) -> dict[str, dict[str, str | None]
     last_by_deal: dict[str, datetime] = {}
     next_by_deal: dict[str, datetime] = {}
 
-    for engagement_type, ts_property, status_property in (
-        ("tasks", "hs_timestamp", "hs_task_status"),
-        ("calls", "hs_timestamp", None),
-        ("meetings", "hs_timestamp", None),
-    ):
-        engagements = _get_paginated(f"/crm/v3/objects/{engagement_type}", {"properties": f"{ts_property},{status_property}" if status_property else ts_property})
+    for engagement_type, ts_property, status_property in _ENGAGEMENT_TYPES:
+        engagements = engagements_by_type.get(engagement_type) or []
         if not engagements:
             continue
-        engagement_ids = [str(e["id"]) for e in engagements]
-        assoc = _batch_associations(engagement_type, "deals", engagement_ids)
+        assoc = engagement_deal_assoc.get(engagement_type) or {}
         by_id = {str(e["id"]): e for e in engagements}
         for engagement_id, deal_id in assoc.items():
             e = by_id.get(engagement_id)
@@ -253,42 +265,91 @@ def _deal_activity_dates(deal_ids: list[str]) -> dict[str, dict[str, str | None]
 _DEAL_PROPERTIES = "dealname,amount,dealstage,pipeline,closedate,createdate,hubspot_owner_id,hs_lastmodifieddate,closed_lost_reason"
 
 
-def get_deals(status: str = "all_not_deleted") -> list[dict]:
-    """Pipedrive-shaped deals (see module docstring for the field mapping).
-    `status` is accepted for call-site compatibility with pipedrive_client.py
-    but not used to filter server-side — HubSpot's list endpoint doesn't
-    support that the way Pipedrive's does; status is derived per-deal below
-    instead."""
-    raw = _get_paginated("/crm/v3/objects/deals", {"properties": _DEAL_PROPERTIES})
-    if not raw:
-        return []
+def _deal_status(stage: dict | None) -> str:
+    """open/won/lost from a deal's stage metadata (see module docstring)."""
+    is_closed = bool(stage and stage["is_closed"])
+    stage_prob = stage["deal_probability"] if stage else None
+    if not is_closed:
+        return "open"
+    if stage_prob is not None and stage_prob >= 99:
+        return "won"
+    if stage_prob is not None and stage_prob <= 1:
+        return "lost"
+    # Closed stage with an ambiguous probability (rare/custom pipeline) — fall
+    # back to the stage's own label text rather than silently guessing won.
+    return "lost" if "lost" in (stage["name"] if stage else "").lower() else "won"
 
-    deal_ids = [str(d["id"]) for d in raw]
-    stage_by_id = {s["id"]: s for s in get_stages()}
-    owners = _owner_names()
-    companies = _company_names()
-    deal_company = _deal_company_associations(deal_ids)
-    activity_dates = _deal_activity_dates(deal_ids)
+
+# ---------------------------------------------------------------------------
+# Snapshot: every HubSpot object the CRM dashboard needs, fetched once
+# ---------------------------------------------------------------------------
+#
+# One CRM overview used to make ~23 sequential HubSpot calls (deals, stages,
+# companies and contacts were each re-fetched 2-3 times by different getters),
+# and the Home page, CRM page and chat prompt each rebuilt it independently.
+# Now every object type is fetched exactly once, independent calls run in
+# parallel, and the assembled result is shared by all callers for a short
+# window (see _SNAPSHOT_TTL_SECONDS). The public get_* functions below keep
+# their original names and return shapes.
+
+_EMPTY_SNAPSHOT = {"stages": [], "deals": [], "activities": [], "persons": [], "orgs": [], "leads": []}
+
+_snapshot: dict | None = None
+_snapshot_at = 0.0
+_snapshot_lock = threading.Lock()  # held while a fetch is in flight (single-flight)
+_refreshing = threading.Event()
+
+
+def _fetch_snapshot() -> dict:
+    with ThreadPoolExecutor(max_workers=_MAX_PARALLEL) as pool:
+        # Round 1: every object list (independent of each other).
+        f_stages = pool.submit(_fetch_stages)
+        f_owners = pool.submit(_owner_names)
+        f_deals = pool.submit(_get_paginated, "/crm/v3/objects/deals", {"properties": _DEAL_PROPERTIES})
+        f_companies = pool.submit(_get_paginated, "/crm/v3/objects/companies", {"properties": "name,createdate,hs_lastmodifieddate"})
+        f_contacts = pool.submit(_get_paginated, "/crm/v3/objects/contacts", {"properties": "createdate,lifecyclestage,lead_created_date"})
+        f_engagements = {
+            t: pool.submit(_get_paginated, f"/crm/v3/objects/{t}", {"properties": _ENGAGEMENT_PROPERTIES[t]})
+            for t, _, _ in _ENGAGEMENT_TYPES
+        }
+
+        raw_deals = f_deals.result()
+        raw_contacts = f_contacts.result()
+        engagements = {t: f.result() for t, f in f_engagements.items()}
+
+        # Round 2: associations, which need the ids from round 1.
+        deal_ids = [str(d["id"]) for d in raw_deals]
+        qualified = [c for c in raw_contacts if (c.get("properties") or {}).get("lifecyclestage") in QUALIFIED_LIFECYCLE_STAGES]
+        contact_ids = [str(c["id"]) for c in qualified]
+        f_deal_company = pool.submit(_batch_associations, "deals", "companies", deal_ids)
+        f_engagement_deal = {
+            t: pool.submit(_batch_associations, t, "deals", [str(e["id"]) for e in engagements[t]])
+            for t in engagements
+        }
+        f_contact_engaged = [
+            pool.submit(_batch_associations, "contacts", t, contact_ids) for t in ("tasks", "calls", "meetings")
+        ]
+
+        stages = f_stages.result()
+        owners = f_owners.result()
+        raw_companies = f_companies.result()
+        deal_company = f_deal_company.result()
+        engagement_deal_assoc = {t: f.result() for t, f in f_engagement_deal.items()}
+        contacted_ids: set[str] = set()
+        for f in f_contact_engaged:
+            contacted_ids.update(f.result())
+
+    stage_by_id = {s["id"]: s for s in stages}
+    company_names = {str(c["id"]): (c.get("properties") or {}).get("name") or "Unnamed company" for c in raw_companies}
+    activity_dates = _deal_activity_dates(deal_ids, engagements, engagement_deal_assoc)
 
     deals = []
-    for d in raw:
+    for d in raw_deals:
         p = d.get("properties") or {}
         deal_id = str(d["id"])
         stage = stage_by_id.get(p.get("dealstage"))
-        is_closed = bool(stage and stage["is_closed"])
         stage_prob = stage["deal_probability"] if stage else None
-        if not is_closed:
-            deal_status = "open"
-        elif stage_prob is not None and stage_prob >= 99:
-            deal_status = "won"
-        elif stage_prob is not None and stage_prob <= 1:
-            deal_status = "lost"
-        else:
-            # Closed stage with an ambiguous probability (rare/custom
-            # pipeline) — fall back to the stage's own label text rather
-            # than silently guessing won.
-            deal_status = "lost" if "lost" in (stage["name"] if stage else "").lower() else "won"
-
+        deal_status = _deal_status(stage)
         close_date = p.get("closedate")
         company_id = deal_company.get(deal_id)
         activity = activity_dates.get(deal_id, {})
@@ -305,67 +366,147 @@ def get_deals(status: str = "all_not_deleted") -> list[dict]:
             "won_time": close_date if deal_status == "won" else None,
             "lost_time": close_date if deal_status == "lost" else None,
             "add_time": p.get("createdate"),
-            "org_name": companies.get(company_id) if company_id else None,
+            "org_name": company_names.get(company_id) if company_id else None,
             "owner_name": owners.get(p.get("hubspot_owner_id")) if p.get("hubspot_owner_id") else None,
             "last_activity_date": activity.get("last_activity_date"),
             "next_activity_date": activity.get("next_activity_date"),
             "lost_reason": p.get("closed_lost_reason"),
         })
-    return deals
 
-
-def get_activities(done: int | None = None) -> list[dict]:
-    """Pipedrive-shaped activities, from HubSpot Tasks (calls/meetings don't
-    carry a due date / done concept the way Pipedrive Activities and HubSpot
-    Tasks do, so only Tasks map cleanly onto this shape)."""
-    raw = _get_paginated("/crm/v3/objects/tasks", {"properties": "hs_task_subject,hs_task_status,hs_timestamp,hs_task_type"})
     activities = []
-    for t in raw:
+    for t in engagements["tasks"]:
         p = t.get("properties") or {}
-        is_done = p.get("hs_task_status") == "COMPLETED"
-        if done is not None and bool(done) != is_done:
-            continue
         ts = p.get("hs_timestamp")
         activities.append({
             "id": t["id"],
             "subject": p.get("hs_task_subject") or "(untitled task)",
             "type": "task",
             "due_date": ts[:10] if ts else None,
-            "done": is_done,
+            "done": p.get("hs_task_status") == "COMPLETED",
         })
-    return activities
+
+    persons = [{"id": c["id"], "add_time": (c.get("properties") or {}).get("createdate")} for c in raw_contacts]
+
+    # Won/open counts per company reuse the deal statuses derived above
+    # instead of re-fetching every deal a second time.
+    status_by_deal = {str(d["id"]): d["status"] for d in deals}
+    deals_by_company: dict[str, list[str]] = defaultdict(list)
+    for deal_id, company_id in deal_company.items():
+        if company_id:
+            deals_by_company[company_id].append(status_by_deal.get(deal_id, "open"))
+    orgs = []
+    for c in raw_companies:
+        p = c.get("properties") or {}
+        statuses = deals_by_company.get(str(c["id"]), [])
+        orgs.append({
+            "id": c["id"],
+            "name": p.get("name") or "Unnamed company",
+            "add_time": p.get("createdate"),
+            "last_activity_date": (p.get("hs_lastmodifieddate") or "")[:10] or None,
+            "won_deals_count": statuses.count("won"),
+            "open_deals_count": statuses.count("open"),
+        })
+
+    leads = []
+    for c in qualified:
+        props = c.get("properties") or {}
+        leads.append({
+            "id": c["id"],
+            "add_time": props.get("lead_created_date") or props.get("createdate"),
+            "is_archived": False,
+            "next_activity_id": "has-engagement" if str(c["id"]) in contacted_ids else None,
+        })
+
+    return {"stages": stages, "deals": deals, "activities": activities, "persons": persons, "orgs": orgs, "leads": leads}
+
+
+def _refresh_snapshot() -> dict:
+    """Fetches a new snapshot unless another thread just did (callers that
+    queued behind an in-flight fetch reuse its result instead of starting
+    their own). A snapshot with no pipeline stages means HubSpot failed —
+    every account has at least one pipeline — so it's returned but not
+    cached, and the next request retries."""
+    global _snapshot, _snapshot_at
+    with _snapshot_lock:
+        if _snapshot is not None and time.monotonic() - _snapshot_at < _SNAPSHOT_TTL_SECONDS:
+            return _snapshot
+        snap = _fetch_snapshot()
+        if snap["stages"]:
+            _snapshot, _snapshot_at = snap, time.monotonic()
+        return snap
+
+
+def _background_refresh() -> None:
+    try:
+        _refresh_snapshot()
+    except Exception as e:  # noqa: BLE001 - a background refresh must never crash the process
+        logger.warning("Background HubSpot refresh failed: %s", e)
+    finally:
+        _refreshing.clear()
+
+
+def _start_background_refresh() -> None:
+    if not _refreshing.is_set():
+        _refreshing.set()
+        threading.Thread(target=_background_refresh, daemon=True).start()
+
+
+def get_snapshot() -> dict:
+    """Every HubSpot-derived list the CRM dashboard needs:
+    {stages, deals, activities, persons, orgs, leads}, each in the same shape
+    the matching get_* function returns. Fresh for _SNAPSHOT_TTL_SECONDS;
+    after that the previous copy is returned immediately while a background
+    refresh runs (stale-while-revalidate), until it's older than
+    _SNAPSHOT_MAX_STALE_SECONDS, when the caller waits for fresh data."""
+    if not is_configured():
+        return _EMPTY_SNAPSHOT
+    age = time.monotonic() - _snapshot_at
+    if _snapshot is not None and age < _SNAPSHOT_TTL_SECONDS:
+        return _snapshot
+    if _snapshot is not None and age < _SNAPSHOT_MAX_STALE_SECONDS:
+        _start_background_refresh()
+        return _snapshot
+    return _refresh_snapshot()
+
+
+def warm_cache_in_background() -> None:
+    """Starts the first HubSpot fetch at backend startup so the first page
+    load finds it already done (or joins it mid-flight) rather than paying
+    for it from scratch."""
+    if is_configured():
+        _start_background_refresh()
+
+
+def get_stages() -> list[dict]:
+    """Flattened stages across every deal pipeline in the account.
+    Pipedrive-shaped: {id, name, order_nr, deal_probability, is_closed}.
+    deal_probability is 0-100."""
+    return get_snapshot()["stages"]
+
+
+def get_deals(status: str = "all_not_deleted") -> list[dict]:
+    """Pipedrive-shaped deals (see module docstring for the field mapping).
+    `status` is accepted for call-site compatibility with pipedrive_client.py
+    but not used to filter server-side — HubSpot's list endpoint doesn't
+    support that the way Pipedrive's does; status is derived per-deal
+    instead."""
+    return get_snapshot()["deals"]
+
+
+def get_activities(done: int | None = None) -> list[dict]:
+    """Pipedrive-shaped activities, from HubSpot Tasks (calls/meetings don't
+    carry a due date / done concept the way Pipedrive Activities and HubSpot
+    Tasks do, so only Tasks map cleanly onto this shape)."""
+    activities = get_snapshot()["activities"]
+    if done is None:
+        return activities
+    return [a for a in activities if a["done"] == bool(done)]
 
 
 def get_persons() -> list[dict]:
     """Pipedrive-shaped persons (add_time only — the one field
     crm_metrics.build_contacts actually reads), from HubSpot Contacts."""
-    raw = _get_paginated("/crm/v3/objects/contacts", {"properties": "createdate"})
-    return [{"id": c["id"], "add_time": (c.get("properties") or {}).get("createdate")} for c in raw]
-
-
-def _lightweight_deal_statuses() -> dict[str, str]:
-    """deal_id -> open/won/lost, using only dealstage (no owner/company/
-    activity-date enrichment) — a cheap version of get_deals()'s status
-    derivation for get_organizations()'s won/open counts, so it doesn't
-    trigger get_deals()'s much more expensive engagement-association lookup
-    a second time per request."""
-    raw = _get_paginated("/crm/v3/objects/deals", {"properties": "dealstage"})
-    stage_by_id = {s["id"]: s for s in get_stages()}
-    statuses = {}
-    for d in raw:
-        stage = stage_by_id.get((d.get("properties") or {}).get("dealstage"))
-        is_closed = bool(stage and stage["is_closed"])
-        stage_prob = stage["deal_probability"] if stage else None
-        if not is_closed:
-            status = "open"
-        elif stage_prob is not None and stage_prob >= 99:
-            status = "won"
-        elif stage_prob is not None and stage_prob <= 1:
-            status = "lost"
-        else:
-            status = "lost" if "lost" in (stage["name"] if stage else "").lower() else "won"
-        statuses[str(d["id"])] = status
-    return statuses
+    return get_snapshot()["persons"]
 
 
 def get_organizations() -> list[dict]:
@@ -375,31 +516,7 @@ def get_organizations() -> list[dict]:
     natively). last_activity_date uses hs_lastmodifieddate as the closest
     available proxy (documented, not presented as a literal "last activity"
     the way Pipedrive's field is)."""
-    raw = _get_paginated("/crm/v3/objects/companies", {"properties": "name,createdate,hs_lastmodifieddate"})
-    if not raw:
-        return []
-
-    deal_company = _deal_company_associations()
-    deals_by_company: dict[str, list[str]] = defaultdict(list)
-    company_status_by_deal = _lightweight_deal_statuses()
-    for deal_id, company_id in deal_company.items():
-        if company_id:
-            deals_by_company[company_id].append(company_status_by_deal.get(deal_id, "open"))
-
-    orgs = []
-    for c in raw:
-        p = c.get("properties") or {}
-        cid = str(c["id"])
-        statuses = deals_by_company.get(cid, [])
-        orgs.append({
-            "id": c["id"],
-            "name": p.get("name") or "Unnamed company",
-            "add_time": p.get("createdate"),
-            "last_activity_date": (p.get("hs_lastmodifieddate") or "")[:10] or None,
-            "won_deals_count": statuses.count("won"),
-            "open_deals_count": statuses.count("open"),
-        })
-    return orgs
+    return get_snapshot()["orgs"]
 
 
 def get_leads() -> list[dict]:
@@ -420,25 +537,4 @@ def get_leads() -> list[dict]:
     across months), so using createdate here would make every month-over-
     month leads comparison meaningless. Falls back to createdate for any
     contact that doesn't have the custom property set."""
-    raw = _get_paginated("/crm/v3/objects/contacts", {"properties": "createdate,lifecyclestage,lead_created_date"})
-    qualified = [c for c in raw if (c.get("properties") or {}).get("lifecyclestage") in QUALIFIED_LIFECYCLE_STAGES]
-    if not qualified:
-        return []
-
-    contact_ids = [str(c["id"]) for c in qualified]
-    has_task = _batch_associations("contacts", "tasks", contact_ids)
-    has_call = _batch_associations("contacts", "calls", contact_ids)
-    has_meeting = _batch_associations("contacts", "meetings", contact_ids)
-
-    leads = []
-    for c in qualified:
-        cid = str(c["id"])
-        contacted = cid in has_task or cid in has_call or cid in has_meeting
-        props = c.get("properties") or {}
-        leads.append({
-            "id": c["id"],
-            "add_time": props.get("lead_created_date") or props.get("createdate"),
-            "is_archived": False,
-            "next_activity_id": "has-engagement" if contacted else None,
-        })
-    return leads
+    return get_snapshot()["leads"]

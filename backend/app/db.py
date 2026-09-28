@@ -11,6 +11,8 @@ data meant to persist can't tolerate.
 """
 
 import logging
+import queue
+import threading
 from contextlib import contextmanager
 from typing import Iterator
 
@@ -21,20 +23,51 @@ from .config import DATABASE_URL
 
 logger = logging.getLogger(__name__)
 
+# Connections are pooled and reused: opening a fresh Postgres connection
+# (TCP + TLS + auth) costs ~2s per query against Render's Postgres, which
+# every settings read, meeting-summary and industry-update query used to pay.
+_POOL_MAX_CONNECTIONS = 5
+_idle: queue.LifoQueue = queue.LifoQueue()
+# Caps open connections; callers wait for a free one rather than erroring.
+_pool_slots = threading.BoundedSemaphore(_POOL_MAX_CONNECTIONS)
+
+
+def _new_connection() -> "psycopg2.extensions.connection":
+    # TCP keepalives so idle pooled connections aren't silently dropped by
+    # the network between requests.
+    return psycopg2.connect(DATABASE_URL, keepalives=1, keepalives_idle=30, keepalives_interval=10, keepalives_count=3)
+
 
 @contextmanager
 def _connect() -> Iterator["psycopg2.extensions.connection"]:
     if not DATABASE_URL:
         raise RuntimeError("DATABASE_URL not set; cannot reach the database.")
-    conn = psycopg2.connect(DATABASE_URL)
-    try:
-        yield conn
-        conn.commit()
-    except Exception:
-        conn.rollback()
-        raise
-    finally:
-        conn.close()
+    with _pool_slots:
+        conn = None
+        while conn is None:
+            try:
+                conn = _idle.get_nowait()
+            except queue.Empty:
+                conn = _new_connection()
+            if conn.closed:
+                conn = None
+        broken = False
+        try:
+            yield conn
+            conn.commit()
+        except Exception as e:
+            # A dropped connection can't be reused; discard it so the next
+            # caller gets a fresh one.
+            broken = isinstance(e, (psycopg2.OperationalError, psycopg2.InterfaceError)) or bool(conn.closed)
+            if not conn.closed:
+                conn.rollback()
+            raise
+        finally:
+            if broken or conn.closed:
+                if not conn.closed:
+                    conn.close()
+            else:
+                _idle.put(conn)
 
 
 def init_db() -> None:

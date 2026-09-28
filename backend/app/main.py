@@ -149,6 +149,14 @@ def _init_db():
         logger.warning("Could not initialize the database: %s", e)
 
 
+@app.on_event("startup")
+def _warm_crm_cache():
+    """Starts fetching HubSpot data in the background as soon as the backend
+    boots (e.g. after a Render cold start), so the first CRM/Home page load
+    joins a fetch that's already underway instead of starting from zero."""
+    crm_metrics.pd.warm_cache_in_background()
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}
