@@ -1,6 +1,7 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import TopNav from "./TopNav";
 import AskFriday from "./AskFriday";
 import { HighlightProvider } from "@/lib/highlight-context";
@@ -14,6 +15,12 @@ const DEFAULT_PANEL_VW = 26;
 export default function AppShell({ children }: { children: React.ReactNode }) {
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_VW);
   const draggingRef = useRef(false);
+
+  // /sign-in (and its Google-redirect callback) renders full-screen, on its
+  // own — no top nav, no Ask Friday panel. Nothing about the app should be
+  // visible before someone is actually signed in.
+  const pathname = usePathname();
+  const isAuthRoute = pathname?.startsWith("/sign-in") ?? false;
 
   // Mobile-only (< lg) state: Ask Friday as a full-screen overlay behind a
   // floating button — desktop keeps the always-visible panel above untouched.
@@ -44,6 +51,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   }, [onPointerMove, stopDragging]);
+
+  if (isAuthRoute) {
+    return <>{children}</>;
+  }
 
   return (
     <HighlightProvider>

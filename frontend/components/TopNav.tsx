@@ -3,6 +3,7 @@
 import { useState } from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { useUser, useClerk } from "@clerk/nextjs";
 import {
   LayoutDashboard,
   Building2,
@@ -32,6 +33,10 @@ const NAV_ITEMS = [
 export default function TopNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const { user } = useUser();
+  const { signOut } = useClerk();
+  const email = user?.primaryEmailAddress?.emailAddress;
+  const initials = (user?.firstName?.[0] ?? email?.[0] ?? "?").toUpperCase();
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#0F172A] border-b border-white/10 shrink-0">
@@ -80,9 +85,13 @@ export default function TopNav() {
           >
             <Bell size={18} />
           </button>
-          <div className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center">
-            <User size={16} />
-          </div>
+          <button
+            onClick={() => signOut({ redirectUrl: "/sign-in" })}
+            title={email ? `Sign out (${email})` : "Sign out"}
+            className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs font-semibold hover:bg-violet-500/30 transition-colors"
+          >
+            {initials}
+          </button>
         </div>
 
         {/* Mobile: hamburger toggle */}
@@ -131,9 +140,13 @@ export default function TopNav() {
             >
               <Bell size={18} />
             </button>
-            <div className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center">
-              <User size={16} />
-            </div>
+            <button
+              onClick={() => signOut({ redirectUrl: "/sign-in" })}
+              title={email ? `Sign out (${email})` : "Sign out"}
+              className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center text-xs font-semibold hover:bg-violet-500/30 transition-colors"
+            >
+              {initials}
+            </button>
           </div>
         </div>
       )}
