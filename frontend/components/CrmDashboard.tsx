@@ -52,9 +52,10 @@ const C = {
   orange: "#F59E0B",
 };
 
-// Restrained pastel accent set for chart series/segments — blue, green,
-// orange, coral, plus two extra hues only for charts with >4 categories.
-const STAGE_COLORS = ["#3B82F6", "#2BAF6A", "#F59E0B", "#EF6B6B", "#8B5CF6", "#22D3EE", "#FB923C"];
+// The site's only accent palette for chart series/segments — blue, amber,
+// green, red, purple. No other hues or variants are used anywhere on the
+// site; charts with >5 categories cycle back through these same 5.
+const STAGE_COLORS = ["#3B82F6", "#F59E0B", "#2BAF6A", "#EF6B6B", "#8B5CF6"];
 
 const TOOLTIP_STYLE = {
   contentStyle: { background: "#FFFFFF", border: `1px solid ${C.border}`, borderRadius: 8, fontSize: 12 },

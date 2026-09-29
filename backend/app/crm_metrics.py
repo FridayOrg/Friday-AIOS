@@ -53,7 +53,13 @@ NOTABLE_OVERDUE_ACTIVITIES = 5
 # NOT tied to the dashboard's selected date-range filter, since a win-rate
 # stat is more meaningful over a rolling window than "since the 1st of the
 # month." Configurable here, not a hidden magic number.
-WIN_RATE_WINDOW_DAYS = 90
+WIN_RATE_WINDOW_DAYS = 30
+
+# Trailing window for the "New Qualified Leads" Daily Brief card — same
+# rolling-window rationale as WIN_RATE_WINDOW_DAYS above: "last 30 days vs.
+# the 30 days before that", not tied to the dashboard's selected date-range
+# filter and not a calendar-month boundary.
+QUALIFIED_LEADS_WINDOW_DAYS = 30
 
 
 # ---------------------------------------------------------------------------
@@ -256,13 +262,20 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
 # ---------------------------------------------------------------------------
 
 def build_qualified_leads(
-    all_leads: list[dict], start: date, end: date, prior_period_count_override: int | None = None
+    all_leads: list[dict],
+    today: date,
+    prior_period_count_override: int | None = None,
+    window_days: int = QUALIFIED_LEADS_WINDOW_DAYS,
 ) -> dict:
-    """count_this_month: non-archived leads whose add_time falls in
-    [start, end]. pct_change_vs_last_month: vs. the immediately preceding
-    period of equal length (None if nothing was added last period —
-    undefined, not 0%). awaiting_first_contact: non-archived leads with no
-    next_activity_id set — i.e. nobody has scheduled a first touch yet.
+    """count_last_30_days: non-archived leads whose add_time falls in the
+    trailing `window_days`-day window ending today. pct_change_vs_previous_
+    period: vs. the `window_days`-day window immediately before that (None
+    if nothing was added in the previous window — undefined, not 0%).
+    Deliberately a rolling trailing window, NOT tied to the dashboard's
+    selected date-range filter or calendar-month boundaries (see
+    QUALIFIED_LEADS_WINDOW_DAYS). awaiting_first_contact: non-archived leads
+    with no next_activity_id set — i.e. nobody has scheduled a first touch
+    yet.
 
     prior_period_count_override: Pipedrive's Leads Inbox only reflects leads
     that still exist right now — once a lead is deleted or converted to a
@@ -277,19 +290,22 @@ def build_qualified_leads(
         added = _parse_date(ld.get("add_time"))
         return added is not None and s <= added <= e
 
-    this_month = [ld for ld in active if added_in(ld, start, end)]
+    start = today - timedelta(days=window_days - 1)
+    current_window = [ld for ld in active if added_in(ld, start, today)]
     if prior_period_count_override is not None:
-        prev_month_count = prior_period_count_override
+        prev_window_count = prior_period_count_override
     else:
-        prev_start, prev_end = _previous_period(start, end)
-        prev_month_count = len([ld for ld in active if added_in(ld, prev_start, prev_end)])
+        prev_end = start - timedelta(days=1)
+        prev_start = prev_end - timedelta(days=window_days - 1)
+        prev_window_count = len([ld for ld in active if added_in(ld, prev_start, prev_end)])
 
     awaiting_first_contact = [ld for ld in active if not ld.get("next_activity_id")]
 
     return {
-        "count_this_month": len(this_month),
-        "pct_change_vs_last_month": _pct_change(len(this_month), prev_month_count),
+        "count_last_30_days": len(current_window),
+        "pct_change_vs_previous_30_days": _pct_change(len(current_window), prev_window_count),
         "awaiting_first_contact": len(awaiting_first_contact),
+        "window_days": window_days,
     }
 
 
@@ -473,20 +489,38 @@ def build_conversion(all_deals: list[dict], start: date, end: date, limitations:
     }
 
 
+def _win_rate_for_window(all_deals: list[dict], start: date, end: date) -> tuple[int, int, float | None]:
+    won = [d for d in all_deals if d.get("status") == "won" and (w := _parse_date(d.get("won_time"))) and start <= w <= end]
+    lost = [d for d in all_deals if d.get("status") == "lost" and (l := _parse_date(d.get("lost_time"))) and start <= l <= end]
+    total = len(won) + len(lost)
+    rate = round(len(won) / total * 100, 1) if total else None
+    return len(won), len(lost), rate
+
+
 def build_win_rate(all_deals: list[dict], today: date, window_days: int = WIN_RATE_WINDOW_DAYS) -> dict:
     """Win rate over a trailing window ending today (see WIN_RATE_WINDOW_DAYS)
     for the Daily Brief's "Deal Win Rate" card — won / (won + lost) among
     deals whose won_time/lost_time falls in the last `window_days` days.
-    rate_pct is None (not 0%) when nothing closed in the window at all."""
+    rate_pct is None (not 0%) when nothing closed in the window at all.
+    pct_change_vs_previous_period compares that rate against the same-length
+    window immediately before it — unlike the leads count, a deal's
+    won_time/lost_time never changes once set, so this comparison is a
+    genuine historical read, not an approximation."""
     start = today - timedelta(days=window_days - 1)
-    won = [d for d in all_deals if d.get("status") == "won" and (w := _parse_date(d.get("won_time"))) and start <= w <= today]
-    lost = [d for d in all_deals if d.get("status") == "lost" and (l := _parse_date(d.get("lost_time"))) and start <= l <= today]
-    total = len(won) + len(lost)
+    won_count, lost_count, rate_pct = _win_rate_for_window(all_deals, start, today)
+
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=window_days - 1)
+    _, _, prev_rate_pct = _win_rate_for_window(all_deals, prev_start, prev_end)
+
     return {
-        "won_count": len(won),
-        "lost_count": len(lost),
-        "closed_count": total,
-        "rate_pct": round(len(won) / total * 100, 1) if total else None,
+        "won_count": won_count,
+        "lost_count": lost_count,
+        "closed_count": won_count + lost_count,
+        "rate_pct": rate_pct,
+        "pct_change_vs_previous_period": (
+            _pct_change(rate_pct, prev_rate_pct) if rate_pct is not None and prev_rate_pct is not None else None
+        ),
         "window_days": window_days,
     }
 
@@ -751,7 +785,7 @@ def build_overview(
 
     revenue = build_revenue(all_deals, start, end, limitations)
     pipeline = build_pipeline(all_deals, stages, today)
-    qualified_leads = build_qualified_leads(all_leads, start, end, leads_prior_period_override)
+    qualified_leads = build_qualified_leads(all_leads, today, leads_prior_period_override)
     top_deals = build_top_deals(all_deals, stages, today)
     risks = build_risks(all_deals, stages, today)
     activity_metrics = build_activities(activities, start, end, today)
