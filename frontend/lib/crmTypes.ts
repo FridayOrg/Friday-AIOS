@@ -59,9 +59,10 @@ export interface CrmOverview {
     closing_this_month_count: number;
   };
   qualified_leads?: {
-    count_this_month: number | null;
-    pct_change_vs_last_month: number | null;
+    count_last_30_days: number | null;
+    pct_change_vs_previous_30_days: number | null;
     awaiting_first_contact: number | null;
+    window_days: number;
   };
   top_deals?: DealRow[];
   risks?: {
@@ -99,6 +100,7 @@ export interface CrmOverview {
     lost_count: number;
     closed_count: number;
     rate_pct: number | null;
+    pct_change_vs_previous_period: number | null;
     window_days: number;
   };
   revenue_target?: number | null;

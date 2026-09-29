@@ -18,20 +18,21 @@ import IndustryUpdates from "./IndustryUpdates";
 // ---------------------------------------------------------------------------
 
 const ACCENT_BLUE = "#2563EB";
-const ACCENT_UP = "#16A34A";
-const ACCENT_DOWN = "#DC2626";
+const ACCENT_UP = "#2BAF6A";
+const ACCENT_DOWN = "#EF6B6B";
 
 // Soft, low-opacity but two-layered shadow — reads as real depth rather than
 // a flat/AI-generated look, without being heavy.
 const CARD_SHADOW = "0 1px 3px rgba(16,24,40,0.08), 0 1px 2px rgba(16,24,40,0.04)";
 
-// Daily Brief card accents (label + double border) — the same hues the CRM
-// page's charts use (see CrmDashboard.tsx's STAGE_COLORS).
+// Daily Brief card accents (label + single border) — the same hues the CRM
+// page's charts use (see CrmDashboard.tsx's STAGE_COLORS) — the only accent
+// colors used anywhere on the site.
 const BRIEF_ACCENT = {
-  violet: "#8B5CF6",
+  blue: "#3B82F6",
   amber: "#F59E0B",
-  pink: "#EF6B6B",
   green: "#2BAF6A",
+  red: "#EF6B6B",
 } as const;
 
 const TYPE_LABEL: Record<string, string> = {
@@ -347,25 +348,26 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
               not the Deals pipeline */}
           <BriefTile
             label="New Qualified Leads"
-            accent={BRIEF_ACCENT.violet}
+            accent={BRIEF_ACCENT.blue}
             value={
               crmLoading
                 ? "—"
-                : !crm?.configured || crm.qualified_leads?.count_this_month == null
+                : !crm?.configured || crm.qualified_leads?.count_last_30_days == null
                 ? "N/A"
-                : String(crm.qualified_leads.count_this_month)
+                : String(crm.qualified_leads.count_last_30_days)
             }
             badge={
-              crm?.configured && crm.qualified_leads?.pct_change_vs_last_month != null
+              crm?.configured && crm.qualified_leads?.pct_change_vs_previous_30_days != null
                 ? {
-                    text: `${crm.qualified_leads.pct_change_vs_last_month}%`,
-                    positive: crm.qualified_leads.pct_change_vs_last_month >= 0,
+                    text: `${crm.qualified_leads.pct_change_vs_previous_30_days}%`,
+                    positive: crm.qualified_leads.pct_change_vs_previous_30_days >= 0,
                   }
                 : undefined
             }
             subtext={
               crm?.configured
                 ? [
+                    `vs previous ${crm.qualified_leads?.window_days ?? 30} days`,
                     crm.qualified_leads?.awaiting_first_contact != null
                       ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
                       : "No leads data available",
@@ -390,12 +392,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           />
 
           {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see
-              WIN_RATE_WINDOW_DAYS). No badge: no prior-window win rate is
-              computed to compare against yet. */}
+              WIN_RATE_WINDOW_DAYS), compared against the equal-length window
+              immediately before it. */}
           <BriefTile
             key={glow?.section === "pipeline" ? `winrate-${glow.ts}` : "winrate"}
             label="Deal Win Rate"
-            accent={BRIEF_ACCENT.pink}
+            accent={BRIEF_ACCENT.green}
             value={
               crmLoading
                 ? "—"
@@ -405,29 +407,38 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 ? "N/A"
                 : `${crm.win_rate.rate_pct}%`
             }
+            badge={
+              crm?.configured && crm.win_rate?.pct_change_vs_previous_period != null
+                ? {
+                    text: `${crm.win_rate.pct_change_vs_previous_period}%`,
+                    positive: crm.win_rate.pct_change_vs_previous_period >= 0,
+                  }
+                : undefined
+            }
             subtext={
               crm?.configured
                 ? [
+                    crm.win_rate ? `vs previous ${crm.win_rate.window_days} days` : "no win-rate data available",
                     crm.win_rate
-                      ? `Last ${crm.win_rate.window_days} days · ${
-                          crm.win_rate.closed_count > 0
-                            ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
-                            : "no deals closed in this window yet"
-                        }`
-                      : "no win-rate data available",
-                  ]
+                      ? crm.win_rate.closed_count > 0
+                        ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
+                        : "no deals closed in this window yet"
+                      : "",
+                  ].filter(Boolean)
                 : [crm?.message ?? "HubSpot not connected"]
             }
             glow={glow?.section === "pipeline"}
           />
 
-          {/* Card 4: Revenue Achieved This Month — real HubSpot data + configurable
-              target. Badge is month-over-month revenue growth (kpis.revenue_growth_pct);
-              the target %/progress bar/remaining are shown separately below it. */}
+          {/* Card 4: Revenue Achieved — real HubSpot data + configurable monthly
+              target (unlike cards 1–3, this one intentionally stays tied to the
+              calendar month, not a rolling 30-day window). Badge is
+              month-over-month revenue growth (kpis.revenue_growth_pct); the
+              target %/progress bar/remaining are shown separately below it. */}
           <BriefTile
             key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
-            label="Revenue Achieved This Month"
-            accent={BRIEF_ACCENT.green}
+            label="Revenue Achieved"
+            accent={BRIEF_ACCENT.red}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
             badge={
               crm?.configured && crm.kpis!.revenue_growth_pct != null
@@ -531,8 +542,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
 // BRIEF TILE — the 4 Daily Brief cards (New Qualified Leads, Open Sales
 // Pipeline, Deal Win Rate, Revenue Achieved This Month). Centered: colored
 // label, big metric, optional %-change badge (green/red + arrow), optional
-// progress bar (Revenue card only), and muted subtext. Double border in the
-// card's accent color: the card's own 1px border plus a 1px inner line.
+// progress bar (Revenue card only), and muted subtext. Single 1px border in
+// the card's accent color.
 // ---------------------------------------------------------------------------
 
 function BriefTile({
@@ -560,12 +571,6 @@ function BriefTile({
       className={`relative rounded-xl px-5 py-6 text-center flex flex-col items-center${g.className}`}
       style={{ background: CARD_BG, border: `1px solid ${accent}`, ...g.style }}
     >
-      <div
-        aria-hidden
-        className="absolute pointer-events-none rounded-lg"
-        style={{ inset: 3, border: `1px solid ${accent}` }}
-      />
-
       <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: accent }}>{label}</p>
 
       <p className="text-[31px] font-extrabold leading-tight tracking-tight" style={{ color: C.ink }}>{value}</p>
