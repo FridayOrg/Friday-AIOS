@@ -367,7 +367,9 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             subtext={
               crm?.configured
                 ? [
-                    `vs previous ${crm.qualified_leads?.window_days ?? 30} days`,
+                    <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
+                      vs previous {crm.qualified_leads?.window_days ?? 30} days
+                    </span>,
                     crm.qualified_leads?.awaiting_first_contact != null
                       ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
                       : "No leads data available",
@@ -418,7 +420,13 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             subtext={
               crm?.configured
                 ? [
-                    crm.win_rate ? `vs previous ${crm.win_rate.window_days} days` : "no win-rate data available",
+                    crm.win_rate ? (
+                      <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
+                        vs previous {crm.win_rate.window_days} days
+                      </span>
+                    ) : (
+                      "no win-rate data available"
+                    ),
                     crm.win_rate
                       ? crm.win_rate.closed_count > 0
                         ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
