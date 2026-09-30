@@ -33,7 +33,6 @@ const BRIEF_ACCENT = {
   amber: "#F59E0B",
   green: "#2BAF6A",
   red: "#EF6B6B",
-  yellow: "#FACC15",
 } as const;
 
 const TYPE_LABEL: Record<string, string> = {
@@ -424,7 +423,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           <BriefTile
             key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
             label="Revenue"
-            accent={BRIEF_ACCENT.yellow}
+            accent={BRIEF_ACCENT.amber}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.revenue_rolling?.won_revenue ?? 0) : "N/A"}
             badge={
               crm?.configured && crm.revenue_rolling?.pct_change_vs_previous_period != null
