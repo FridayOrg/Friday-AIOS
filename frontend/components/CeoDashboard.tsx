@@ -330,7 +330,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
           {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
               (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
-              not the Deals pipeline */}
+              not the Deals pipeline. Absolute change (current - previous, both
+              from the live 30-day windows the backend already computes) is the
+              primary comparison, with %-change shown smaller/secondary next to
+              it — a raw count swing like 8->19 reads as a distorted "+137.5%"
+              if percentage is the headline, so the count itself leads here. */}
           <BriefTile
             label="New Qualified Leads"
             accent={BRIEF_ACCENT.blue}
@@ -341,13 +345,41 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 ? "N/A"
                 : String(crm.qualified_leads.count_last_30_days)
             }
-            badge={
-              crm?.configured && crm.qualified_leads?.pct_change_vs_previous_30_days != null
-                ? {
-                    text: `${crm.qualified_leads.pct_change_vs_previous_30_days}%`,
-                    positive: crm.qualified_leads.pct_change_vs_previous_30_days >= 0,
+            customComparison={
+              crm?.configured &&
+              crm.qualified_leads?.count_last_30_days != null &&
+              crm.qualified_leads?.count_previous_30_days != null ? (
+                (() => {
+                  const current = crm.qualified_leads!.count_last_30_days!;
+                  const previous = crm.qualified_leads!.count_previous_30_days!;
+                  const absChange = current - previous;
+                  const pct = crm.qualified_leads!.pct_change_vs_previous_30_days;
+                  if (absChange === 0) {
+                    return (
+                      <p className="text-[15px] font-semibold mt-1.5" style={{ color: C.muted }}>
+                        No change
+                      </p>
+                    );
                   }
-                : undefined
+                  const positive = absChange > 0;
+                  return (
+                    <p className="inline-flex items-center justify-center gap-1 mt-1.5">
+                      <span
+                        className="text-[15px] font-semibold"
+                        style={{ color: positive ? ACCENT_UP : ACCENT_DOWN }}
+                      >
+                        {positive ? "↑" : "↓"} {Math.abs(absChange)} lead{Math.abs(absChange) === 1 ? "" : "s"}
+                      </span>
+                      {pct != null && (
+                        <span className="text-[11px]" style={{ color: C.faint }}>
+                          · {pct > 0 ? "+" : ""}
+                          {pct}%
+                        </span>
+                      )}
+                    </p>
+                  );
+                })()
+              ) : undefined
             }
             subtext={
               crm?.configured
@@ -360,15 +392,30 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             }
           />
 
-          {/* Card 2: Open Sales Pipeline — real HubSpot data. No badge: there's no
-              stored historical pipeline value to compute a genuine %-change from. */}
+          {/* Card 2: Open Sales Pipeline — real HubSpot data. Badge is a genuine
+              %-change: value of OPEN deals grouped by their own start date
+              (add_time), trailing 30 days vs. the 30 days before that (see
+              crm_metrics.build_pipeline_rolling) — not the same as the point-
+              in-time total_open_value shown as the big number, which includes
+              every open deal regardless of when it started. */}
           <BriefTile
             label="Open Sales Pipeline"
             accent={BRIEF_ACCENT.amber}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
+            badge={
+              crm?.configured && crm.pipeline_rolling?.pct_change_vs_previous_30_days != null
+                ? {
+                    text: `${crm.pipeline_rolling.pct_change_vs_previous_30_days}%`,
+                    positive: crm.pipeline_rolling.pct_change_vs_previous_30_days >= 0,
+                  }
+                : undefined
+            }
             subtext={
               crm?.configured
                 ? [
+                    <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
+                      vs previous {crm.pipeline_rolling?.window_days ?? 30} days
+                    </span>,
                     `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"}`,
                     `Expected to close this month: ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)}`,
                   ]
@@ -528,6 +575,7 @@ function BriefTile({
   accent,
   value,
   badge,
+  customComparison,
   progressLabel,
   progressPct,
   subtext,
@@ -537,6 +585,7 @@ function BriefTile({
   accent: string;
   value: string;
   badge?: { text: string; positive: boolean };
+  customComparison?: React.ReactNode;
   progressLabel?: string;
   progressPct?: number;
   subtext: React.ReactNode[];
@@ -561,6 +610,8 @@ function BriefTile({
           {badge.text}
         </p>
       )}
+
+      {customComparison}
 
       {progressLabel && (
         <p className="text-xs mt-2" style={{ color: C.muted }}>{progressLabel}</p>

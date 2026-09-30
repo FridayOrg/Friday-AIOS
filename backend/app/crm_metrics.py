@@ -68,6 +68,16 @@ QUALIFIED_LEADS_WINDOW_DAYS = 30
 # remaining reason for it to use a different window than its neighbors).
 REVENUE_WINDOW_DAYS = 30
 
+# Trailing window for the Daily Brief's "Open Sales Pipeline" comparison —
+# same rolling-window rationale as the other three cards. Unlike
+# total_open_value (a point-in-time snapshot of every currently-open deal,
+# regardless of when it started — see build_pipeline), this groups OPEN
+# deals by their own start date (add_time) so a genuine before/after
+# comparison is possible without needing a stored historical snapshot of
+# pipeline value, which HubSpot doesn't retain and this app doesn't
+# currently capture over time.
+PIPELINE_WINDOW_DAYS = 30
+
 
 # ---------------------------------------------------------------------------
 # Parsing helpers — Pipedrive dates are plain "YYYY-MM-DD" or
@@ -283,6 +293,39 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
     }
 
 
+def build_pipeline_rolling(all_deals: list[dict], today: date, window_days: int = PIPELINE_WINDOW_DAYS) -> dict:
+    """Open pipeline value grouped by deal START date (add_time) rather than
+    the point-in-time snapshot in build_pipeline — for the Daily Brief's
+    "Open Sales Pipeline" %-change comparison. Compares the value of OPEN
+    deals that started in the trailing `window_days`-day window against
+    those that started in the equal-length window immediately before it
+    (see PIPELINE_WINDOW_DAYS). pct_change is None (not 0%) when nothing
+    started in the previous window at all — undefined, not fabricated."""
+    open_deals = [d for d in all_deals if d.get("status") == "open"]
+
+    def started_in(d: dict, s: date, e: date) -> bool:
+        started = _parse_date(d.get("add_time"))
+        return started is not None and s <= started <= e
+
+    start = today - timedelta(days=window_days - 1)
+    current_window = [d for d in open_deals if started_in(d, start, today)]
+    current_value = _sum_value(current_window)
+
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=window_days - 1)
+    prev_window = [d for d in open_deals if started_in(d, prev_start, prev_end)]
+    prev_value = _sum_value(prev_window)
+
+    return {
+        "value_last_30_days": current_value,
+        "count_last_30_days": len(current_window),
+        "value_previous_30_days": prev_value,
+        "count_previous_30_days": len(prev_window),
+        "pct_change_vs_previous_30_days": _pct_change(current_value, prev_value),
+        "window_days": window_days,
+    }
+
+
 # ---------------------------------------------------------------------------
 # Qualified leads (Daily Brief card) — sourced from Pipedrive's actual Leads
 # Inbox (GET /leads, see pipedrive_client.get_leads), not derived/proxied
@@ -336,6 +379,7 @@ def build_qualified_leads(
 
     return {
         "count_last_30_days": len(current_window),
+        "count_previous_30_days": prev_window_count,
         "pct_change_vs_previous_30_days": _pct_change(len(current_window), prev_window_count),
         "awaiting_first_contact": len(awaiting_first_contact),
         "window_days": window_days,
@@ -818,6 +862,7 @@ def build_overview(
 
     revenue = build_revenue(all_deals, start, end, limitations)
     pipeline = build_pipeline(all_deals, stages, today)
+    pipeline_rolling = build_pipeline_rolling(all_deals, today)
     qualified_leads = build_qualified_leads(all_leads, today, leads_prior_period_override)
     top_deals = build_top_deals(all_deals, stages, today)
     risks = build_risks(all_deals, stages, today)
@@ -849,6 +894,7 @@ def build_overview(
         "revenue": revenue,
         "revenue_rolling": revenue_rolling,
         "pipeline": pipeline,
+        "pipeline_rolling": pipeline_rolling,
         "qualified_leads": qualified_leads,
         "top_deals": top_deals,
         "risks": risks,
