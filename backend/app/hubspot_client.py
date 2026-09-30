@@ -329,6 +329,7 @@ def _fetch_snapshot() -> dict:
         f_contact_engaged = [
             pool.submit(_batch_associations, "contacts", t, contact_ids) for t in ("tasks", "calls", "meetings")
         ]
+        f_contact_deal = pool.submit(_batch_associations, "contacts", "deals", contact_ids)
 
         stages = f_stages.result()
         owners = f_owners.result()
@@ -338,6 +339,16 @@ def _fetch_snapshot() -> dict:
         contacted_ids: set[str] = set()
         for f in f_contact_engaged:
             contacted_ids.update(f.result())
+        contact_deal = f_contact_deal.result()
+        # A contact counts as "contacted" if an engagement is on the contact
+        # directly, OR on a deal that's associated with that contact (see
+        # get_leads's docstring — tasks are commonly logged on the deal).
+        deals_with_engagement: set[str] = set()
+        for assoc in engagement_deal_assoc.values():
+            deals_with_engagement.update(assoc.values())
+        for cid, deal_id in contact_deal.items():
+            if deal_id in deals_with_engagement:
+                contacted_ids.add(cid)
 
     stage_by_id = {s["id"]: s for s in stages}
     company_names = {str(c["id"]): (c.get("properties") or {}).get("name") or "Unnamed company" for c in raw_companies}
@@ -527,7 +538,12 @@ def get_leads() -> list[dict]:
     real per-contact engagement association (non-null placeholder string) so
     crm_metrics.build_qualified_leads's "awaiting first contact" check
     (not ld.get("next_activity_id")) reflects whether any task/call/meeting
-    is actually associated with that contact.
+    is actually associated with that contact — either directly, OR via a
+    deal linked to that contact (verified directly against this account:
+    tasks are commonly created on the Deal record, associated with the deal
+    rather than the contact, so a contact-only check was undercounting
+    "contacted" leads that genuinely have activity logged against their
+    deal).
 
     add_time prefers the account's custom `lead_created_date` property over
     the standard `createdate` system field when set — this account backdates
@@ -536,5 +552,11 @@ def get_leads() -> list[dict]:
     record was synced into HubSpot, but lead_created_date has a real spread
     across months), so using createdate here would make every month-over-
     month leads comparison meaningless. Falls back to createdate for any
-    contact that doesn't have the custom property set."""
+    contact that doesn't have the custom property set. "Contacted" (for
+    next_activity_id) counts an engagement associated with the contact
+    directly, OR with a deal that's associated with that contact — verified
+    directly against this account: tasks are commonly logged on the Deal
+    record rather than the Contact, so a contact-only check undercounts
+    genuinely-contacted leads. See _fetch_snapshot for how both are
+    computed."""
     return get_snapshot()["leads"]
