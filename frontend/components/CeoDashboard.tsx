@@ -545,7 +545,7 @@ function BriefTile({
   return (
     <div
       className={`relative rounded-xl px-5 py-6 text-center flex flex-col items-center${g.className}`}
-      style={{ background: CARD_BG, border: `1px solid ${accent}`, ...g.style }}
+      style={{ background: CARD_BG, border: `1.5px solid ${accent}`, ...g.style }}
     >
       <p className="text-xs font-bold uppercase tracking-wide mb-2" style={{ color: accent }}>{label}</p>
 
