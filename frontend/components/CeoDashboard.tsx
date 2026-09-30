@@ -371,7 +371,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                         {positive ? "↑" : "↓"} {Math.abs(absChange)} lead{Math.abs(absChange) === 1 ? "" : "s"}
                       </span>
                       {pct != null && (
-                        <span className="text-[11px]" style={{ color: C.faint }}>
+                        <span className="text-[11px]" style={{ color: positive ? ACCENT_UP : ACCENT_DOWN }}>
                           · {pct > 0 ? "+" : ""}
                           {pct}%
                         </span>
