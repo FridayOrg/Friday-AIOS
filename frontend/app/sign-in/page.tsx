@@ -1,16 +1,66 @@
 "use client";
 
-import { useState } from "react";
-import { useSignIn } from "@clerk/nextjs";
+import { Suspense, useEffect, useState } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import { useSignIn, useSignUp } from "@clerk/nextjs";
 
 // Our own login screen (Friday logo + "Sign in with Google"), built on
 // Clerk's useSignIn() hook rather than Clerk's prebuilt <SignIn> component —
 // this is the piece that avoids the "Secured by Clerk" badge that ships on
 // the free plan's prebuilt sign-in form.
+//
+// This page does double duty: a plain visit shows the Google button; a visit
+// carrying an invitation ticket (__clerk_ticket / __clerk_status=sign_up,
+// appended by Clerk to the link in the invitation email) instead auto-accepts
+// that invitation and signs the person straight in — no separate click
+// needed, since clicking the emailed link already proved they own that
+// invited email address.
 export default function SignInPage() {
+  return (
+    <Suspense fallback={null}>
+      <SignInPageContent />
+    </Suspense>
+  );
+}
+
+function SignInPageContent() {
   const { signIn } = useSignIn(); // null until Clerk has finished loading
+  const { signUp } = useSignUp(); // this Clerk version's "Future" signal API
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  const ticket = searchParams.get("__clerk_ticket");
+  const ticketStatus = searchParams.get("__clerk_status");
+  const showingInviteFlow = !!ticket && ticketStatus === "sign_up";
+
   const [error, setError] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
+  const [ticketSubmitted, setTicketSubmitted] = useState(false);
+
+  // Step 1: hand the ticket to Clerk once. This is fire-and-forget — its
+  // result shows up as signUp.status changing, picked up by the effect below
+  // (signUp is a reactive "signal": Clerk re-renders us as it updates).
+  useEffect(() => {
+    if (!showingInviteFlow || ticketSubmitted || !signUp) return;
+    setTicketSubmitted(true);
+    signUp.ticket({ ticket: ticket! }).then(({ error: ticketError }) => {
+      if (ticketError) {
+        setError("This invitation link is invalid or has expired. Please ask for a new invite.");
+      }
+    });
+  }, [showingInviteFlow, ticketSubmitted, signUp, ticket]);
+
+  // Step 2: once the ticket exchange reports the sign-up as complete,
+  // finalize it into an actual session and take the user into the app.
+  useEffect(() => {
+    if (signUp?.status !== "complete") return;
+    signUp.finalize().then(({ error: finalizeError }) => {
+      if (finalizeError) {
+        setError("Something went wrong finishing sign-in. Please try again.");
+      } else {
+        router.push("/");
+      }
+    });
+  }, [signUp?.status, signUp, router]);
 
   async function handleGoogleSignIn() {
     if (!signIn) return;
@@ -45,20 +95,29 @@ export default function SignInPage() {
           <p className="text-sm text-slate-500 text-center">Sign in to your AI Chief of Staff</p>
         </div>
 
-        <button
-          onClick={handleGoogleSignIn}
-          disabled={loading || !signIn}
-          className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
-        >
-          <GoogleIcon />
-          {loading ? "Redirecting…" : "Sign in with Google"}
-        </button>
+        {showingInviteFlow && !error ? (
+          <div className="flex flex-col items-center gap-3 py-2">
+            <div className="h-6 w-6 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
+            <p className="text-sm text-slate-500">Accepting your invitation…</p>
+          </div>
+        ) : (
+          <>
+            <button
+              onClick={handleGoogleSignIn}
+              disabled={loading || !signIn}
+              className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <GoogleIcon />
+              {loading ? "Redirecting…" : "Sign in with Google"}
+            </button>
 
-        {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+            {error && <p className="text-sm text-red-600 text-center">{error}</p>}
 
-        <p className="text-xs text-slate-400 text-center">
-          Only people invited to this workspace can sign in.
-        </p>
+            <p className="text-xs text-slate-400 text-center">
+              Only people invited to this workspace can sign in.
+            </p>
+          </>
+        )}
       </div>
     </div>
   );
