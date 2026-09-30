@@ -64,8 +64,17 @@ export interface CrmOverview {
     closing_this_month_value: number;
     closing_this_month_count: number;
   };
+  pipeline_rolling?: {
+    value_last_30_days: number;
+    count_last_30_days: number;
+    value_previous_30_days: number;
+    count_previous_30_days: number;
+    pct_change_vs_previous_30_days: number | null;
+    window_days: number;
+  };
   qualified_leads?: {
     count_last_30_days: number | null;
+    count_previous_30_days: number | null;
     pct_change_vs_previous_30_days: number | null;
     awaiting_first_contact: number | null;
     window_days: number;
