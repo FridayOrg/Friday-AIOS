@@ -445,19 +445,14 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                 ? { text: `${crm.kpis!.revenue_growth_pct}%`, positive: crm.kpis!.revenue_growth_pct >= 0 }
                 : undefined
             }
-            progressPct={
-              crm?.configured && effectiveRevenueTarget
-                ? Math.min(100, (crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)
-                : undefined
-            }
             subtext={
               crm?.configured
                 ? effectiveRevenueTarget
                   ? [
                       crm.kpis!.won_revenue >= effectiveRevenueTarget
-                        ? "Target reached"
+                        ? ""
                         : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
-                    ]
+                    ].filter(Boolean)
                   : ["No revenue target set"]
                 : [crm?.message ?? "HubSpot not connected"]
             }
