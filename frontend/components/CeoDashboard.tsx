@@ -369,7 +369,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             subtext={
               crm?.configured
                 ? [
-                    `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"} · ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)} expected to close this month`,
+                    `${crm.pipeline?.total_open_count ?? 0} active opportunit${crm.pipeline?.total_open_count === 1 ? "y" : "ies"}`,
+                    `Expected to close this month: ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)}`,
                   ]
                 : [crm?.message ?? "HubSpot not connected"]
             }
