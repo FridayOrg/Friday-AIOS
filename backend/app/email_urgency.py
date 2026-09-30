@@ -37,7 +37,16 @@ _PROMPT_TEMPLATE = """You are triaging a list of emails to decide which ones gen
 need attention from the recipient today — not just "nice to eventually read" — and how
 urgent each one is.
 
-For each email, pick exactly one tier:
+HARD FILTER — apply this before anything else: automated system/account notifications
+(sign-in alerts, "new device" notices, password-reset confirmations, CI/CD or workflow
+run results, uptime/monitoring alerts, and similar auto-generated messages) are "none"
+UNLESS the email itself explicitly asks the recipient to take an action because something
+is wrong (e.g. "we detected suspicious activity, please secure your account now" - not
+just "here's a routine heads-up, no action needed if this was you"). A CI/workflow failure
+notification is "none" too - that's an engineering concern, not something the recipient
+(a CEO/founder) needs to personally act on.
+
+For each email that passes the hard filter, pick exactly one tier:
 - "overdue": a deadline has clearly already passed, or it's an explicit follow-up/reminder
   about something still outstanding (e.g. "following up again", "still waiting on this",
   "this was due").

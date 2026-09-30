@@ -167,9 +167,20 @@ export async function getAllMeetingsThisWeek(): Promise<Meeting[]> {
   return data.calendar.meetings;
 }
 
+/** Task status ("overdue" / "due_today" / "pending") is derived here from
+ *  due_date vs. the real today, not trusted from tasks.json's own `status`
+ *  field - that field is a static string authored once, and readJson() slides
+ *  every due_date forward daily to stay anchored to "today" (see
+ *  shiftIsoDates), so a hardcoded status drifts out of sync with the date it
+ *  was meant to describe. Deriving it live keeps the two consistent no matter
+ *  how many days have passed since the mock data was authored. */
 export function getTasks(): Task[] {
   const data = readJson<{ tasks: Task[] }>("tasks.json");
-  return data.tasks;
+  const today = isoDate();
+  return data.tasks.map((t) => ({
+    ...t,
+    status: t.due_date < today ? "overdue" : t.due_date === today ? "due_today" : "pending",
+  }));
 }
 
 /** Tasks worth surfacing on the dashboard's "Needs Your Attention" card: overdue
