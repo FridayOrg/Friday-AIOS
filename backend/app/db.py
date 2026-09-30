@@ -97,6 +97,7 @@ def init_db() -> None:
                 url TEXT UNIQUE NOT NULL,
                 title TEXT NOT NULL,
                 topic TEXT,
+                category TEXT,
                 content TEXT,
                 published_at TIMESTAMPTZ,
                 relevance_reason TEXT,
@@ -104,6 +105,9 @@ def init_db() -> None:
             )
             """
         )
+        # Added after the table already existed in some deployments -
+        # ADD COLUMN IF NOT EXISTS keeps this migration-free.
+        cur.execute("ALTER TABLE industry_updates ADD COLUMN IF NOT EXISTS category TEXT")
         cur.execute(
             """
             CREATE TABLE IF NOT EXISTS app_settings (
@@ -273,12 +277,13 @@ def upsert_industry_update(item: dict) -> None:
         cur.execute(
             """
             INSERT INTO industry_updates
-                (url, title, topic, content, published_at, relevance_reason)
-            VALUES (%(url)s, %(title)s, %(topic)s, %(content)s, %(published_at)s,
+                (url, title, topic, category, content, published_at, relevance_reason)
+            VALUES (%(url)s, %(title)s, %(topic)s, %(category)s, %(content)s, %(published_at)s,
                     %(relevance_reason)s)
             ON CONFLICT (url) DO UPDATE SET
                 title = EXCLUDED.title,
                 topic = EXCLUDED.topic,
+                category = EXCLUDED.category,
                 content = EXCLUDED.content,
                 published_at = EXCLUDED.published_at,
                 relevance_reason = EXCLUDED.relevance_reason
@@ -287,6 +292,7 @@ def upsert_industry_update(item: dict) -> None:
                 "url": item["url"],
                 "title": item["title"],
                 "topic": item.get("topic"),
+                "category": item.get("category"),
                 "content": item.get("content"),
                 "published_at": item.get("published_at"),
                 "relevance_reason": item.get("relevance_reason"),
@@ -294,30 +300,36 @@ def upsert_industry_update(item: dict) -> None:
         )
 
 
-def list_industry_updates(day_start: str, day_end: str, limit: int = 30) -> list[dict]:
-    """Industry updates whose published_at (falling back to fetched_at, for
-    items with no known publish date) falls within [day_start, day_end) —
-    the caller passes the exact window (see industry_client.week_bounds) so
-    this reflects the app's own clock/timezone, not the database server's.
-    Most recent first; never returns an item outside that window even if
-    it's still the most recently fetched row. The dashboard currently passes
-    a rolling 7-day window with limit=3 (see main.py's GET /industry-updates)."""
+def list_top_industry_updates(per_category: int = 2) -> dict[str, list[dict]]:
+    """The `per_category` most recent industry_updates rows for each distinct
+    `category` ("industry", "competitor"), ranked by published_at (falling
+    back to fetched_at for items with no known publish date) - no time-window
+    cutoff, so an old item stays displayed indefinitely until something more
+    recent in its own category comes along to outrank it, rather than the
+    section going empty on a quiet week. Returns {category: [rows...]}."""
     with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
         cur.execute(
             """
-            SELECT url, title, topic, content, published_at, relevance_reason, fetched_at
-            FROM industry_updates
-            WHERE COALESCE(published_at, fetched_at) >= %(day_start)s
-              AND COALESCE(published_at, fetched_at) < %(day_end)s
-            ORDER BY COALESCE(published_at, fetched_at) DESC
-            LIMIT %(limit)s
+            SELECT url, title, topic, category, content, published_at, relevance_reason, fetched_at
+            FROM (
+                SELECT *, ROW_NUMBER() OVER (
+                    PARTITION BY category
+                    ORDER BY COALESCE(published_at, fetched_at) DESC
+                ) AS rn
+                FROM industry_updates
+                WHERE category IS NOT NULL
+            ) ranked
+            WHERE rn <= %(per_category)s
+            ORDER BY category, rn
             """,
-            {"day_start": day_start, "day_end": day_end, "limit": limit},
+            {"per_category": per_category},
         )
         rows = [dict(r) for r in cur.fetchall()]
 
+    result: dict[str, list[dict]] = {}
     for r in rows:
         if r.get("published_at") is not None:
             r["published_at"] = r["published_at"].isoformat()
         r["fetched_at"] = r["fetched_at"].isoformat()
-    return rows
+        result.setdefault(r["category"], []).append(r)
+    return result

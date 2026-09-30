@@ -18,7 +18,8 @@ interface IndustryUpdate {
 }
 
 export default function IndustryUpdates() {
-  const [updates, setUpdates] = useState<IndustryUpdate[]>([]);
+  const [industryUpdates, setIndustryUpdates] = useState<IndustryUpdate[]>([]);
+  const [competitorMoves, setCompetitorMoves] = useState<IndustryUpdate[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
 
@@ -26,9 +27,11 @@ export default function IndustryUpdates() {
     try {
       const res = await fetch("/api/industry-updates", { cache: "no-store" });
       const data = await res.json();
-      setUpdates(data.updates ?? []);
+      setIndustryUpdates(data.industry_updates ?? []);
+      setCompetitorMoves(data.competitor_moves ?? []);
     } catch {
-      setUpdates([]);
+      setIndustryUpdates([]);
+      setCompetitorMoves([]);
     } finally {
       setLoading(false);
     }
@@ -61,28 +64,41 @@ export default function IndustryUpdates() {
       </div>
       {loading ? (
         <p className="text-xs text-slate-500 pt-1">Checking for updates...</p>
-      ) : updates.length === 0 ? (
-        <p className="text-xs text-slate-500 pt-1">No significant updates today yet.</p>
+      ) : industryUpdates.length === 0 && competitorMoves.length === 0 ? (
+        <p className="text-xs text-slate-500 pt-1">No significant updates yet.</p>
       ) : (
         <div className="flex flex-col max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">
-          {updates.map((u) => (
-            <div key={u.url} className="py-2.5 row-separator">
-              <p className="text-[13px] font-medium leading-snug text-slate-900">{u.title}</p>
-              {u.content && (
-                <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
-              )}
-              <a
-                href={u.url}
-                target="_blank"
-                rel="noreferrer"
-                className="inline-block text-xs mt-2 text-blue-600 font-medium"
-              >
-                View full article →
-              </a>
-            </div>
-          ))}
+          <UpdateGroup label="Industry Updates" items={industryUpdates} />
+          <UpdateGroup label="Competitor Moves" items={competitorMoves} />
         </div>
       )}
+    </div>
+  );
+}
+
+function UpdateGroup({ label, items }: { label: string; items: IndustryUpdate[] }) {
+  if (items.length === 0) return null;
+  return (
+    <div className="pt-2 first:pt-0">
+      <span className="inline-block text-[11px] font-semibold uppercase tracking-wide text-slate-500 bg-slate-100 rounded px-2 py-0.5">
+        {label}
+      </span>
+      {items.map((u) => (
+        <div key={u.url} className="py-2.5 row-separator">
+          <p className="text-[13px] font-medium leading-snug text-slate-900 line-clamp-1">{u.title}</p>
+          {u.content && (
+            <p className="text-xs text-slate-500 mt-1 leading-snug line-clamp-2">{u.content}</p>
+          )}
+          <a
+            href={u.url}
+            target="_blank"
+            rel="noreferrer"
+            className="inline-block text-xs mt-2 text-blue-600 font-medium"
+          >
+            View full article →
+          </a>
+        </div>
+      ))}
     </div>
   );
 }

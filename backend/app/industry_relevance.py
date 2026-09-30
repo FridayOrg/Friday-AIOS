@@ -52,13 +52,17 @@ no actual content ("sales is important," "AI is changing business").
 {item_blocks}
 
 Respond with EXACTLY one line per item above, in the same order, in this exact
-format and nothing else. For "yes" items, write a CLEAN one-sentence summary in
-your own words (never copy raw text from Content - it's often scraped page
-junk with navigation menus, "read more" links, and unrelated snippets mixed
-in); state the one concrete fact/insight a CEO would actually want to know,
-in plain English, under 25 words, with no markdown/links. For "no" items, a
-short reason is enough.
-<number>: yes|<clean one-sentence summary, under 25 words, no markdown>
+format and nothing else. For "yes" items, write:
+(1) a short crisp headline in your own words, 5-6 words, no punctuation at the
+end, no company name repeated if already obvious, title case, that fits on one
+line - NOT a copy of the raw page title (those are long SEO titles);
+(2) a CLEAN one-sentence summary in your own words (never copy raw text from
+Content - it's often scraped page junk with navigation menus, "read more"
+links, and unrelated snippets mixed in); state the one concrete fact/insight a
+CEO would actually want to know, in plain English, under 25 words, with no
+markdown/links.
+For "no" items, a short reason is enough.
+<number>: yes|<5-6 word headline, title case>|<clean one-sentence summary, under 25 words, no markdown>
 <number>: no|<reason under 12 words>
 """
 
@@ -75,7 +79,8 @@ def _build_item_blocks(items: list[dict]) -> str:
     return "\n\n".join(blocks)
 
 
-_RESULT_LINE_RE = re.compile(r"^\s*(\d+)\s*:\s*(yes|no)\s*\|\s*(.*)$", re.IGNORECASE)
+_YES_LINE_RE = re.compile(r"^\s*(\d+)\s*:\s*yes\s*\|\s*([^|]*)\|\s*(.*)$", re.IGNORECASE)
+_NO_LINE_RE = re.compile(r"^\s*(\d+)\s*:\s*no\s*\|\s*(.*)$", re.IGNORECASE)
 
 
 def classify_updates(items: list[dict]) -> list[dict]:
@@ -94,29 +99,34 @@ def classify_updates(items: list[dict]) -> list[dict]:
             model=MODEL,
             contents=prompt,
             config=genai.types.GenerateContentConfig(
-                temperature=0, max_output_tokens=60 * len(items)
+                temperature=0, max_output_tokens=80 * len(items)
             ),
         )
     except Exception as e:  # noqa: BLE001 - a classifier hiccup fails the whole batch safely
         logger.warning("Industry-update relevance classification failed for this batch: %s", e)
         return []
 
-    results_by_index: dict[int, tuple[bool, str]] = {}
+    results_by_index: dict[int, tuple[bool, str, str]] = {}
     for line in (response.text or "").strip().splitlines():
-        m = _RESULT_LINE_RE.match(line)
-        if not m:
+        m = _YES_LINE_RE.match(line)
+        if m:
+            index, headline, summary = int(m.group(1)), m.group(2).strip(), m.group(3).strip()
+            results_by_index[index] = (True, headline, summary)
             continue
-        index, verdict, reason = int(m.group(1)), m.group(2).lower(), m.group(3).strip()
-        results_by_index[index] = (verdict == "yes", reason)
+        m = _NO_LINE_RE.match(line)
+        if m:
+            index = int(m.group(1))
+            results_by_index[index] = (False, "", "")
 
     relevant = []
     for i, item in enumerate(items, start=1):
-        is_relevant, summary = results_by_index.get(i, (False, ""))
+        is_relevant, headline, summary = results_by_index.get(i, (False, "", ""))
         if is_relevant:
-            # `content` gets OVERWRITTEN with the model's clean summary here -
-            # the raw value (Tavily's scraped page text: nav menus, "read
-            # more" links, unrelated snippets) is only ever meant as input to
-            # this classification pass, never for display. This is what
-            # main.py's refresh endpoint stores and the dashboard shows.
-            relevant.append({**item, "content": summary, "relevance_reason": summary})
+            # `title` and `content` get OVERWRITTEN with the model's short
+            # headline and clean summary here - the raw values (Tavily's long
+            # SEO page title, and scraped page text: nav menus, "read more"
+            # links, unrelated snippets) are only ever meant as input to this
+            # classification pass, never for display. This is what main.py's
+            # refresh endpoint stores and the dashboard shows.
+            relevant.append({**item, "title": headline or item["title"], "content": summary, "relevance_reason": summary})
     return relevant

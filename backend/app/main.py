@@ -20,9 +20,10 @@ Endpoints:
   GET  /gmail/urgent    — cached list of inbox emails judged to need an immediate
                            reply (see gmail_client.py / email_urgency.py)
   POST /gmail/refresh    — forces a fresh Gmail fetch + urgency-classification pass
-  GET  /industry-updates — top 3 most recent stored, LLM-filtered industry
-                           news items from the past week (see industry_client.py
-                           / industry_relevance.py)
+  GET  /industry-updates — top 2 most recent stored, LLM-filtered items for
+                           each of "industry" and "competitor" (see
+                           industry_client.py / industry_relevance.py /
+                           db.list_top_industry_updates)
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
@@ -333,11 +334,14 @@ def gmail_refresh():
 @app.get("/industry-updates")
 def industry_updates():
     try:
-        week_start, week_end = industry_client.week_bounds(now())
-        return {"updates": db.list_industry_updates(week_start, week_end, limit=3)}
+        by_category = db.list_top_industry_updates(per_category=2)
+        return {
+            "industry_updates": by_category.get("industry", []),
+            "competitor_moves": by_category.get("competitor", []),
+        }
     except Exception as e:
         logger.warning("Could not read industry updates: %s", e)
-        return {"updates": []}
+        return {"industry_updates": [], "competitor_moves": []}
 
 
 @app.post("/industry-updates/refresh")
