@@ -61,6 +61,13 @@ WIN_RATE_WINDOW_DAYS = 30
 # filter and not a calendar-month boundary.
 QUALIFIED_LEADS_WINDOW_DAYS = 30
 
+# Trailing window for the Daily Brief's "Revenue" card — same rolling-window
+# rationale as the other three Daily Brief cards, for consistency across the
+# row (this used to be pinned to the calendar month for target-tracking, but
+# the target/progress-bar display was dropped from this card, so there's no
+# remaining reason for it to use a different window than its neighbors).
+REVENUE_WINDOW_DAYS = 30
+
 
 # ---------------------------------------------------------------------------
 # Parsing helpers — Pipedrive dates are plain "YYYY-MM-DD" or
@@ -186,6 +193,32 @@ def build_revenue(all_deals: list[dict], start: date, end: date, limitations: li
         "pipeline_value": _sum_value(open_deals),
         "growth_pct": _pct_change(revenue, prev_revenue),
         "previous_period_revenue": prev_revenue,
+    }
+
+
+def build_revenue_rolling(all_deals: list[dict], today: date, window_days: int = REVENUE_WINDOW_DAYS) -> dict:
+    """Won revenue over a trailing window ending today (see
+    REVENUE_WINDOW_DAYS), for the Daily Brief's "Revenue" card — not tied to
+    the dashboard's selected date-range filter or a calendar-month boundary,
+    same rolling-window pattern as build_win_rate/build_qualified_leads.
+    pct_change_vs_previous_period compares against the equal-length window
+    immediately before it; None (not 0%) if nothing was won in that prior
+    window — undefined, not a fabricated rate."""
+    won_deals = [d for d in all_deals if d.get("status") == "won"]
+
+    start = today - timedelta(days=window_days - 1)
+    in_window = _won_in_range(won_deals, start, today)
+    revenue = _sum_value(in_window)
+
+    prev_end = start - timedelta(days=1)
+    prev_start = prev_end - timedelta(days=window_days - 1)
+    prev_revenue = _sum_value(_won_in_range(won_deals, prev_start, prev_end))
+
+    return {
+        "won_revenue": revenue,
+        "won_deal_count": len(in_window),
+        "pct_change_vs_previous_period": _pct_change(revenue, prev_revenue),
+        "window_days": window_days,
     }
 
 
@@ -792,6 +825,7 @@ def build_overview(
     contacts = build_contacts(persons, orgs, start, end)
     conversion = build_conversion(all_deals, start, end, limitations)
     win_rate = build_win_rate(all_deals, today)
+    revenue_rolling = build_revenue_rolling(all_deals, today)
     forecast = build_forecast(all_deals, stages, start, end, limitations)
     trend = build_revenue_trend(all_deals, trend_period, today)
     won_vs_lost = build_won_vs_lost(all_deals, start, end)
@@ -813,6 +847,7 @@ def build_overview(
             "new_contacts": contacts["new_contacts_count"],
         },
         "revenue": revenue,
+        "revenue_rolling": revenue_rolling,
         "pipeline": pipeline,
         "qualified_leads": qualified_leads,
         "top_deals": top_deals,
