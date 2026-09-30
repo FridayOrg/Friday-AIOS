@@ -17,7 +17,14 @@ interface Task {
 
 const STATUS_STYLE: Record<string, string> = {
   overdue: "bg-red-100 text-red-700",
+  due_today: "bg-orange-100 text-orange-700",
   pending: "bg-amber-100 text-amber-700",
+};
+
+const STATUS_LABEL: Record<string, string> = {
+  overdue: "overdue",
+  due_today: "due today",
+  pending: "pending",
 };
 
 const PRIORITY_STYLE: Record<string, string> = {
@@ -29,8 +36,9 @@ const PRIORITY_STYLE: Record<string, string> = {
 // Overdue tasks always surface first, then by priority — same "what needs
 // attention" ordering as the dashboard, so Tasks isn't just raw JSON order.
 const PRIORITY_RANK: Record<string, number> = { high: 0, medium: 1, low: 2 };
+const STATUS_RANK: Record<string, number> = { overdue: 0, due_today: 1, pending: 2 };
 
-const STATUS_FILTERS = ["all", "overdue", "pending"] as const;
+const STATUS_FILTERS = ["all", "overdue", "due_today", "pending"] as const;
 const PRIORITY_FILTERS = ["all", "high", "medium", "low"] as const;
 type StatusFilter = (typeof STATUS_FILTERS)[number];
 type PriorityFilter = (typeof PRIORITY_FILTERS)[number];
@@ -77,8 +85,8 @@ export default function TasksPage() {
       .filter((t) => priorityFilter === "all" || t.priority === priorityFilter)
       .slice()
       .sort((a, b) => {
-        if (a.status === "overdue" && b.status !== "overdue") return -1;
-        if (b.status === "overdue" && a.status !== "overdue") return 1;
+        const statusDiff = (STATUS_RANK[a.status] ?? 99) - (STATUS_RANK[b.status] ?? 99);
+        if (statusDiff !== 0) return statusDiff;
         return (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99);
       });
   }, [tasks, statusFilter, priorityFilter]);
@@ -98,7 +106,7 @@ export default function TasksPage() {
             <div className="flex flex-wrap items-center gap-2">
               {STATUS_FILTERS.map((s) => (
                 <FilterPill key={s} active={statusFilter === s} onClick={() => setStatusFilter(s)}>
-                  {s}
+                  {s === "all" ? "all" : STATUS_LABEL[s]}
                 </FilterPill>
               ))}
               <span className="hidden sm:inline w-px h-4 bg-gray-200 mx-1" />
@@ -134,7 +142,7 @@ export default function TasksPage() {
                         STATUS_STYLE[t.status] ?? "bg-gray-100 text-slate-600"
                       }`}
                     >
-                      {t.status}
+                      {STATUS_LABEL[t.status] ?? t.status}
                     </span>
                   </div>
                 </div>

@@ -19,7 +19,7 @@
 import { useEffect, useState } from "react";
 import Link from "next/link";
 
-type PriorityTier = "overdue" | "high" | "important";
+type PriorityTier = "overdue" | "due_today" | "high" | "important";
 
 interface UrgentEmail {
   id: string;
@@ -40,11 +40,14 @@ interface Task {
   status: string;
 }
 
-// Same three tiers email_urgency.py classifies emails into (see
-// PRIORITY_TIERS there) — one shared ranking both item types sort by.
-const TIER_RANK: Record<PriorityTier, number> = { overdue: 0, high: 1, important: 2 };
+// Emails classify into 3 tiers (see PRIORITY_TIERS in email_urgency.py);
+// tasks add a 4th, "due_today" (a task due today isn't yet "overdue" - it
+// only becomes overdue once its due date has actually passed). One shared
+// ranking both item types sort by.
+const TIER_RANK: Record<PriorityTier, number> = { overdue: 0, due_today: 1, high: 2, important: 3 };
 const TIER_LABEL: Record<PriorityTier, { text: string; className: string }> = {
   overdue: { text: "Overdue", className: "bg-red-100 text-red-700" },
+  due_today: { text: "Due Today", className: "bg-orange-100 text-orange-700" },
   high: { text: "High", className: "bg-amber-100 text-amber-700" },
   important: { text: "Important", className: "bg-blue-100 text-blue-700" },
 };
@@ -55,12 +58,15 @@ function PriorityTag({ tier }: { tier: PriorityTier }) {
 }
 
 // Tasks don't have an "important" tier of their own (that's the email
-// classifier's catch-all) — a task only shows up here if it's overdue or
-// explicitly high-priority; everything else (medium/low, not overdue) stays
-// out of this card and is only visible via "View more" on the full /tasks
-// page, per the CEO's ask to only surface overdue/high/important here.
+// classifier's catch-all) — a task only shows up here if it's overdue, due
+// today, or explicitly high-priority; everything else (medium/low, due
+// later) stays out of this card and is only visible via "View more" on the
+// full /tasks page, per the CEO's ask to only surface overdue/high/important
+// here. `status` is already derived from due_date vs. today (see
+// lib/data.ts's getTasks), not a stale hardcoded value.
 function taskTier(t: Task): PriorityTier | null {
   if (t.status === "overdue") return "overdue";
+  if (t.status === "due_today") return "due_today";
   if (t.priority === "high") return "high";
   return null;
 }
