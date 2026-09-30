@@ -370,9 +370,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
                       vs previous {crm.qualified_leads?.window_days ?? 30} days
                     </span>,
-                    crm.qualified_leads?.awaiting_first_contact != null
-                      ? `${crm.qualified_leads.awaiting_first_contact} awaiting first contact`
-                      : "No leads data available",
                   ]
                 : [crm?.message ?? "HubSpot not connected"]
             }
@@ -427,11 +424,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     ) : (
                       "no win-rate data available"
                     ),
-                    crm.win_rate
-                      ? crm.win_rate.closed_count > 0
-                        ? `${crm.win_rate.won_count} won out of ${crm.win_rate.closed_count} closed deals`
-                        : "no deals closed in this window yet"
-                      : "",
                   ].filter(Boolean)
                 : [crm?.message ?? "HubSpot not connected"]
             }
@@ -451,11 +443,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             badge={
               crm?.configured && crm.kpis!.revenue_growth_pct != null
                 ? { text: `${crm.kpis!.revenue_growth_pct}%`, positive: crm.kpis!.revenue_growth_pct >= 0 }
-                : undefined
-            }
-            progressLabel={
-              crm?.configured && effectiveRevenueTarget
-                ? `${Math.round((crm.kpis!.won_revenue / effectiveRevenueTarget) * 100)}% of ${fmtUsd(effectiveRevenueTarget)} target`
                 : undefined
             }
             progressPct={
