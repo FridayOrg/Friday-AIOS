@@ -42,24 +42,39 @@ function SignInPageContent() {
   useEffect(() => {
     if (!showingInviteFlow || ticketSubmitted || !signUp) return;
     setTicketSubmitted(true);
-    signUp.ticket({ ticket: ticket! }).then(({ error: ticketError }) => {
-      if (ticketError) {
-        setError("This invitation link is invalid or has expired. Please ask for a new invite.");
-      }
-    });
+    signUp
+      .ticket({ ticket: ticket! })
+      .then(({ error: ticketError }) => {
+        if (ticketError) {
+          setError("This invitation link is invalid or has expired. Please ask for a new invite.");
+        }
+      })
+      .catch(() => {
+        // Clerk's bot-protection widget throws here if its container div
+        // isn't in the DOM (see the <div id="clerk-captcha" /> below) —
+        // without this catch the promise rejection was silent and the
+        // spinner spun forever even though the invite had already been
+        // accepted server-side.
+        setError("Something went wrong accepting your invitation. Please try again.");
+      });
   }, [showingInviteFlow, ticketSubmitted, signUp, ticket]);
 
   // Step 2: once the ticket exchange reports the sign-up as complete,
   // finalize it into an actual session and take the user into the app.
   useEffect(() => {
     if (signUp?.status !== "complete") return;
-    signUp.finalize().then(({ error: finalizeError }) => {
-      if (finalizeError) {
+    signUp
+      .finalize()
+      .then(({ error: finalizeError }) => {
+        if (finalizeError) {
+          setError("Something went wrong finishing sign-in. Please try again.");
+        } else {
+          router.push("/");
+        }
+      })
+      .catch(() => {
         setError("Something went wrong finishing sign-in. Please try again.");
-      } else {
-        router.push("/");
-      }
-    });
+      });
   }, [signUp?.status, signUp, router]);
 
   async function handleGoogleSignIn() {
@@ -118,6 +133,12 @@ function SignInPageContent() {
             </p>
           </>
         )}
+
+        {/* Required by Clerk's bot-protection (Smart CAPTCHA): without this
+            container in the DOM, Clerk can't mount the widget and every
+            sign-up/ticket call silently fails. Clerk manages what (if
+            anything) renders inside it. */}
+        <div id="clerk-captcha" />
       </div>
     </div>
   );
