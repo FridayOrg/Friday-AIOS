@@ -10,11 +10,18 @@ TOPICS is a plain list of search queries, not company-specific integration
 code — new companies/domains get added here later with no other changes
 needed anywhere in this module.
 
-Restricted to the past week (time_range="week" on the Tavily request, plus a
-published_date sanity check on the response) so nothing older than 7 days
-lingers on the dashboard — the calling code in main.py additionally filters
-storage reads to the same rolling 7-day window, and caps the displayed count
-to the 3 most recent items.
+Each topic is tagged "competitor" or "industry" (see COMPETITOR_TOPICS /
+INDUSTRY_TOPICS below); main.py stores that category alongside each item and
+displays the 2 most recent per category (see db.list_top_industry_updates),
+rather than a single pooled list — old items are only replaced once something
+newer for that same category turns up, so a quiet week/month leaves the
+existing 2 in place instead of the section going empty.
+
+Fetched with time_range="week" for the broad industry topics (plus a
+published_date sanity check on the response), or "month" for the named-
+competitor topics — those are small agencies whose own sites carry no real
+publish dates, so a 7-day window filtered out genuine, still-current case
+studies that just weren't freshly re-crawled by Tavily that week.
 
 Never raises on failure: a missing/invalid API key, an unreachable API, a
 rate limit, or a genuinely quiet news day all just return an empty list so a
@@ -60,21 +67,55 @@ _MAX_RESULTS_PER_TOPIC = 10
 # what keeps the card from coming back empty - see industry_relevance.py's
 # relaxed hard filter, which now accepts genuine trend/analysis content, not
 # only company-specific developments.
-TOPICS: list[dict] = [
-    {"name": "Belkins", "query": "new service pricing case study announcement", "domains": ["belkins.io"]},
-    {"name": "SalesRoads", "query": "new service pricing case study announcement", "domains": ["salesroads.com"]},
+# Each topic is tagged with a "category" ("competitor" or "industry") used
+# downstream (main.py, db.py) to split the dashboard into two headed groups
+# of 2 items each, rather than one flat pooled list. Named-competitor topics
+# use "time_range": "month" instead of the default "week" (see _fetch_topic) -
+# these are small agencies whose own sites carry no real publish dates, so a
+# 7-day window filtered out genuine, still-current case studies/announcements
+# that just weren't freshly re-crawled by Tavily that week.
+COMPETITOR_TOPICS: list[dict] = [
+    {"name": "Belkins", "query": "new service pricing case study announcement", "domains": ["belkins.io"],
+     "category": "competitor", "time_range": "month"},
+    {"name": "SalesRoads", "query": "new service pricing case study announcement", "domains": ["salesroads.com"],
+     "category": "competitor", "time_range": "month"},
+    {"name": "CIENCE", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["cience.com"], "category": "competitor", "time_range": "month"},
+    {"name": "Callbox", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["callboxinc.com"], "category": "competitor", "time_range": "month"},
+    {"name": "Martal Group", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["martal.ca"], "category": "competitor", "time_range": "month"},
+    {"name": "Cleverly", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["cleverly.co"], "category": "competitor", "time_range": "month"},
+    {"name": "SalesHive", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["saleshive.com"], "category": "competitor", "time_range": "month"},
+    {"name": "Leadium", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["leadium.io"], "category": "competitor", "time_range": "month"},
+    {"name": "Overpass", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["overpass.com"], "category": "competitor", "time_range": "month"},
+    {"name": "Pearl Lemon Leads", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["pearllemonleads.com"], "category": "competitor", "time_range": "month"},
+    {"name": "Vsynergize", "query": "new service pricing case study announcement funding partnership launch",
+     "domains": ["vsynergize.com"], "category": "competitor", "time_range": "month"},
+]
+
+INDUSTRY_TOPICS: list[dict] = [
     {
         "name": "B2B Appointment Setting Industry",
         "query": "B2B appointment setting agency OR SDR-as-a-service company launch funding partnership",
         "news": True,
+        "category": "industry",
     },
     {
         "name": "Sales Development Trends",
         "query": "B2B sales development trends OR outbound sales strategy OR SDR industry report OR "
         "AI in sales prospecting OR cold outreach benchmarks",
         "news": True,
+        "category": "industry",
     },
 ]
+
+TOPICS: list[dict] = COMPETITOR_TOPICS + INDUSTRY_TOPICS
 
 
 def _parse_published_date(raw: str | None) -> str | None:
@@ -109,7 +150,7 @@ def _fetch_topic(topic: dict, start: date, end: date) -> list[dict]:
     name = topic["name"]
     payload = {
         "query": topic["query"],
-        "time_range": "week",
+        "time_range": topic.get("time_range", "week"),
         "max_results": _MAX_RESULTS_PER_TOPIC,
     }
     if topic.get("domains"):
@@ -149,6 +190,7 @@ def _fetch_topic(topic: dict, start: date, end: date) -> list[dict]:
                 "url": r.get("url", ""),
                 "title": r.get("title") or "(untitled)",
                 "topic": name,
+                "category": topic["category"],
                 "content": r.get("content", ""),
                 "published_at": published_at,
             }
