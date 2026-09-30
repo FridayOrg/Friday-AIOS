@@ -98,6 +98,27 @@ function SignInPageContent() {
     }
   }
 
+  // The invitation ticket alone only proves the person owns the invited
+  // email — it does not satisfy "how will they authenticate," since Google
+  // is this app's only enabled sign-up method. So after the ticket is
+  // accepted, signUp.status sits at "missing_requirements" until they
+  // attach a Google identity via this (continuing the same signUp attempt,
+  // unlike handleGoogleSignIn's plain signIn.sso()).
+  async function handleCompleteInviteWithGoogle() {
+    if (!signUp) return;
+    setLoading(true);
+    setError(null);
+    const { error: ssoError } = await signUp.sso({
+      strategy: "oauth_google",
+      redirectCallbackUrl: "/sign-in/sso-callback",
+      redirectUrl: "/",
+    });
+    if (ssoError) {
+      setLoading(false);
+      setError("Something went wrong signing in. Please try again.");
+    }
+  }
+
   return (
     <div className="min-h-screen flex items-center justify-center bg-[#0F172A] px-4">
       <div className="w-full max-w-sm bg-white rounded-2xl shadow-xl p-8 flex flex-col items-center gap-6">
@@ -110,7 +131,22 @@ function SignInPageContent() {
           <p className="text-sm text-slate-500 text-center">Sign in to your AI Chief of Staff</p>
         </div>
 
-        {showingInviteFlow && !error ? (
+        {showingInviteFlow && !error && ticketSubmitted && signUp?.status === "missing_requirements" ? (
+          <>
+            <p className="text-sm text-slate-500 text-center -mt-2">
+              You're invited! One last step — continue with Google to finish joining.
+            </p>
+            <button
+              onClick={handleCompleteInviteWithGoogle}
+              disabled={loading}
+              className="w-full flex items-center justify-center gap-3 rounded-lg border border-gray-200 bg-white px-4 py-2.5 text-sm font-medium text-slate-700 shadow-sm hover:bg-gray-50 disabled:opacity-50 transition-colors"
+            >
+              <GoogleIcon />
+              {loading ? "Redirecting…" : "Continue with Google"}
+            </button>
+            {error && <p className="text-sm text-red-600 text-center">{error}</p>}
+          </>
+        ) : showingInviteFlow && !error ? (
           <div className="flex flex-col items-center gap-3 py-2">
             <div className="h-6 w-6 rounded-full border-2 border-slate-200 border-t-blue-600 animate-spin" />
             <p className="text-sm text-slate-500">Accepting your invitation…</p>
