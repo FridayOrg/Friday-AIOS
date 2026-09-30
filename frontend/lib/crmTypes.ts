@@ -49,6 +49,12 @@ export interface CrmOverview {
     growth_pct: number | null;
     previous_period_revenue: number;
   };
+  revenue_rolling?: {
+    won_revenue: number;
+    won_deal_count: number;
+    pct_change_vs_previous_period: number | null;
+    window_days: number;
+  };
   pipeline?: {
     total_open_value: number;
     total_open_count: number;

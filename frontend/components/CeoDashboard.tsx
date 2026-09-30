@@ -138,21 +138,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
       .finally(() => setCrmLoading(false));
   }, []);
 
-  // Monthly revenue target (see backend/app/main.py's /settings/revenue-target)
-  // for the Revenue card's "% of target" badge + progress bar. Falls back to
-  // `crm.revenue_target` (also returned inline on the CRM overview response)
-  // if this separate fetch fails, so one flaky request doesn't blank the badge.
-  const [revenueTarget, setRevenueTarget] = useState<number | null>(null);
-
-  useEffect(() => {
-    fetch("/api/settings/revenue-target", { cache: "no-store" })
-      .then((res) => res.json())
-      .then((d) => setRevenueTarget(typeof d.target === "number" ? d.target : null))
-      .catch(() => setRevenueTarget(null));
-  }, []);
-
-  const effectiveRevenueTarget = revenueTarget ?? crm?.revenue_target ?? null;
-
   // Open by default — Quick Access stays expanded; clicking a card's header
   // still toggles it closed if the user wants to collapse it.
   const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({
@@ -431,29 +416,30 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           />
 
           {/* Card 4: Revenue Achieved — real HubSpot data + configurable monthly
-              target (unlike cards 1–3, this one intentionally stays tied to the
-              calendar month, not a rolling 30-day window). Badge is
-              month-over-month revenue growth (kpis.revenue_growth_pct); the
-              target %/progress bar/remaining are shown separately below it. */}
+              window (see crm_metrics.REVENUE_WINDOW_DAYS), same rolling-window
+              pattern as the other three Daily Brief cards — value is won
+              revenue over the trailing window, badge is %-change vs the
+              equal-length window before it. */}
           <BriefTile
             key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
-            label="Revenue Achieved"
+            label="Revenue"
             accent={BRIEF_ACCENT.red}
-            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.won_revenue) : "N/A"}
+            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.revenue_rolling?.won_revenue ?? 0) : "N/A"}
             badge={
-              crm?.configured && crm.kpis!.revenue_growth_pct != null
-                ? { text: `${crm.kpis!.revenue_growth_pct}%`, positive: crm.kpis!.revenue_growth_pct >= 0 }
+              crm?.configured && crm.revenue_rolling?.pct_change_vs_previous_period != null
+                ? {
+                    text: `${crm.revenue_rolling.pct_change_vs_previous_period}%`,
+                    positive: crm.revenue_rolling.pct_change_vs_previous_period >= 0,
+                  }
                 : undefined
             }
             subtext={
               crm?.configured
-                ? effectiveRevenueTarget
-                  ? [
-                      crm.kpis!.won_revenue >= effectiveRevenueTarget
-                        ? ""
-                        : `${fmtUsd(effectiveRevenueTarget - crm.kpis!.won_revenue)} remaining to target`,
-                    ].filter(Boolean)
-                  : ["No revenue target set"]
+                ? [
+                    <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
+                      vs previous {crm.revenue_rolling?.window_days ?? 30} days
+                    </span>,
+                  ]
                 : [crm?.message ?? "HubSpot not connected"]
             }
             glow={glow?.section === "financial"}
