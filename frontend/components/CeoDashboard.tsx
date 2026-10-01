@@ -353,7 +353,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   const current = crm.qualified_leads!.count_last_30_days!;
                   const previous = crm.qualified_leads!.count_previous_30_days!;
                   const absChange = current - previous;
-                  const pct = crm.qualified_leads!.pct_change_vs_previous_30_days;
                   if (absChange === 0) {
                     return (
                       <p className="text-[15px] font-semibold mt-1.5" style={{ color: C.muted }}>
@@ -370,12 +369,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       >
                         {positive ? "↑" : "↓"} {Math.abs(absChange)} lead{Math.abs(absChange) === 1 ? "" : "s"}
                       </span>
-                      {pct != null && (
-                        <span className="text-[11px]" style={{ color: positive ? ACCENT_UP : ACCENT_DOWN }}>
-                          · {pct > 0 ? "+" : ""}
-                          {pct}%
-                        </span>
-                      )}
                     </p>
                   );
                 })()
