@@ -386,11 +386,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           />
 
           {/* Card 2: Open Sales Pipeline — real HubSpot data. Badge is a genuine
-              %-change: value of OPEN deals grouped by their own start date
-              (add_time), trailing 30 days vs. the 30 days before that (see
-              crm_metrics.build_pipeline_rolling) — not the same as the point-
-              in-time total_open_value shown as the big number, which includes
-              every open deal regardless of when it started. */}
+              %-change: value of ALL deals (any status — "opened" means
+              "created", not "still open today") grouped by their own start
+              date (add_time), trailing 30 days vs. the 30 days before that
+              (see crm_metrics.build_pipeline_rolling) — not the same as the
+              point-in-time total_open_value shown as the big number, which
+              only counts deals that are open right now. */}
           <BriefTile
             label="Open Sales Pipeline"
             accent={BRIEF_ACCENT.amber}

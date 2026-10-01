@@ -71,11 +71,10 @@ REVENUE_WINDOW_DAYS = 30
 # Trailing window for the Daily Brief's "Open Sales Pipeline" comparison —
 # same rolling-window rationale as the other three cards. Unlike
 # total_open_value (a point-in-time snapshot of every currently-open deal,
-# regardless of when it started — see build_pipeline), this groups OPEN
-# deals by their own start date (add_time) so a genuine before/after
-# comparison is possible without needing a stored historical snapshot of
-# pipeline value, which HubSpot doesn't retain and this app doesn't
-# currently capture over time.
+# regardless of when it started — see build_pipeline), this groups ALL
+# deals (any status) by their own start date (add_time) — see
+# build_pipeline_rolling's docstring for why current status is deliberately
+# ignored here.
 PIPELINE_WINDOW_DAYS = 30
 
 
@@ -294,26 +293,34 @@ def build_pipeline(all_deals: list[dict], stages: list[dict], today: date) -> di
 
 
 def build_pipeline_rolling(all_deals: list[dict], today: date, window_days: int = PIPELINE_WINDOW_DAYS) -> dict:
-    """Open pipeline value grouped by deal START date (add_time) rather than
-    the point-in-time snapshot in build_pipeline — for the Daily Brief's
-    "Open Sales Pipeline" %-change comparison. Compares the value of OPEN
-    deals that started in the trailing `window_days`-day window against
-    those that started in the equal-length window immediately before it
-    (see PIPELINE_WINDOW_DAYS). pct_change is None (not 0%) when nothing
-    started in the previous window at all — undefined, not fabricated."""
-    open_deals = [d for d in all_deals if d.get("status") == "open"]
+    """Deal value grouped by deal START date (add_time), for the Daily
+    Brief's "Open Sales Pipeline" %-change comparison. Deliberately counts
+    EVERY deal created in each window regardless of its current status (open,
+    won, or lost) — "opened" here means "created," not "still open today."
+    Filtering to only currently-open deals would make this comparison
+    collapse to zero/undefined for any account where the deals open right
+    now all happen to share a similar start date and anything older has
+    since closed (verified happening on this account: every currently-open
+    deal has a September start date, since the August-dated ones already
+    closed won/lost) — a correct result, but not a useful one for answering
+    "is deal creation trending up or down." Compares the trailing
+    `window_days`-day window against the equal-length window immediately
+    before it (see PIPELINE_WINDOW_DAYS). pct_change is None (not 0%) when
+    nothing was created in the previous window at all — undefined, not
+    fabricated. The card's big number stays the point-in-time
+    total_open_value from build_pipeline — this is a separate metric."""
 
     def started_in(d: dict, s: date, e: date) -> bool:
         started = _parse_date(d.get("add_time"))
         return started is not None and s <= started <= e
 
     start = today - timedelta(days=window_days - 1)
-    current_window = [d for d in open_deals if started_in(d, start, today)]
+    current_window = [d for d in all_deals if started_in(d, start, today)]
     current_value = _sum_value(current_window)
 
     prev_end = start - timedelta(days=1)
     prev_start = prev_end - timedelta(days=window_days - 1)
-    prev_window = [d for d in open_deals if started_in(d, prev_start, prev_end)]
+    prev_window = [d for d in all_deals if started_in(d, prev_start, prev_end)]
     prev_value = _sum_value(prev_window)
 
     return {
