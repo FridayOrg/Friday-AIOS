@@ -385,24 +385,46 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             }
           />
 
-          {/* Card 2: Open Sales Pipeline — real HubSpot data. Badge is a genuine
-              %-change: value of ALL deals (any status — "opened" means
-              "created", not "still open today") grouped by their own start
-              date (add_time), trailing 30 days vs. the 30 days before that
-              (see crm_metrics.build_pipeline_rolling) — not the same as the
+          {/* Card 2: Open Sales Pipeline — real HubSpot data. Comparison is the
+              absolute $ change (same display pattern as New Qualified Leads):
+              value of ALL deals (any status — "opened" means "created", not
+              "still open today") grouped by their own start date (add_time),
+              trailing 30 days vs. the 30 days before that (see
+              crm_metrics.build_pipeline_rolling) — not the same as the
               point-in-time total_open_value shown as the big number, which
               only counts deals that are open right now. */}
           <BriefTile
             label="Open Sales Pipeline"
             accent={BRIEF_ACCENT.amber}
             value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
-            badge={
-              crm?.configured && crm.pipeline_rolling?.pct_change_vs_previous_30_days != null
-                ? {
-                    text: `${crm.pipeline_rolling.pct_change_vs_previous_30_days}%`,
-                    positive: crm.pipeline_rolling.pct_change_vs_previous_30_days >= 0,
+            customComparison={
+              crm?.configured &&
+              crm.pipeline_rolling?.value_last_30_days != null &&
+              crm.pipeline_rolling?.value_previous_30_days != null ? (
+                (() => {
+                  const current = crm.pipeline_rolling!.value_last_30_days!;
+                  const previous = crm.pipeline_rolling!.value_previous_30_days!;
+                  const absChange = current - previous;
+                  if (absChange === 0) {
+                    return (
+                      <p className="text-[15px] font-semibold mt-1.5" style={{ color: C.muted }}>
+                        No change
+                      </p>
+                    );
                   }
-                : undefined
+                  const positive = absChange > 0;
+                  return (
+                    <p className="inline-flex items-center justify-center gap-1 mt-1.5">
+                      <span
+                        className="text-[15px] font-semibold"
+                        style={{ color: positive ? ACCENT_UP : ACCENT_DOWN }}
+                      >
+                        {positive ? "↑" : "↓"} {fmtUsd(Math.abs(absChange))}
+                      </span>
+                    </p>
+                  );
+                })()
+              ) : undefined
             }
             subtext={
               crm?.configured
@@ -410,7 +432,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                     <span key="vs" className="text-[10px]" style={{ color: C.faint }}>
                       vs previous {crm.pipeline_rolling?.window_days ?? 30} days
                     </span>,
-                    `Expected to close this month: ${fmtUsd(crm.pipeline?.closing_this_month_value ?? 0)}`,
                   ]
                 : [crm?.message ?? "HubSpot not connected"]
             }
