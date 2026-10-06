@@ -30,6 +30,14 @@ function readJson<T>(fileName: string): T {
   return JSON.parse(raw);
 }
 
+// Plain read, no date-shifting — unlike the rest of mock-data/, actions.json
+// is real-looking data a backend will soon replace outright, so its dates
+// are used exactly as given, not re-anchored onto "today".
+function readJsonVerbatim<T>(fileName: string): T {
+  const filePath = path.join(MOCK_DATA_DIR, fileName);
+  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
+}
+
 // Calendar data no longer comes from mock-data/calendar.json — it's fetched live
 // from the backend's /calendar endpoint (backend/app/calendar_client.py), which
 // reads Google Calendar directly. Proxied through the backend rather than called
@@ -133,6 +141,31 @@ export interface Task {
   status: string;
   related_client?: string;
   raised_by?: string;
+}
+
+// Field names kept exactly as the (future) backend will send them — see
+// mock-data/actions.json — so swapping this file for a real API later needs
+// no changes in getActions() or any component that consumes it.
+export interface Action {
+  actionId: string;
+  priority: string;
+  action: string;
+  owner: string;
+  due: string;
+  status: string;
+  opportunityId: string;
+  deal: string;
+  value: number;
+  whyNow: string;
+  source: string;
+  rule: string;
+  timeHorizon: string;
+  userDecision: string;
+  notes: string;
+}
+
+export function getActions(): Action[] {
+  return readJsonVerbatim<Action[]>("actions.json");
 }
 
 export interface SpendEntry {
