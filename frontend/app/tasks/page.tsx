@@ -163,9 +163,9 @@ export default function TasksPage() {
       .filter((i) => priorityFilter === "all" || i.priority === priorityFilter)
       .slice()
       .sort((a, b) => {
-        const statusDiff = (STATUS_RANK[a.status ?? ""] ?? 99) - (STATUS_RANK[b.status ?? ""] ?? 99);
-        if (statusDiff !== 0) return statusDiff;
-        return (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99);
+        const priorityDiff = (PRIORITY_RANK[a.priority] ?? 99) - (PRIORITY_RANK[b.priority] ?? 99);
+        if (priorityDiff !== 0) return priorityDiff;
+        return (STATUS_RANK[a.status ?? ""] ?? 99) - (STATUS_RANK[b.status ?? ""] ?? 99);
       });
   }, [items, statusFilter, priorityFilter]);
 

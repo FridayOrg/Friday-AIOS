@@ -164,8 +164,50 @@ export interface Action {
   notes: string;
 }
 
+// Shape of backend/app/actions_mapper.py's output (mock-data/generated_actions.json)
+// — same fields as Action, but snake_case and computed live from the Playbook
+// rules (R-001–R-006) over opportunities.json + events.json, rather than
+// hand-typed. See backend/app/README_ACTIONS_HANDOFF.md.
+interface GeneratedAction {
+  action_id: string;
+  priority: string;
+  action: string;
+  owner: string;
+  due: string;
+  status: string;
+  opportunity_id: string;
+  deal: string;
+  value: number;
+  why_now: string;
+  source: string;
+  rule: string;
+  time_horizon: string;
+  user_decision: string;
+  notes: string;
+}
+
+function toAction(g: GeneratedAction): Action {
+  return {
+    actionId: g.action_id,
+    priority: g.priority,
+    action: g.action,
+    owner: g.owner,
+    due: g.due,
+    status: g.status,
+    opportunityId: g.opportunity_id,
+    deal: g.deal,
+    value: g.value,
+    whyNow: g.why_now,
+    source: g.source,
+    rule: g.rule,
+    timeHorizon: g.time_horizon,
+    userDecision: g.user_decision,
+    notes: g.notes,
+  };
+}
+
 export function getActions(): Action[] {
-  return readJsonVerbatim<Action[]>("actions.json");
+  return readJsonVerbatim<GeneratedAction[]>("generated_actions.json").map(toAction);
 }
 
 export interface SpendEntry {
