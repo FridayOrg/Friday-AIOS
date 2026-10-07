@@ -1,7 +1,7 @@
 [
   {
-    "event_id": "EV-A5001",
-    "opportunity_id": "OPP-1001",
+    "event_id": "EV-ACT-001",
+    "opportunity_id": "OPP-001",
     "event_type": "Meeting",
     "date": "2026-08-25",
     "source": "CRM Activity",
@@ -12,11 +12,11 @@
     "commitment_or_decision": "Qualified need",
     "commitment_due": null,
     "creates_action": false,
-    "linked_source_id": 5001
+    "linked_source_id": "ACT-001"
   },
   {
-    "event_id": "EV-A5002",
-    "opportunity_id": "OPP-1001",
+    "event_id": "EV-ACT-002",
+    "opportunity_id": "OPP-001",
     "event_type": "Meeting",
     "date": "2026-09-12",
     "source": "CRM Activity",
@@ -27,11 +27,11 @@
     "commitment_or_decision": "Proposal requested",
     "commitment_due": null,
     "creates_action": false,
-    "linked_source_id": 5002
+    "linked_source_id": "ACT-002"
   },
   {
-    "event_id": "EV-A5003",
-    "opportunity_id": "OPP-1001",
+    "event_id": "EV-ACT-003",
+    "opportunity_id": "OPP-001",
     "event_type": "Email",
     "date": "2026-09-24",
     "source": "CRM Activity",
@@ -42,11 +42,11 @@
     "commitment_or_decision": "No response",
     "commitment_due": null,
     "creates_action": false,
-    "linked_source_id": 5003
+    "linked_source_id": "ACT-003"
   },
   {
-    "event_id": "EV-A5004",
-    "opportunity_id": "OPP-1002",
+    "event_id": "EV-ACT-004",
+    "opportunity_id": "OPP-002",
     "event_type": "Meeting",
     "date": "2026-10-01",
     "source": "CRM Activity",
@@ -57,11 +57,11 @@
     "commitment_or_decision": "Decision date agreed",
     "commitment_due": null,
     "creates_action": true,
-    "linked_source_id": 5004
+    "linked_source_id": "ACT-004"
   },
   {
-    "event_id": "EV-A5005",
-    "opportunity_id": "OPP-1002",
+    "event_id": "EV-ACT-005",
+    "opportunity_id": "OPP-002",
     "event_type": "Call",
     "date": "2026-10-08",
     "source": "CRM Activity",
@@ -72,11 +72,11 @@
     "commitment_or_decision": "Pending",
     "commitment_due": "2026-10-08",
     "creates_action": true,
-    "linked_source_id": 5005
+    "linked_source_id": "ACT-005"
   },
   {
-    "event_id": "EV-A5006",
-    "opportunity_id": "OPP-1003",
+    "event_id": "EV-ACT-006",
+    "opportunity_id": "OPP-003",
     "event_type": "Meeting",
     "date": "2026-10-01",
     "source": "CRM Activity",
@@ -87,26 +87,26 @@
     "commitment_or_decision": "Scope requested",
     "commitment_due": null,
     "creates_action": true,
-    "linked_source_id": 5006
+    "linked_source_id": "ACT-006"
   },
   {
-    "event_id": "EV-A5007",
-    "opportunity_id": "OPP-1003",
+    "event_id": "EV-ACT-007",
+    "opportunity_id": "OPP-003",
     "event_type": "Task",
-    "date": "2026-10-03",
+    "date": "2026-10-06",
     "source": "CRM Activity",
     "actor": "Alex Reed",
     "summary": "Send audit scope",
     "material": false,
     "customer_interaction": false,
     "commitment_or_decision": "Pending",
-    "commitment_due": "2026-10-03",
+    "commitment_due": "2026-10-06",
     "creates_action": true,
-    "linked_source_id": 5007
+    "linked_source_id": "ACT-007"
   },
   {
-    "event_id": "EV-A5008",
-    "opportunity_id": "OPP-1004",
+    "event_id": "EV-ACT-008",
+    "opportunity_id": "OPP-004",
     "event_type": "Meeting",
     "date": "2026-09-23",
     "source": "CRM Activity",
@@ -117,11 +117,11 @@
     "commitment_or_decision": "References requested",
     "commitment_due": null,
     "creates_action": false,
-    "linked_source_id": 5008
+    "linked_source_id": "ACT-008"
   },
   {
-    "event_id": "EV-A5009",
-    "opportunity_id": "OPP-1006",
+    "event_id": "EV-ACT-009",
+    "opportunity_id": "OPP-006",
     "event_type": "Meeting",
     "date": "2026-09-30",
     "source": "CRM Activity",
@@ -132,26 +132,26 @@
     "commitment_or_decision": "Technical blocker",
     "commitment_due": null,
     "creates_action": true,
-    "linked_source_id": 5009
+    "linked_source_id": "ACT-009"
   },
   {
-    "event_id": "EV-A5010",
-    "opportunity_id": "OPP-1006",
+    "event_id": "EV-ACT-010",
+    "opportunity_id": "OPP-006",
     "event_type": "Task",
-    "date": "2026-10-04",
+    "date": "2026-10-07",
     "source": "CRM Activity",
     "actor": "Alex Reed",
     "summary": "Send security answers",
     "material": false,
     "customer_interaction": false,
     "commitment_or_decision": "Pending",
-    "commitment_due": "2026-10-04",
+    "commitment_due": "2026-10-07",
     "creates_action": true,
-    "linked_source_id": 5010
+    "linked_source_id": "ACT-010"
   },
   {
-    "event_id": "EV-A5011",
-    "opportunity_id": "OPP-1007",
+    "event_id": "EV-ACT-011",
+    "opportunity_id": "OPP-007",
     "event_type": "Email",
     "date": "2026-09-22",
     "source": "CRM Activity",
@@ -162,41 +162,146 @@
     "commitment_or_decision": "No response",
     "commitment_due": null,
     "creates_action": false,
-    "linked_source_id": 5011
+    "linked_source_id": "ACT-011"
   },
   {
-    "event_id": "EV-A5012",
-    "opportunity_id": "OPP-1011",
-    "event_type": "Meeting",
-    "date": "2026-10-02",
+    "event_id": "EV-ACT-012",
+    "opportunity_id": "OPP-019",
+    "event_type": "Task",
+    "date": "2026-08-13",
     "source": "CRM Activity",
     "actor": "Priya Shah",
-    "summary": "Discovery call",
-    "material": true,
-    "customer_interaction": true,
-    "commitment_or_decision": "Next stakeholder identified",
+    "summary": "Close won handoff",
+    "material": false,
+    "customer_interaction": false,
+    "commitment_or_decision": "Completed",
     "commitment_due": null,
-    "creates_action": true,
-    "linked_source_id": 5012
+    "creates_action": false,
+    "linked_source_id": "ACT-012"
   },
   {
-    "event_id": "EV-A5013",
-    "opportunity_id": "OPP-1011",
+    "event_id": "EV-ACT-013",
+    "opportunity_id": "OPP-021",
+    "event_type": "Meeting",
+    "date": "2026-08-23",
+    "source": "CRM Activity",
+    "actor": "Alex Reed",
+    "summary": "Commercial review",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Positive",
+    "commitment_due": null,
+    "creates_action": false,
+    "linked_source_id": "ACT-013"
+  },
+  {
+    "event_id": "EV-ACT-014",
+    "opportunity_id": "OPP-023",
+    "event_type": "Meeting",
+    "date": "2026-08-31",
+    "source": "CRM Activity",
+    "actor": "Jamie Cole",
+    "summary": "Demo call",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Proposal requested",
+    "commitment_due": null,
+    "creates_action": false,
+    "linked_source_id": "ACT-014"
+  },
+  {
+    "event_id": "EV-ACT-015",
+    "opportunity_id": "OPP-015",
+    "event_type": "Call",
+    "date": "2026-09-06",
+    "source": "CRM Activity",
+    "actor": "Alex Reed",
+    "summary": "Final pricing",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Positive",
+    "commitment_due": null,
+    "creates_action": false,
+    "linked_source_id": "ACT-015"
+  },
+  {
+    "event_id": "EV-ACT-016",
+    "opportunity_id": "OPP-018",
+    "event_type": "Meeting",
+    "date": "2026-09-27",
+    "source": "CRM Activity",
+    "actor": "Alex Reed",
+    "summary": "Pilot review",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Positive",
+    "commitment_due": null,
+    "creates_action": false,
+    "linked_source_id": "ACT-016"
+  },
+  {
+    "event_id": "EV-ACT-017",
+    "opportunity_id": "OPP-010",
+    "event_type": "Meeting",
+    "date": "2026-10-04",
+    "source": "CRM Activity",
+    "actor": "Alex Reed",
+    "summary": "Expansion discussion",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Pricing requested",
+    "commitment_due": null,
+    "creates_action": true,
+    "linked_source_id": "ACT-017"
+  },
+  {
+    "event_id": "EV-ACT-018",
+    "opportunity_id": "OPP-011",
     "event_type": "Task",
-    "date": "2026-10-06",
+    "date": "2026-10-05",
+    "source": "CRM Activity",
+    "actor": "Priya Shah",
+    "summary": "Kickoff handoff",
+    "material": false,
+    "customer_interaction": false,
+    "commitment_or_decision": "Completed",
+    "commitment_due": null,
+    "creates_action": false,
+    "linked_source_id": "ACT-018"
+  },
+  {
+    "event_id": "EV-ACT-019",
+    "opportunity_id": "OPP-005",
+    "event_type": "Meeting",
+    "date": "2026-10-07",
+    "source": "CRM Activity",
+    "actor": "Jamie Cole",
+    "summary": "First discovery call",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Pending",
+    "commitment_due": "2026-10-07",
+    "creates_action": true,
+    "linked_source_id": "ACT-019"
+  },
+  {
+    "event_id": "EV-ACT-020",
+    "opportunity_id": "OPP-008",
+    "event_type": "Task",
+    "date": "2026-10-09",
     "source": "CRM Activity",
     "actor": "Priya Shah",
     "summary": "Book solution workshop",
     "material": false,
     "customer_interaction": false,
     "commitment_or_decision": "Pending",
-    "commitment_due": "2026-10-06",
+    "commitment_due": "2026-10-09",
     "creates_action": true,
-    "linked_source_id": 5013
+    "linked_source_id": "ACT-020"
   },
   {
-    "event_id": "EV-N7001",
-    "opportunity_id": "OPP-1001",
+    "event_id": "EV-NOTE-001",
+    "opportunity_id": "OPP-001",
     "event_type": "CRM Note",
     "date": "2026-09-12 15:05",
     "source": "CRM Note",
@@ -207,11 +312,11 @@
     "commitment_or_decision": "Buyer likes phased rollout. Proposal should show Phase 1 for UK team, then US rollout if first 60 days hit adoption target.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7001
+    "linked_source_id": "NOTE-001"
   },
   {
-    "event_id": "EV-N7002",
-    "opportunity_id": "OPP-1002",
+    "event_id": "EV-NOTE-002",
+    "opportunity_id": "OPP-002",
     "event_type": "CRM Note",
     "date": "2026-10-01 11:50",
     "source": "CRM Note",
@@ -222,11 +327,11 @@
     "commitment_or_decision": "Daniel confirmed internal decision meeting on 8 Oct. Do not chase before then unless they ask a question.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7002
+    "linked_source_id": "NOTE-002"
   },
   {
-    "event_id": "EV-N7003",
-    "opportunity_id": "OPP-1003",
+    "event_id": "EV-NOTE-003",
+    "opportunity_id": "OPP-003",
     "event_type": "CRM Note",
     "date": "2026-10-01 15:45",
     "source": "CRM Note",
@@ -237,11 +342,11 @@
     "commitment_or_decision": "Sophie asked for a fixed-price audit scope and wants to review it before Monday.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7003
+    "linked_source_id": "NOTE-003"
   },
   {
-    "event_id": "EV-N7004",
-    "opportunity_id": "OPP-1004",
+    "event_id": "EV-NOTE-004",
+    "opportunity_id": "OPP-004",
     "event_type": "CRM Note",
     "date": "2026-09-23 14:00",
     "source": "CRM Note",
@@ -252,11 +357,11 @@
     "commitment_or_decision": "Procurement wants two customer references and a clearer exit clause before progressing.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7004
+    "linked_source_id": "NOTE-004"
   },
   {
-    "event_id": "EV-N7005",
-    "opportunity_id": "OPP-1006",
+    "event_id": "EV-NOTE-005",
+    "opportunity_id": "OPP-006",
     "event_type": "CRM Note",
     "date": "2026-09-30 17:05",
     "source": "CRM Note",
@@ -267,11 +372,11 @@
     "commitment_or_decision": "Technical team is positive but security questionnaire must be answered before commercial review.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7005
+    "linked_source_id": "NOTE-005"
   },
   {
-    "event_id": "EV-N7006",
-    "opportunity_id": "OPP-1007",
+    "event_id": "EV-NOTE-006",
+    "opportunity_id": "OPP-007",
     "event_type": "CRM Note",
     "date": "2026-09-22 09:40",
     "source": "CRM Note",
@@ -282,6 +387,66 @@
     "commitment_or_decision": "No reply after proposal follow-up. Need to requalify rather than keep chasing indefinitely.",
     "commitment_due": null,
     "creates_action": "potentially",
-    "linked_source_id": 7006
+    "linked_source_id": "NOTE-006"
+  },
+  {
+    "event_id": "EV-NOTE-007",
+    "opportunity_id": "OPP-010",
+    "event_type": "CRM Note",
+    "date": "2026-10-04 10:45",
+    "source": "CRM Note",
+    "actor": "Alex Reed",
+    "summary": "Existing customer wants pricing for 15 more users and asked for annual discount options.",
+    "material": true,
+    "customer_interaction": false,
+    "commitment_or_decision": "Existing customer wants pricing for 15 more users and asked for annual discount options.",
+    "commitment_due": null,
+    "creates_action": "potentially",
+    "linked_source_id": "NOTE-007"
+  },
+  {
+    "event_id": "EV-NOTE-008",
+    "opportunity_id": "OPP-011",
+    "event_type": "CRM Note",
+    "date": "2026-10-02 16:10",
+    "source": "CRM Note",
+    "actor": "Priya Shah",
+    "summary": "Buyer approved scope and requested kickoff next week.",
+    "material": true,
+    "customer_interaction": false,
+    "commitment_or_decision": "Buyer approved scope and requested kickoff next week.",
+    "commitment_due": null,
+    "creates_action": "potentially",
+    "linked_source_id": "NOTE-008"
+  },
+  {
+    "event_id": "EV-NOTE-009",
+    "opportunity_id": "OPP-012",
+    "event_type": "CRM Note",
+    "date": "2026-10-03 13:20",
+    "source": "CRM Note",
+    "actor": "Jamie Cole",
+    "summary": "Budget has been frozen until Q1. Keep relationship warm but do not chase weekly.",
+    "material": true,
+    "customer_interaction": false,
+    "commitment_or_decision": "Budget has been frozen until Q1. Keep relationship warm but do not chase weekly.",
+    "commitment_due": null,
+    "creates_action": "potentially",
+    "linked_source_id": "NOTE-009"
+  },
+  {
+    "event_id": "EV-NOTE-010",
+    "opportunity_id": "OPP-013",
+    "event_type": "CRM Note",
+    "date": "2026-10-05 14:00",
+    "source": "CRM Note",
+    "actor": "Alex Reed",
+    "summary": "Closed won after buyer accepted annual plan and onboarding timeline.",
+    "material": true,
+    "customer_interaction": false,
+    "commitment_or_decision": "Closed won after buyer accepted annual plan and onboarding timeline.",
+    "commitment_due": null,
+    "creates_action": "potentially",
+    "linked_source_id": "NOTE-010"
   }
 ]

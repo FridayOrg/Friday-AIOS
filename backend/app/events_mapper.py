@@ -1,13 +1,18 @@
-"""Task 2 (Mon PM): turns the raw Activities and Notes sheets into RevenueOS's
-"Events" structure (tab 22), and fills in the `revenueos_stage` field on the
-Opportunities built by deals_mapper.py (tab 21), using the Stage Map (tab 30).
+"""Turns the raw "Activities" and "Notes" sheets into RevenueOS's "Events"
+structure (tab 22), and fills in the `revenueos_stage` field on the Opportunities
+built by deals_mapper.py (tab 21), using the Stage Map (tab 30).
 
-Only "material" signals become Events — not every CRM touch. Each Event also gets a
-`creates_action` flag so the playbook rules (Task 3) know which events still need
-follow-up. See the two rules below for exactly how that's decided; the next_action-
-based rule is a close-fit approximation of the handoff doc's hand-authored examples
-(matches 12 of the 13 sample activities — the one exception is noted in the module
-docstring for map_activity_to_event).
+Only "material" signals become Events — not every CRM touch. Each Event also gets
+a `creates_action` flag so the playbook rules (Task 3) know which events still
+need follow-up. See the two rules below for exactly how that's decided; the
+next_action-based rule is a close-fit approximation of the handoff doc's
+hand-authored examples, not a perfect match in every case.
+
+Each Activity/Note row references its deal by the source's own deal ID (e.g.
+"DEAL-001") — never the same thing as our generated `opportunity_id`. This module
+looks that up via the `source_record_id -> opportunity_id` map built from
+deals_mapper.py's output (opportunities.json), rather than assuming any
+relationship between the two ID schemes.
 
 Run directly (`python -m app.events_mapper` from backend/) to regenerate
 mock-data/events.json and refresh the revenueos_stage field in
@@ -16,13 +21,10 @@ mock-data/opportunities.json.
 
 import json
 
-import openpyxl
-
 from .config import MOCK_DATA_DIR
 from .stage_map import map_source_stage_to_revenueos
+from .xlsx_source import excel_value_to_iso_date, excel_value_to_iso_datetime, load_sheet
 
-ACTIVITIES_PATH = MOCK_DATA_DIR / "activities.xlsx"
-NOTES_PATH = MOCK_DATA_DIR / "notes.xlsx"
 OPPORTUNITIES_PATH = MOCK_DATA_DIR / "opportunities.json"
 EVENTS_OUTPUT_PATH = MOCK_DATA_DIR / "events.json"
 
@@ -32,63 +34,24 @@ EVENTS_OUTPUT_PATH = MOCK_DATA_DIR / "events.json"
 _MATERIAL_ACTIVITY_TYPES = {"Meeting", "Call"}
 
 
-def _load_rows(path) -> list[dict]:
-    wb = openpyxl.load_workbook(path, data_only=True)
-    ws = wb.active
-    rows = list(ws.iter_rows(values_only=True))
-    headers = rows[0]
-    return [dict(zip(headers, row)) for row in rows[1:] if row[0] is not None]
-
-
-def _excel_serial_to_iso_date(value) -> str | None:
-    from datetime import date, timedelta
-
-    if value is None or value == "":
-        return None
-    if isinstance(value, (int, float)):
-        return (date(1899, 12, 30) + timedelta(days=int(value))).isoformat()
-    if hasattr(value, "isoformat"):
-        return value.isoformat()[:10]
-    return None
-
-
-def _excel_serial_to_iso_datetime(value) -> str | None:
-    """Same as the date version but keeps the time-of-day (Notes carry a
-    date+time serial; Activities' due date doesn't, so those stay date-only)."""
-    from datetime import datetime, timedelta
-
-    if value is None or value == "":
-        return None
-    if isinstance(value, (int, float)):
-        base = datetime(1899, 12, 30) + timedelta(days=value)
-        return base.strftime("%Y-%m-%d %H:%M")
-    if hasattr(value, "isoformat"):
-        return value.isoformat()
-    return None
-
-
-def map_activity_to_event(raw: dict, opportunity_next_action: str | None) -> dict:
+def map_activity_to_event(raw: dict, opportunity_id: str, opportunity_next_action: str | None) -> dict:
     """Converts one Activities row into an Event.
 
-    `creates_action` is Yes when the activity is still undone, or when it's done but
-    the related deal already has a next_action on file (meaning this activity is
-    what produced that commitment). This matches 12 of the 13 sample activities in
-    the handoff doc; the one exception (a completed "discovery call" whose deal has
-    an unrelated later next_action) would need reading the free-text outcome to
-    catch — a deliberate V1 simplification, not a bug, flagged here rather than
-    silently accepted.
+    `creates_action` is Yes when the activity is still undone, or when it's done
+    but the related deal already has a next_action on file (meaning this activity
+    is what produced that commitment). A deliberate V1 simplification — catching
+    every case exactly would need reading the free-text outcome, not just
+    structured fields — flagged here rather than silently treated as exact.
     """
     activity_type = raw["Activity - Type"]
     done = raw["Activity - Done"] == "Done"
-    event_id = f"EV-A{raw['Activity - Pipedrive System ID']}"
-
     creates_action = (not done) or bool(opportunity_next_action)
 
     return {
-        "event_id": event_id,
-        "opportunity_id": f"OPP-{raw['Deal - Pipedrive System ID']}",
+        "event_id": f"EV-{raw['Activity - System ID']}",
+        "opportunity_id": opportunity_id,
         "event_type": activity_type,
-        "date": _excel_serial_to_iso_date(raw.get("Activity - Due date")),
+        "date": excel_value_to_iso_date(raw.get("Activity - Due date")),
         "source": "CRM Activity",
         "actor": raw.get("Activity - Assigned to user"),
         "summary": raw.get("Activity - Subject"),
@@ -98,21 +61,21 @@ def map_activity_to_event(raw: dict, opportunity_next_action: str | None) -> dic
         # Only still-pending (undone) activities carry a concrete due date forward —
         # a completed meeting that produced a commitment doesn't need its own date,
         # the still-open follow-up activity already carries it.
-        "commitment_due": _excel_serial_to_iso_date(raw.get("Activity - Due date")) if not done else None,
+        "commitment_due": excel_value_to_iso_date(raw.get("Activity - Due date")) if not done else None,
         "creates_action": creates_action,
-        "linked_source_id": raw["Activity - Pipedrive System ID"],
+        "linked_source_id": raw["Activity - System ID"],
     }
 
 
-def map_note_to_event(raw: dict) -> dict:
+def map_note_to_event(raw: dict, opportunity_id: str) -> dict:
     """Converts one Notes row into an Event. Notes never auto-create an action on
     their own (creates_action = "potentially") — that call is left to Task 3's
     playbook rules, which check whether a matching action already exists."""
     return {
-        "event_id": f"EV-N{raw['Note - Pipedrive System ID']}",
-        "opportunity_id": f"OPP-{raw['Deal - Pipedrive System ID']}",
+        "event_id": f"EV-{raw['Note - System ID']}",
+        "opportunity_id": opportunity_id,
         "event_type": "CRM Note",
-        "date": _excel_serial_to_iso_datetime(raw.get("Note - Created at")),
+        "date": excel_value_to_iso_datetime(raw.get("Note - Created at")),
         "source": "CRM Note",
         "actor": raw.get("Note - Author"),
         "summary": raw.get("Note - Content"),
@@ -121,19 +84,27 @@ def map_note_to_event(raw: dict) -> dict:
         "commitment_or_decision": raw.get("Note - Content"),
         "commitment_due": None,
         "creates_action": "potentially",
-        "linked_source_id": raw["Note - Pipedrive System ID"],
+        "linked_source_id": raw["Note - System ID"],
     }
 
 
 def build_events(opportunities: list[dict]) -> list[dict]:
+    opportunity_id_by_source = {o["source_record_id"]: o["opportunity_id"] for o in opportunities}
     next_action_by_opportunity = {o["opportunity_id"]: o.get("next_action") for o in opportunities}
 
     events = []
-    for raw in _load_rows(ACTIVITIES_PATH):
-        opp_id = f"OPP-{raw['Deal - Pipedrive System ID']}"
-        events.append(map_activity_to_event(raw, next_action_by_opportunity.get(opp_id)))
-    for raw in _load_rows(NOTES_PATH):
-        events.append(map_note_to_event(raw))
+    for raw in load_sheet("Activities"):
+        source_deal_id = raw["Deal - System ID"]
+        opp_id = opportunity_id_by_source.get(source_deal_id)
+        if opp_id is None:
+            continue  # activity references a deal not present in this run's Opportunities
+        events.append(map_activity_to_event(raw, opp_id, next_action_by_opportunity.get(opp_id)))
+    for raw in load_sheet("Notes"):
+        source_deal_id = raw["Deal - System ID"]
+        opp_id = opportunity_id_by_source.get(source_deal_id)
+        if opp_id is None:
+            continue
+        events.append(map_note_to_event(raw, opp_id))
     return events
 
 

@@ -1,47 +1,30 @@
-"""Maps synthetic Pipedrive-shaped deal records (mock-data/Deals.xlsx) into RevenueOS's
-common Opportunity structure. This is the only place that knows Pipedrive's field names
-("Deal - Stage (pipeline)", "Deal - Value", ...) — everything downstream (stage mapping,
-playbook rules, Actions, the dashboard) reads the common Opportunity shape instead, so a
-different source (HubSpot, a partner's Excel sheet, a different CRM) only ever needs a
-new mapper like this one, never changes to the rest of the app.
+"""Maps the raw "Deals" sheet (synthetic CRM source data) into RevenueOS's common
+Opportunity structure. This is the only place that knows the source's field names
+("Deal - Title", "Deal - Stage (pipeline)", ...) — everything downstream (stage
+mapping, playbook rules, Actions, the dashboard) reads the common Opportunity shape
+instead, so a different source (HubSpot, a partner's Excel sheet, a different CRM)
+only ever needs a new mapper like this one, never changes to the rest of the app.
 
-Deliberately does NOT fill in `revenueos_stage` — that translation (raw stage name ->
-RevenueOS stage, e.g. "Proposal Sent" -> "Proposal") depends on the separate Stage Map
-table and is a later step. This module only does field renaming, date-format conversion
-(Excel serial numbers -> ISO date strings) and a generated id + data-quality flag.
+Opportunity IDs are always generated as OPP-001, OPP-002, ... in file order —
+never derived from the source's own ID format, since that format isn't ours to
+depend on (it's gone from plain numbers to "DEAL-001" once already). The raw
+source ID is kept separately as `source_record_id` for traceability.
+
+Deliberately does NOT fill in `revenueos_stage` — that translation (raw stage name
+-> RevenueOS stage, e.g. "Proposal Sent" -> "Proposal") depends on the separate
+Stage Map table and is a later step. This module only does field renaming, date
+normalization and a generated id + data-quality flag.
 
 Run directly (`python -m app.deals_mapper` from backend/) to regenerate
-mock-data/opportunities.json from mock-data/Deals.xlsx.
+mock-data/opportunities.json from the source workbook's "Deals" sheet.
 """
 
 import json
-from datetime import date, timedelta
-
-import openpyxl
 
 from .config import MOCK_DATA_DIR
+from .xlsx_source import excel_value_to_iso_date, load_sheet
 
-EXCEL_PATH = MOCK_DATA_DIR / "Deals.xlsx"
 OUTPUT_PATH = MOCK_DATA_DIR / "opportunities.json"
-
-# Excel's date epoch is 1899-12-30 (not 1900-01-01) because Excel wrongly treats 1900
-# as a leap year; this offset is the standard correction and matches the worked
-# examples in the handoff doc (46289 -> 2026-09-24, 46296 -> 2026-10-01).
-_EXCEL_EPOCH = date(1899, 12, 30)
-
-
-def _excel_serial_to_iso(value) -> str | None:
-    """Converts an Excel date serial number (e.g. 46289) to an ISO date string
-    (e.g. "2026-09-24"). Returns None for blank cells."""
-    if value is None or value == "":
-        return None
-    if isinstance(value, (int, float)):
-        return (_EXCEL_EPOCH + timedelta(days=int(value))).isoformat()
-    # openpyxl sometimes returns an already-parsed datetime/date if the cell is
-    # formatted as a date in the workbook.
-    if hasattr(value, "isoformat"):
-        return value.isoformat()[:10]
-    return None
 
 
 def _clean(value):
@@ -49,16 +32,6 @@ def _clean(value):
     if value == "":
         return None
     return value
-
-
-def _load_raw_deals() -> list[dict]:
-    """Reads mock-data/Deals.xlsx and returns one dict per deal row, keyed by the
-    exact column headers in the sheet (Pipedrive-style field names)."""
-    wb = openpyxl.load_workbook(EXCEL_PATH, data_only=True)
-    ws = wb.active
-    rows = list(ws.iter_rows(values_only=True))
-    headers = rows[0]
-    return [dict(zip(headers, row)) for row in rows[1:] if row[0] is not None]
 
 
 def _data_quality(opportunity: dict) -> str:
@@ -72,14 +45,14 @@ def _data_quality(opportunity: dict) -> str:
     return "OK"
 
 
-def map_deal_to_opportunity(index: int, raw: dict) -> dict:
-    """Translates one raw Pipedrive-shaped deal row into the common Opportunity shape
-    (mirrors the "21 Opportunities" tab). All Pipedrive-specific field names are
-    confined to this function."""
+def map_deal_to_opportunity(opportunity_id: str, raw: dict) -> dict:
+    """Translates one raw deal row into the common Opportunity shape (mirrors the
+    "21 Opportunities" tab). All source-specific field names are confined to this
+    function."""
     opportunity = {
-        "opportunity_id": f"OPP-{raw['Deal - Pipedrive System ID']}",
+        "opportunity_id": opportunity_id,
         "source_system": "CRM",
-        "source_record_id": raw["Deal - Pipedrive System ID"],
+        "source_record_id": raw["Deal - System ID"],
         "deal": raw["Deal - Title"],
         "account": raw["Organization"],
         "contact_person": _clean(raw.get("Contact person")),
@@ -90,13 +63,13 @@ def map_deal_to_opportunity(index: int, raw: dict) -> dict:
         "value": raw["Deal - Value"],
         "currency": raw["Deal - Currency of value"],
         "probability": _clean(raw.get("Deal - Probability")),
-        "created_date": _excel_serial_to_iso(raw.get("Deal - Creation date")),
-        "expected_close": _excel_serial_to_iso(raw.get("Deal - Expected close date")),
-        "closed_on": _excel_serial_to_iso(raw.get("Deal - Closed on")),
+        "created_date": excel_value_to_iso_date(raw.get("Deal - Creation date")),
+        "expected_close": excel_value_to_iso_date(raw.get("Deal - Expected close date")),
+        "closed_on": excel_value_to_iso_date(raw.get("Deal - Closed on")),
         "lost_reason": _clean(raw.get("Deal - Lost reason")),
-        "last_interaction": _excel_serial_to_iso(raw.get("Last meaningful activity date")),
+        "last_interaction": excel_value_to_iso_date(raw.get("Last meaningful activity date")),
         "next_action": _clean(raw.get("Next action")),
-        "next_action_due": _excel_serial_to_iso(raw.get("Next action due")),
+        "next_action_due": excel_value_to_iso_date(raw.get("Next action due")),
         "primary_offer": _clean(raw.get("Primary Offer")),
         "offer_type": _clean(raw.get("Offer Type")),
         "source": _clean(raw.get("Lead source")),
@@ -106,10 +79,10 @@ def map_deal_to_opportunity(index: int, raw: dict) -> dict:
 
 
 def build_opportunities() -> list[dict]:
-    """Reads all rows from Deals.xlsx and returns the full list of mapped
-    Opportunity records, in source order."""
-    raw_deals = _load_raw_deals()
-    return [map_deal_to_opportunity(i, raw) for i, raw in enumerate(raw_deals, start=1)]
+    """Reads every row from the "Deals" sheet and returns the full list of mapped
+    Opportunity records, in source order, with freshly generated OPP-xxx ids."""
+    raw_deals = load_sheet("Deals")
+    return [map_deal_to_opportunity(f"OPP-{i:03d}", raw) for i, raw in enumerate(raw_deals, start=1)]
 
 
 def main() -> None:

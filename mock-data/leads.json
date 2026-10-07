@@ -1,0 +1,122 @@
+[
+  {
+    "lead_id": "LEAD-001",
+    "created_date": "2026-10-06",
+    "archived": false,
+    "next_activity_source_id": "ACT-020"
+  },
+  {
+    "lead_id": "LEAD-002",
+    "created_date": "2026-10-04",
+    "archived": false,
+    "next_activity_source_id": "ACT-019"
+  },
+  {
+    "lead_id": "LEAD-003",
+    "created_date": "2026-10-02",
+    "archived": false,
+    "next_activity_source_id": "ACT-018"
+  },
+  {
+    "lead_id": "LEAD-004",
+    "created_date": "2026-09-29",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-005",
+    "created_date": "2026-09-26",
+    "archived": false,
+    "next_activity_source_id": "ACT-017"
+  },
+  {
+    "lead_id": "LEAD-006",
+    "created_date": "2026-09-23",
+    "archived": false,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-007",
+    "created_date": "2026-09-20",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-008",
+    "created_date": "2026-09-16",
+    "archived": false,
+    "next_activity_source_id": "ACT-016"
+  },
+  {
+    "lead_id": "LEAD-009",
+    "created_date": "2026-09-12",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-010",
+    "created_date": "2026-09-08",
+    "archived": false,
+    "next_activity_source_id": "ACT-015"
+  },
+  {
+    "lead_id": "LEAD-011",
+    "created_date": "2026-09-04",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-012",
+    "created_date": "2026-08-31",
+    "archived": false,
+    "next_activity_source_id": "ACT-014"
+  },
+  {
+    "lead_id": "LEAD-013",
+    "created_date": "2026-08-28",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-014",
+    "created_date": "2026-08-24",
+    "archived": false,
+    "next_activity_source_id": "ACT-013"
+  },
+  {
+    "lead_id": "LEAD-015",
+    "created_date": "2026-08-21",
+    "archived": false,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-016",
+    "created_date": "2026-08-18",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-017",
+    "created_date": "2026-08-15",
+    "archived": false,
+    "next_activity_source_id": "ACT-012"
+  },
+  {
+    "lead_id": "LEAD-018",
+    "created_date": "2026-08-12",
+    "archived": true,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-019",
+    "created_date": "2026-08-09",
+    "archived": false,
+    "next_activity_source_id": null
+  },
+  {
+    "lead_id": "LEAD-020",
+    "created_date": "2026-08-08",
+    "archived": true,
+    "next_activity_source_id": null
+  }
+]
