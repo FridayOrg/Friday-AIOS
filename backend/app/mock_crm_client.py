@@ -104,7 +104,11 @@ def get_activities(done: int | None = None) -> list[dict]:
             "id": e["event_id"],
             "subject": e.get("summary") or e.get("event_type") or "(untitled event)",
             "type": (e.get("event_type") or "event").lower(),
-            "due_date": e.get("commitment_due") or e.get("date"),
+            # Note events store `date` as a full timestamp ("2026-09-12
+            # 15:05"), not a plain date — [:10] matches the plain-date-only
+            # convention hubspot_client.py uses for the same reason, so the
+            # frontend's `new Date(iso + "T00:00:00")` doesn't choke on it.
+            "due_date": (e.get("commitment_due") or e.get("date") or "")[:10] or None,
             # An event that still needs an action (creates_action: true) is
             # treated as not-yet-done; everything else as done, since the
             # source data has no separate "task completed" flag of its own.
