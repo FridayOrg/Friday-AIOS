@@ -1,11 +1,13 @@
 """Derives CEO-facing CRM metrics from raw CRM data. Was originally written
-against Pipedrive (pipedrive_client.py); now sourced from HubSpot
-(hubspot_client.py) instead — both modules expose the identical function
-names/dict shapes (see hubspot_client.py's module docstring for exactly how
-each HubSpot field was mapped onto Pipedrive's original shape), so this file
-itself needed no changes beyond the one import line. Docstrings below still
-say "Pipedrive" in places; read that as "the CRM client module" — the field
-names themselves (status, stage_id, won_time, etc.) are what's authoritative.
+against Pipedrive (pipedrive_client.py), then HubSpot (hubspot_client.py);
+now sourced from the synthetic RevenueOS demo dataset (mock_crm_client.py)
+instead — all three modules expose the identical function names/dict shapes,
+so this file itself needed no changes beyond the one import line. Docstrings
+below still say "Pipedrive"/"HubSpot" in places; read that as "the CRM client
+module" — the field names themselves (status, stage_id, won_time, etc.) are
+what's authoritative. See mock_crm_client.py's module docstring for which
+metrics this source can't fully populate (no contacts/leads data, so New
+Qualified Leads reads 0 rather than a fabricated number).
 
 Every number here is computed directly from real CRM fields — nothing is
 fabricated. Where the CRM doesn't give us what we'd need for a metric (e.g.
@@ -32,7 +34,7 @@ import logging
 from collections import defaultdict
 from datetime import date, datetime, timedelta
 
-from . import hubspot_client as pd
+from . import mock_crm_client as pd
 
 logger = logging.getLogger(__name__)
 
