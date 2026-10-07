@@ -644,16 +644,16 @@ def build_forecast(all_deals: list[dict], stages: list[dict], start: date, end: 
 
     if included == 0:
         limitations.append(
-            "Sales forecast unavailable: none of the deals with an expected close date in "
+            "Sales forecast unavailable. None of the deals with an expected close date in "
             "this range have a probability set on their pipeline stage. Set a probability on "
-            "each deal stage in HubSpot's pipeline settings to enable this."
+            "each deal stage in your pipeline settings to enable this."
         )
         return None
 
     if excluded:
         limitations.append(
             f"Sales forecast excludes {excluded} deal(s) in range with no probability set "
-            "(deal or stage-level) — forecast is a partial total, not the full open pipeline."
+            "(deal or stage-level). Forecast is a partial total, not the full open pipeline."
         )
 
     return {

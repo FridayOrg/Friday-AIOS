@@ -172,7 +172,7 @@ export default function CrmDashboard({ today }: { today: string }) {
           <div>
             <h1 className="text-2xl font-bold">CRM</h1>
             <p className="text-sm mt-0.5" style={{ color: C.muted }}>
-              HubSpot-powered CEO view · {fmtFullDay(today)}
+              {fmtFullDay(today)}
             </p>
           </div>
           <div className="flex flex-wrap items-center gap-2">
@@ -449,15 +449,29 @@ function PipelineByStageCard({ data }: { data: CrmOverview }) {
 
 function DealsByStageCard({ data }: { data: CrmOverview }) {
   const rows = data.deals_by_stage ?? [];
+  const total = rows.reduce((sum, r) => sum + (r.count ?? 0), 0);
   return (
-    <ChartCard title="Deals by Stage" subtitle="Open deal count distribution">
+    <ChartCard
+      title="Deals by Stage"
+      subtitle="Open deal count distribution"
+      right={rows.length > 0 ? <span className="text-xl font-bold" style={{ color: C.ink }}>{total}</span> : undefined}
+    >
       {rows.length === 0 ? (
         <EmptyChart label="No open deals." />
       ) : (
         <div className="h-56 mt-2">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart>
-              <Pie data={rows} dataKey="count" nameKey="stage_name" innerRadius={45} outerRadius={75} paddingAngle={2}>
+            <PieChart margin={{ top: 20, right: 20, bottom: 0, left: 20 }}>
+              <Pie
+                data={rows}
+                dataKey="count"
+                nameKey="stage_name"
+                innerRadius={40}
+                outerRadius={65}
+                paddingAngle={2}
+                label={({ value }) => value}
+                labelLine={false}
+              >
                 {rows.map((_, i) => (
                   <Cell key={i} fill={STAGE_COLORS[i % STAGE_COLORS.length]} />
                 ))}
@@ -574,7 +588,7 @@ function ForecastCard({ data }: { data: CrmOverview }) {
         </>
       ) : (
         <p className="text-sm" style={{ color: C.faint }}>
-          Not available — no open deals in this range have a probability set on their HubSpot deal stage.
+          Not available. No open deals in this range have a probability set on their deal stage.
         </p>
       )}
     </div>

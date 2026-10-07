@@ -1,21 +1,22 @@
 "use client";
 
 // A standalone, self-contained dashboard widget: fetches its own data
-// client-side from /api/urgent-emails, /api/tasks and /api/actions rather
-// than going through lib/data.ts's getDashboardData(), so this feature stays
-// fully isolated from the existing calendar/revenue data plumbing — nothing
-// here is threaded through DashboardData. Mounted inside CeoDashboard's
+// client-side from /api/urgent-emails and /api/actions rather than going
+// through lib/data.ts's getDashboardData(), so this feature stays fully
+// isolated from the existing calendar/revenue data plumbing — nothing here
+// is threaded through DashboardData. Mounted inside CeoDashboard's
 // "My Priorities" card (see CeoDashboard.tsx) as a full-width strip below the
 // 4 stat tiles, so it's unstyled at the outer level (no page padding/card of
 // its own) — the parent card already provides that chrome.
 //
-// Emails (from email_urgency.classify_emails), tasks (from tasks.json) and
-// actions (from actions.json) are merged into ONE list, ranked
-// critical-first/overdue-next/.../low-last (see TIER_RANK) rather than kept
-// in separate blocks — whichever actually needs attention first goes to the
-// top, regardless of which system it came from. Every action is always
-// shown (actions.json's own priority is used as-is, not re-derived from any
-// other date); "View more" links to the full /tasks page for everything else.
+// Emails (from email_urgency.classify_emails) and actions (from
+// actions.json) are merged into ONE list, ranked critical-first/overdue-
+// next/.../low-last (see TIER_RANK) — whichever actually needs attention
+// first goes to the top, regardless of which system it came from. tasks.json
+// is deliberately not shown here — "Today's Priorities" replaces the task
+// list entirely rather than merging it in. Every action is always shown
+// (actions.json's own priority is used as-is, not re-derived from any other
+// date); "View more" links to the full /tasks page for everything else.
 //
 // Today / This Week filter + Done/In Progress/Dismissed status are local-only
 // (component state, not persisted) — see Monday PM sprint-plan item: "works
@@ -39,14 +40,6 @@ interface UrgentEmail {
   priority: "overdue" | "due_today" | "high" | "important";
 }
 
-interface Task {
-  id: string;
-  title: string;
-  due_date: string;
-  priority: string;
-  status: string;
-}
-
 interface Action {
   actionId: string;
   priority: string; // "Critical" | "High" | "Low" — as given in actions.json
@@ -60,9 +53,9 @@ interface Action {
 }
 
 // Emails classify into 3 tiers (see PRIORITY_TIERS in email_urgency.py);
-// tasks add a 4th, "due_today"; actions carry their own priority
-// (Critical/High/Low) straight from actions.json. One shared ranking every
-// item type sorts by — critical actions outrank even overdue tasks/emails.
+// actions carry their own priority (Critical/High/Low) straight from
+// actions.json. One shared ranking every item type sorts by — critical
+// actions outrank even overdue/important emails.
 const TIER_RANK: Record<PriorityTier, number> = {
   critical: 0,
   overdue: 1,
@@ -96,19 +89,6 @@ function PriorityTag({ tier }: { tier: PriorityTier }) {
   return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${t.className}`}>{t.text}</span>;
 }
 
-// Tasks don't have an "important" tier of their own (that's the email
-// classifier's catch-all) — a task only shows up here if it's overdue, due
-// today, or explicitly high-priority; everything else (medium/low, due
-// later) stays out of this card and is only visible via "View more" on the
-// full /tasks page. `status` is already derived from due_date vs. today (see
-// lib/data.ts's getTasks), not a stale hardcoded value.
-function taskTier(t: Task): PriorityTier | null {
-  if (t.status === "overdue") return "overdue";
-  if (t.status === "due_today") return "due_today";
-  if (t.priority === "high") return "high";
-  return null;
-}
-
 // The backend already filters emails down to only overdue/high/important
 // (see email_urgency.PRIORITY_TIERS) — this just guards against an
 // unexpected/stale value (e.g. a backend that hasn't picked up a change yet)
@@ -117,10 +97,9 @@ function emailTier(e: UrgentEmail): PriorityTier {
   return e.priority in TIER_RANK ? e.priority : "important";
 }
 
-// Every action is always shown here (unlike tasks, which get filtered down
-// to just the urgent ones) — actions.json already is the curated "needs
-// attention" list, nothing to filter further. Priority comes straight from
-// the file, not re-derived from any date.
+// Every action is always shown here — actions.json already is the curated
+// "needs attention" list, nothing to filter further. Priority comes
+// straight from the file, not re-derived from any date.
 function actionTier(a: Action): PriorityTier {
   if (a.priority === "Critical") return "critical";
   if (a.priority === "High") return "high";
@@ -128,14 +107,10 @@ function actionTier(a: Action): PriorityTier {
 }
 
 // Emails carry no due date of their own (urgency comes from the inbox, not a
-// deadline) so they're always "Today". Tasks use their own derived status —
-// overdue/due_today both count as "Today", everything else as "This Week".
-// Actions use their own timeHorizon field directly, unchanged.
+// deadline) so they're always "Today". Actions use their own timeHorizon
+// field directly, unchanged.
 function emailHorizon(): Horizon {
   return "Today";
-}
-function taskHorizon(t: Task): Horizon {
-  return t.status === "overdue" || t.status === "due_today" ? "Today" : "This Week";
 }
 function actionHorizon(a: Action): Horizon {
   return a.timeHorizon === "Today" ? "Today" : "This Week";
@@ -143,12 +118,10 @@ function actionHorizon(a: Action): Horizon {
 
 type ActionItem =
   | { kind: "email"; id: string; tier: PriorityTier; horizon: Horizon; email: UrgentEmail }
-  | { kind: "task"; id: string; tier: PriorityTier; horizon: Horizon; task: Task }
   | { kind: "action"; id: string; tier: PriorityTier; horizon: Horizon; action: Action };
 
 export default function UrgentEmails() {
   const [emails, setEmails] = useState<UrgentEmail[]>([]);
-  const [tasks, setTasks] = useState<Task[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [refreshing, setRefreshing] = useState(false);
@@ -170,10 +143,6 @@ export default function UrgentEmails() {
 
   useEffect(() => {
     load();
-    fetch("/api/tasks", { cache: "no-store" })
-      .then((r) => r.json())
-      .then((d) => setTasks(d.tasks ?? []))
-      .catch(() => setTasks([]));
     fetch("/api/actions", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setActions(d.actions ?? []))
@@ -204,16 +173,6 @@ export default function UrgentEmails() {
           horizon: emailHorizon(),
           email,
         })),
-        ...tasks
-          .map((task) => ({ task, tier: taskTier(task) }))
-          .filter((x): x is { task: Task; tier: PriorityTier } => x.tier !== null)
-          .map((x): ActionItem => ({
-            kind: "task",
-            id: `task-${x.task.id}`,
-            tier: x.tier,
-            horizon: taskHorizon(x.task),
-            task: x.task,
-          })),
         ...actions.map((action): ActionItem => ({
           kind: "action",
           id: `action-${action.actionId}`,
@@ -222,7 +181,7 @@ export default function UrgentEmails() {
           action,
         })),
       ].sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]),
-    [emails, tasks, actions]
+    [emails, actions]
   );
 
   const visibleItems = items.filter((i) => horizonFilter === "all" || i.horizon === horizonFilter);
@@ -293,18 +252,6 @@ export default function UrgentEmails() {
                   </div>
                   <p className="text-xs text-slate-500 mt-1 truncate">{item.email.sender}</p>
                   <p className="text-xs text-slate-500 mt-1 leading-snug">{item.email.reason}</p>
-                  {statusRow}
-                </div>
-              );
-            }
-            if (item.kind === "task") {
-              return (
-                <div key={item.id} className="py-2.5 row-separator" style={{ opacity: dimmed ? 0.5 : 1 }}>
-                  <p className="text-[13px] font-medium leading-snug truncate text-slate-900">{item.task.title}</p>
-                  <div className="flex items-center gap-2 mt-1">
-                    <PriorityTag tier={item.tier} />
-                    <span className="text-xs text-slate-500">Due {item.task.due_date}</span>
-                  </div>
                   {statusRow}
                 </div>
               );
