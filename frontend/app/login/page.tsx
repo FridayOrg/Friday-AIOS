@@ -51,8 +51,7 @@ function LoginForm() {
             friday<span className="text-blue-600">.</span>
           </span>
         </div>
-        <h1 className="text-xl font-bold text-slate-900 mb-1">Sign in</h1>
-        <p className="text-sm text-slate-500 mb-6">Demo access for this presentation.</p>
+        <h1 className="text-xl font-bold text-slate-900 mb-6">Sign in</h1>
 
         <form onSubmit={handleSubmit} className="flex flex-col gap-4">
           <div>
