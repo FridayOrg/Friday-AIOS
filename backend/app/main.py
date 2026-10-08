@@ -160,6 +160,22 @@ def _warm_crm_cache():
     crm_metrics.pd.warm_cache_in_background()
 
 
+@app.on_event("startup")
+def _warm_chat_context():
+    """Builds the chat system prompt once in the background at boot. The first
+    build is slow (live Gmail/CRM fetches, ~10s cold); doing it now fills those
+    caches so the user's first message doesn't pay for it."""
+    import threading
+
+    def _warm():
+        try:
+            build_analyst_system_prompt()
+        except Exception as e:
+            logger.warning("Could not warm the chat context: %s", e)
+
+    threading.Thread(target=_warm, daemon=True).start()
+
+
 @app.get("/health")
 def health():
     return {"status": "ok"}

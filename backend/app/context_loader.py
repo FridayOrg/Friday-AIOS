@@ -23,8 +23,8 @@ import re
 from datetime import date, timedelta
 from functools import lru_cache
 
-from . import calendar_client, crm_metrics, db, gmail_client, industry_client
-from .config import CONTEXT_DIR, MOCK_DATA_DIR, now, shift_days
+from . import actions_mapper, calendar_client, crm_metrics, db, gmail_client, industry_client
+from .config import CONTEXT_DIR, MOCK_DATA_DIR, now
 from .timeline import schedule_digest
 
 logger = logging.getLogger(__name__)
@@ -70,7 +70,7 @@ authoritative; do not recompute it.
   call it "upcoming". If asked what's upcoming today and there is nothing left, say
   that plainly first, then briefly note the earlier meetings already happened.
 - The SCHEDULE STATUS block's computed task buckets (OVERDUE / due today / due in Nd)
-  override any static "status" field inside tasks.json; trust the computed bucket.
+  override any static "status" field in the data; trust the computed bucket.
 - When you state how many days away a date is, check the arithmetic against
   {today_iso} / {now_time} first; never restate a due date or meeting time as a
   different value than the data gives. Use the exact weekday+date the SCHEDULE STATUS
@@ -85,11 +85,15 @@ Follow these rules at all times:
   data rather than speaking in generalities. When a specific metric or figure exists
   in the data that's relevant to the question (a rate, a percentage, a dollar amount),
   cite the actual number; don't stay qualitative when a precise figure is available.
-- calendar.json and tasks.json are different things: calendar.json holds scheduled
-  meetings (with a time and duration); tasks.json holds approvals/decisions/
-  escalations/commitments with a due date but no meeting slot. When asked about
-  "meetings," answer from calendar.json specifically; don't substitute a task's due
-  date for a scheduled meeting, though you may mention related tasks separately.
+- Meetings and actions are different things: calendar.json holds scheduled meetings
+  (with a time and duration); the Actions / My Priorities data holds follow-ups with a
+  due date but no meeting slot, computed from opportunities.json and events.json.
+  When asked about "meetings," answer from calendar.json specifically; don't
+  substitute an action's due date for a scheduled meeting, though you may mention
+  related actions separately.
+- Answer deals, pipeline, leads, contacts and priorities questions from the current
+  data only: opportunities.json, events.json, leads.json, contacts.json,
+  organizations.json and the computed actions. All deal values are in GBP (pounds).
 - If any piece of data carries an explicit caveat about its own reliability (e.g. a
   "data_quality: estimated" or similar note), you must surface that caveat whenever
   you use that data in your answer; don't state a number derived from flagged data
@@ -346,16 +350,28 @@ def _context_md_blob() -> str:
     return "\n\n---\n\n".join(sections)
 
 
+# The current RevenueOS demo dataset. Older frozen files in mock-data (revenue,
+# pipeline, spend, tasks, actions, generated_actions) are deliberately NOT given
+# to the agents: they describe the previous demo story and would contradict this
+# data. Actions come from the live playbook instead (see _actions_section).
+_CURRENT_MOCK_FILES = (
+    "opportunities.json",
+    "events.json",
+    "leads.json",
+    "contacts.json",
+    "organizations.json",
+)
+
+
 @lru_cache(maxsize=1)
 def _mock_data_raw() -> tuple[tuple[str, str], ...]:
-    """Raw (filename, text) for each operational mock-data file, unshifted. Cached;
-    the per-request date-shift is applied in _mock_data_blob()."""
+    """Raw (filename, text) for each current mock-data file. Cached. These files
+    carry real dates (playbook.py evaluates them against the real clock), so they
+    are passed through as-is, with no date shifting."""
     return tuple(
-        (f.name, f.read_text(encoding="utf-8"))
-        for f in sorted(MOCK_DATA_DIR.glob("*.json"))
-        # today.json is anchor-config, not operational data; calendar.json is no
-        # longer the source of truth — live data is injected below instead.
-        if f.name not in ("today.json", "calendar.json")
+        (name, (MOCK_DATA_DIR / name).read_text(encoding="utf-8"))
+        for name in _CURRENT_MOCK_FILES
+        if (MOCK_DATA_DIR / name).exists()
     )
 
 
@@ -366,11 +382,11 @@ def _mock_data_blob() -> str:
     _live_data_blob). Both agents call this via _load_files(mock_data=True), so
     both get the same live sources; only which company-background *.md files
     each agent also sees (via md=True/False) differs between them."""
-    days = shift_days()
     sections = {
-        name: f"## MOCK DATA FILE: {name} (JSON)\n\n{_shift_iso_dates(text, days)}"
+        name: f"## MOCK DATA FILE: {name} (JSON)\n\n{text}"
         for name, text in _mock_data_raw()
     }
+    sections["actions (live)"] = _actions_section()
     sections["calendar.json"] = (
         "## MOCK DATA FILE: calendar.json (JSON, live from Google Calendar)\n\n"
         + json.dumps(calendar_client.fetch_calendar_document(now()), indent=2)
@@ -476,19 +492,27 @@ def _live_data_blob() -> str:
     )
 
 
-def _shifted_json(filename: str) -> dict:
-    """Parse one mock-data file with its dates already slid onto the real week."""
-    for name, text in _mock_data_raw():
-        if name == filename:
-            return json.loads(_shift_iso_dates(text, shift_days()))
-    return {}
+def _live_actions() -> list[dict]:
+    """Today's actions, computed from opportunities.json + events.json by the
+    playbook rules against the real current date (same source as the My
+    Priorities card)."""
+    try:
+        return actions_mapper.generate_actions()
+    except Exception as e:  # noqa: BLE001 - must not break the whole prompt
+        logger.warning("Could not compute actions for the agent prompt: %s", e)
+        return []
+
+
+def _actions_section() -> str:
+    header = "## LIVE DATA: Actions / My Priorities, computed from opportunities and events (JSON)"
+    return header + "\n\n" + json.dumps(_live_actions(), indent=2, default=str)
 
 
 def _schedule_status() -> str:
     """The pre-computed SCHEDULE STATUS block — see timeline.schedule_digest. Built
     fresh per request against the real clock and the date-shifted mock data."""
     cal = calendar_client.fetch_calendar_document(now()).get("calendar", {})
-    tasks = _shifted_json("tasks.json").get("tasks", [])
+    tasks = [{"title": a.get("action", "(untitled)"), "due_date": a.get("due")} for a in _live_actions()]
     return schedule_digest(cal.get("meetings", []), tasks, now())
 
 
