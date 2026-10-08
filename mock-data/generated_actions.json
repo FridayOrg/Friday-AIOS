@@ -12,25 +12,25 @@
     "notes": "",
     "priority": "High",
     "action": "Review deal strategy \u2014 late-stage high-value deal has no dated next step",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "Late-stage, high-value proposal has no dated next action",
     "action_id": "ACT-001"
   },
   {
     "owner": "Priya Shah",
-    "status": "Scheduled",
+    "status": "Open",
     "opportunity_id": "OPP-002",
     "deal": "FollowUp AI - 20 users",
     "value": 9600,
-    "rule": "R-003",
+    "rule": "R-004",
     "source": "CRM activity / note",
-    "time_horizon": "This Week",
+    "time_horizon": "Today",
     "user_decision": "Pending",
     "notes": "",
-    "priority": "Low",
-    "action": "Do not contact buyer before agreed decision date (2026-10-08)",
+    "priority": "High",
+    "action": "Decision check-in on agreed date",
     "due": "2026-10-08",
-    "why_now": "Buyer confirmed Decision check-in for 2026-10-08",
+    "why_now": "A recent meeting or note created a commitment that still needs action",
     "action_id": "ACT-002"
   },
   {
@@ -46,7 +46,7 @@
     "notes": "",
     "priority": "High",
     "action": "Send audit scope and price",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "A recent meeting or note created a commitment that still needs action",
     "action_id": "ACT-003"
   },
@@ -63,7 +63,7 @@
     "notes": "",
     "priority": "High",
     "action": "Review deal strategy \u2014 late-stage high-value deal has no dated next step",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "Late-stage, high-value proposal has no dated next action",
     "action_id": "ACT-004"
   },
@@ -80,7 +80,7 @@
     "notes": "",
     "priority": "High",
     "action": "First discovery call",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "A recent meeting or note created a commitment that still needs action",
     "action_id": "ACT-005"
   },
@@ -97,7 +97,7 @@
     "notes": "",
     "priority": "High",
     "action": "Send security answers",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "A recent meeting or note created a commitment that still needs action",
     "action_id": "ACT-006"
   },
@@ -114,7 +114,7 @@
     "notes": "If inactive, move to nurture/lost rather than keep chasing.",
     "priority": "Critical",
     "action": "Requalify proposal and set a new dated next step",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "Expected close date has passed and there is no confirmed next step",
     "action_id": "ACT-007"
   },
@@ -148,7 +148,7 @@
     "notes": "",
     "priority": "High",
     "action": "Send expansion pricing",
-    "due": "2026-10-07",
+    "due": "2026-10-08",
     "why_now": "A recent meeting or note created a commitment that still needs action",
     "action_id": "ACT-009"
   }
