@@ -1,22 +1,16 @@
 "use client";
 
 // A standalone, self-contained dashboard widget: fetches its own data
-// client-side from /api/urgent-emails and /api/actions rather than going
-// through lib/data.ts's getDashboardData(), so this feature stays fully
-// isolated from the existing calendar/revenue data plumbing — nothing here
-// is threaded through DashboardData. Mounted inside CeoDashboard's
-// "My Priorities" card (see CeoDashboard.tsx) as a full-width strip below the
-// 4 stat tiles, so it's unstyled at the outer level (no page padding/card of
-// its own) — the parent card already provides that chrome.
+// client-side from /api/actions rather than going through lib/data.ts's
+// getDashboardData(), so this feature stays fully isolated from the
+// existing calendar/revenue data plumbing — nothing here is threaded
+// through DashboardData. Mounted inside CeoDashboard's "My Priorities" card
+// (see CeoDashboard.tsx) as a full-width strip below the 4 stat tiles, so
+// it's unstyled at the outer level (no page padding/card of its own) — the
+// parent card already provides that chrome.
 //
-// Emails (from email_urgency.classify_emails) and actions (from
-// actions.json) are merged into ONE list, ranked critical-first/overdue-
-// next/.../low-last (see TIER_RANK) — whichever actually needs attention
-// first goes to the top, regardless of which system it came from. tasks.json
-// is deliberately not shown here — "Today's Priorities" replaces the task
-// list entirely rather than merging it in. Every action is always shown
-// (actions.json's own priority is used as-is, not re-derived from any other
-// date); "View more" links to the full /tasks page for everything else.
+// Shows only actions.json-derived data — emails are deliberately not shown
+// here (removed per request); "View more" links to the full /tasks page.
 //
 // Today / This Week filter + Done/In Progress/Dismissed status are local-only
 // (component state, not persisted) — see Monday PM sprint-plan item: "works
@@ -25,20 +19,9 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-type PriorityTier = "critical" | "overdue" | "due_today" | "high" | "important" | "low";
+type PriorityTier = "critical" | "high" | "low";
 type Horizon = "Today" | "This Week";
 type LocalStatus = "done" | "in_progress" | "dismissed";
-
-interface UrgentEmail {
-  id: string;
-  subject: string;
-  sender: string;
-  snippet: string;
-  received_at: string | null;
-  gmail_url: string;
-  reason: string;
-  priority: "overdue" | "due_today" | "high" | "important";
-}
 
 interface Action {
   actionId: string;
@@ -52,24 +35,10 @@ interface Action {
   timeHorizon: string; // "Today" | "This Week" — as given in actions.json
 }
 
-// Emails classify into 3 tiers (see PRIORITY_TIERS in email_urgency.py);
-// actions carry their own priority (Critical/High/Low) straight from
-// actions.json. One shared ranking every item type sorts by — critical
-// actions outrank even overdue/important emails.
-const TIER_RANK: Record<PriorityTier, number> = {
-  critical: 0,
-  overdue: 1,
-  due_today: 2,
-  high: 3,
-  important: 4,
-  low: 5,
-};
+const TIER_RANK: Record<PriorityTier, number> = { critical: 0, high: 1, low: 2 };
 const TIER_LABEL: Record<PriorityTier, { text: string; className: string }> = {
   critical: { text: "Critical", className: "bg-red-200 text-red-800" },
-  overdue: { text: "Overdue", className: "bg-red-100 text-red-700" },
-  due_today: { text: "Due Today", className: "bg-orange-100 text-orange-700" },
   high: { text: "High", className: "bg-amber-100 text-amber-700" },
-  important: { text: "Important", className: "bg-blue-100 text-blue-700" },
   low: { text: "Low", className: "bg-slate-100 text-slate-600" },
 };
 
@@ -85,16 +54,8 @@ const STATUS_STYLE: Record<LocalStatus, string> = {
 };
 
 function PriorityTag({ tier }: { tier: PriorityTier }) {
-  const t = TIER_LABEL[tier] ?? TIER_LABEL.important;
+  const t = TIER_LABEL[tier] ?? TIER_LABEL.low;
   return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${t.className}`}>{t.text}</span>;
-}
-
-// The backend already filters emails down to only overdue/high/important
-// (see email_urgency.PRIORITY_TIERS) — this just guards against an
-// unexpected/stale value (e.g. a backend that hasn't picked up a change yet)
-// so a bad string degrades to "important" instead of crashing the card.
-function emailTier(e: UrgentEmail): PriorityTier {
-  return e.priority in TIER_RANK ? e.priority : "important";
 }
 
 // Every action is always shown here — actions.json already is the curated
@@ -106,82 +67,35 @@ function actionTier(a: Action): PriorityTier {
   return "low";
 }
 
-// Emails carry no due date of their own (urgency comes from the inbox, not a
-// deadline) so they're always "Today". Actions use their own timeHorizon
-// field directly, unchanged.
-function emailHorizon(): Horizon {
-  return "Today";
-}
 function actionHorizon(a: Action): Horizon {
   return a.timeHorizon === "Today" ? "Today" : "This Week";
 }
 
-type ActionItem =
-  | { kind: "email"; id: string; tier: PriorityTier; horizon: Horizon; email: UrgentEmail }
-  | { kind: "action"; id: string; tier: PriorityTier; horizon: Horizon; action: Action };
-
 export default function UrgentEmails() {
-  const [emails, setEmails] = useState<UrgentEmail[]>([]);
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
-  const [refreshing, setRefreshing] = useState(false);
   const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
   const [horizonFilter, setHorizonFilter] = useState<"all" | Horizon>("all");
   const [localStatus, setLocalStatus] = useState<Record<string, LocalStatus>>({});
 
-  async function load() {
-    try {
-      const res = await fetch("/api/urgent-emails", { cache: "no-store" });
-      const data = await res.json();
-      setEmails(data.emails ?? []);
-    } catch {
-      setEmails([]);
-    } finally {
-      setLoading(false);
-    }
-  }
-
   useEffect(() => {
-    load();
     fetch("/api/actions", { cache: "no-store" })
       .then((r) => r.json())
       .then((d) => setActions(d.actions ?? []))
-      .catch(() => setActions([]));
+      .catch(() => setActions([]))
+      .finally(() => setLoading(false));
   }, []);
-
-  async function handleRefresh() {
-    setRefreshing(true);
-    try {
-      await fetch("/api/urgent-emails", { method: "POST" });
-      await load();
-    } finally {
-      setRefreshing(false);
-    }
-  }
 
   function setStatus(id: string, status: LocalStatus) {
     setLocalStatus((prev) => ({ ...prev, [id]: prev[id] === status ? undefined : status } as Record<string, LocalStatus>));
   }
 
-  const items: ActionItem[] = useMemo(
+  const items = useMemo(
     () =>
-      [
-        ...emails.map((email): ActionItem => ({
-          kind: "email",
-          id: `email-${email.id}`,
-          tier: emailTier(email),
-          horizon: emailHorizon(),
-          email,
-        })),
-        ...actions.map((action): ActionItem => ({
-          kind: "action",
-          id: `action-${action.actionId}`,
-          tier: actionTier(action),
-          horizon: actionHorizon(action),
-          action,
-        })),
-      ].sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]),
-    [emails, actions]
+      [...actions]
+        .map((action) => ({ action, tier: actionTier(action), horizon: actionHorizon(action) }))
+        .sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]),
+    [actions]
   );
 
   const visibleItems = items.filter((i) => horizonFilter === "all" || i.horizon === horizonFilter);
@@ -202,63 +116,19 @@ export default function UrgentEmails() {
             </button>
           ))}
         </div>
-        <button
-          onClick={handleRefresh}
-          disabled={refreshing}
-          className="text-xs text-slate-500 hover:text-slate-700 disabled:opacity-50"
-        >
-          {refreshing ? "Refreshing…" : "Refresh"}
-        </button>
       </div>
       {loading ? (
-        <p className="text-xs text-slate-500 pt-2">Checking for anything urgent...</p>
+        <p className="text-xs text-slate-500 pt-2">Loading priorities...</p>
       ) : visibleItems.length === 0 ? (
         <p className="text-xs text-slate-500 pt-2">Nothing needs your attention right now.</p>
       ) : (
         <div className="flex flex-col max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">
           {visibleItems.map((item) => {
-            const status = localStatus[item.id];
+            const status = localStatus[item.action.actionId];
             const dimmed = status === "done" || status === "dismissed";
-            const statusRow = (
-              <div className="flex items-center gap-1 mt-1.5">
-                {STATUS_OPTIONS.map((opt) => (
-                  <button
-                    key={opt.key}
-                    onClick={() => setStatus(item.id, opt.key)}
-                    className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full transition-colors ${
-                      status === opt.key ? STATUS_STYLE[opt.key] : "bg-gray-100 text-slate-500"
-                    }`}
-                  >
-                    {opt.label}
-                  </button>
-                ))}
-              </div>
-            );
-
-            if (item.kind === "email") {
-              return (
-                <div key={item.id} className="py-2.5 row-separator" style={{ opacity: dimmed ? 0.5 : 1 }}>
-                  <p className="text-[13px] font-medium leading-snug truncate text-slate-900">{item.email.subject}</p>
-                  <div className="flex items-center justify-between gap-2 mt-1">
-                    <PriorityTag tier={item.tier} />
-                    <a
-                      href={item.email.gmail_url}
-                      target="_blank"
-                      rel="noreferrer"
-                      className="shrink-0 text-xs text-blue-600"
-                    >
-                      Open
-                    </a>
-                  </div>
-                  <p className="text-xs text-slate-500 mt-1 truncate">{item.email.sender}</p>
-                  <p className="text-xs text-slate-500 mt-1 leading-snug">{item.email.reason}</p>
-                  {statusRow}
-                </div>
-              );
-            }
             const expanded = expandedActionId === item.action.actionId;
             return (
-              <div key={item.id} className="py-2.5 row-separator" style={{ opacity: dimmed ? 0.5 : 1 }}>
+              <div key={item.action.actionId} className="py-2.5 row-separator" style={{ opacity: dimmed ? 0.5 : 1 }}>
                 <p className="text-[13px] font-medium leading-snug text-slate-900">{item.action.action}</p>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <div className="flex items-center gap-2 min-w-0">
@@ -282,7 +152,19 @@ export default function UrgentEmails() {
                     {item.action.notes && <p className="mt-1 text-slate-500">{item.action.notes}</p>}
                   </div>
                 )}
-                {statusRow}
+                <div className="flex items-center gap-1 mt-1.5">
+                  {STATUS_OPTIONS.map((opt) => (
+                    <button
+                      key={opt.key}
+                      onClick={() => setStatus(item.action.actionId, opt.key)}
+                      className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full transition-colors ${
+                        status === opt.key ? STATUS_STYLE[opt.key] : "bg-gray-100 text-slate-500"
+                      }`}
+                    >
+                      {opt.label}
+                    </button>
+                  ))}
+                </div>
               </div>
             );
           })}

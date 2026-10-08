@@ -1,7 +1,8 @@
 "use client";
 
 import { useEffect, useState } from "react";
-import { User, Camera, Briefcase, Building2, MapPin } from "lucide-react";
+import { User, Camera, Briefcase, Building2, MapPin, Pencil, Check } from "lucide-react";
+import { useFounderName, setFounderName } from "@/lib/founderName";
 
 // Reads the CEO's real name/title/location/experience straight out of team.md (via
 // the existing /api/context endpoint) rather than hardcoding a person's details into
@@ -34,6 +35,15 @@ export default function ProfilePage() {
   const [ceo, setCeo] = useState<CeoProfile | null>(null);
   const [companyName, setCompanyName] = useState<string | null>(null);
   const [loading, setLoading] = useState(true);
+
+  // The name greetings use app-wide (CeoDashboard/AskFriday) — see
+  // lib/founderName.ts. Editable here so it's a real, typed-in name rather
+  // than always whatever team.md happens to say.
+  const resolvedName = useFounderName();
+  const [nameOverride, setNameOverride] = useState<string | null>(null);
+  const [editingName, setEditingName] = useState(false);
+  const [nameDraft, setNameDraft] = useState("");
+  const displayName = nameOverride ?? resolvedName;
 
   useEffect(() => {
     fetch("/api/context")
@@ -80,7 +90,52 @@ export default function ProfilePage() {
               </div>
 
               <div className="min-w-0">
-                <h2 className="text-xl font-bold text-slate-900">{ceo?.name ?? "Founder"}</h2>
+                {editingName ? (
+                  <div className="flex items-center gap-2">
+                    <input
+                      autoFocus
+                      value={nameDraft}
+                      onChange={(e) => setNameDraft(e.target.value)}
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          setFounderName(nameDraft);
+                          setNameOverride(nameDraft.trim() || displayName);
+                          setEditingName(false);
+                        }
+                        if (e.key === "Escape") setEditingName(false);
+                      }}
+                      className="text-xl font-bold text-slate-900 border-b-2 border-sky-400 outline-none bg-transparent"
+                    />
+                    <button
+                      type="button"
+                      aria-label="Save name"
+                      onClick={() => {
+                        setFounderName(nameDraft);
+                        setNameOverride(nameDraft.trim() || displayName);
+                        setEditingName(false);
+                      }}
+                      className="h-7 w-7 rounded-full bg-sky-500 text-white flex items-center justify-center hover:bg-sky-400 transition-colors"
+                    >
+                      <Check size={14} />
+                    </button>
+                  </div>
+                ) : (
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold text-slate-900">{displayName}</h2>
+                    <button
+                      type="button"
+                      aria-label="Edit name"
+                      title="Edit name"
+                      onClick={() => {
+                        setNameDraft(displayName);
+                        setEditingName(true);
+                      }}
+                      className="text-slate-400 hover:text-sky-600 transition-colors"
+                    >
+                      <Pencil size={14} />
+                    </button>
+                  </div>
+                )}
                 <p className="text-sm text-slate-500 mt-0.5">{ceo?.title ?? "Chief Executive Officer"}</p>
                 <div className="flex flex-wrap items-center gap-x-4 gap-y-1 mt-3 text-xs text-slate-500">
                   {companyName && (
@@ -121,9 +176,9 @@ export default function ProfilePage() {
 
           <div className="px-8 pb-8">
             <p className="text-xs text-slate-500 leading-relaxed border-t border-gray-200 pt-4">
-              Full profile management (editable name, role, and notification preferences) isn&rsquo;t built yet.
-              This MVP has no accounts or database, so this page reflects the founder&rsquo;s details from the
-              company&rsquo;s own context files.
+              Full profile management (role, and notification preferences) isn&rsquo;t built yet. This MVP has no
+              accounts or database — the name above is saved to this browser only (click the pencil to change it),
+              and everything else reflects the founder&rsquo;s details from the company&rsquo;s own context files.
             </p>
           </div>
         </div>

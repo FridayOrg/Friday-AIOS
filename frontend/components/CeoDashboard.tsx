@@ -5,6 +5,7 @@ import type { DashboardData } from "@/lib/data";
 import type { CrmOverview } from "@/lib/crmTypes";
 import { classifyMeeting } from "@/lib/timeline";
 import { useHighlight } from "@/lib/highlight-context";
+import { useFounderName } from "@/lib/founderName";
 import { C, PAGE_BG, CARD_BG, priorityOf } from "@/lib/dashboardTokens";
 import UrgentEmails from "./UrgentEmails";
 import IndustryUpdates from "./IndustryUpdates";
@@ -93,17 +94,17 @@ const to12h = (t: string) => {
   return `${hr}:${m.toString().padStart(2, "0")} ${period}`;
 };
 
-const FOUNDER_NAME = "Paval";
-
 // Time-of-day greeting, computed from the server-clock "now" (data.now,
 // already FRIDAY_TZ-correct) rather than the browser's own Date() — keeps it
 // consistent with everything else on this page that's driven by the app's
-// own timezone instead of wherever the viewer happens to be.
-function greetingFor(nowHHMM: string): string {
+// own timezone instead of wherever the viewer happens to be. founderName
+// comes from useFounderName() (see lib/founderName.ts) — the name someone
+// set on the Profile page, falling back to Context/team.md's CEO name.
+function greetingFor(nowHHMM: string, founderName: string): string {
   const hour = Number(nowHHMM.split(":")[0]);
-  if (hour < 12) return `Good morning, ${FOUNDER_NAME}`;
-  if (hour < 17) return `Good afternoon, ${FOUNDER_NAME}`;
-  return `Good evening, ${FOUNDER_NAME}`;
+  if (hour < 12) return `Good morning, ${founderName}`;
+  if (hour < 17) return `Good afternoon, ${founderName}`;
+  return `Good evening, ${founderName}`;
 }
 
 // The 2x2 grid below "Daily Brief". Financial Performance / Sales & Guarantee
@@ -122,6 +123,7 @@ const GRID_CARDS = [
 
 export default function CeoDashboard({ data }: { data: DashboardData }) {
   const { tasks, calendar, meetingSummaries } = data;
+  const founderName = useFounderName();
 
   // Daily Brief's revenue/pipeline/conversion tiles are real HubSpot data
   // (see backend/app/crm_metrics.py via GET /api/crm), fetched client-side —
@@ -246,7 +248,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- HEADER ---------------- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="text-[25px] font-bold tracking-tight">{greetingFor(data.now)}</h1>
+            <h1 className="text-[25px] font-bold tracking-tight">{greetingFor(data.now, founderName)}</h1>
             <p className="text-sm mt-0.5" style={{ color: C.muted }}>
               CEO Dashboard · Strategic overview for BookMySales · {fmtFullDay(data.today)}
             </p>

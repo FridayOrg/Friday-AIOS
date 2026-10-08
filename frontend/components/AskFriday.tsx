@@ -6,6 +6,7 @@ import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X, PlayCircle } from "lu
 import Markdown from "./Markdown";
 import EmailDraftCard, { extractEmailDraft, speakableText } from "./EmailDraftCard";
 import { useHighlight } from "@/lib/highlight-context";
+import { useFounderName } from "@/lib/founderName";
 
 interface ChatMessage {
   role: "user" | "friday";
@@ -48,7 +49,6 @@ function now() {
   return new Date().toLocaleTimeString([], { hour: "2-digit", minute: "2-digit" });
 }
 
-const FOUNDER_NAME = "Paval";
 function timeGreeting() {
   const hour = new Date().getHours();
   if (hour < 12) return "morning";
@@ -84,6 +84,7 @@ function FridayMessageBody({ text }: { text: string }) {
 export default function AskFriday({ onClose }: { onClose?: () => void }) {
   const router = useRouter();
   const { highlightFromText, highlightMeeting } = useHighlight();
+  const founderName = useFounderName();
   const [messages, setMessages] = useState<ChatMessage[]>([]);
   const [loading, setLoading] = useState(false); // waiting for the first chunk
   const [streaming, setStreaming] = useState(false); // chunks are actively arriving
@@ -761,7 +762,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         {messages.length === 0 && (
           <div className="flex flex-col gap-3 mt-2">
             <p className="text-sm font-medium text-slate-200">
-              Good {timeGreeting()}, {FOUNDER_NAME}.
+              Good {timeGreeting()}, {founderName}.
             </p>
             <p className="text-sm text-slate-400">
               Ask me anything about the business. I won&rsquo;t volunteer a briefing
