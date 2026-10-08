@@ -94,14 +94,19 @@ const to12h = (t: string) => {
   return `${hr}:${m.toString().padStart(2, "0")} ${period}`;
 };
 
-// Time-of-day greeting, computed from the server-clock "now" (data.now,
-// already FRIDAY_TZ-correct) rather than the browser's own Date() — keeps it
-// consistent with everything else on this page that's driven by the app's
-// own timezone instead of wherever the viewer happens to be. founderName
-// comes from useFounderName() (see lib/founderName.ts) — the name someone
-// set on the Profile page, falling back to Context/team.md's CEO name.
-function greetingFor(nowHHMM: string, founderName: string): string {
-  const hour = Number(nowHHMM.split(":")[0]);
+// Time-of-day greeting, deliberately computed from the BROWSER's own clock
+// (not data.now / FRIDAY_TZ) so each viewer gets "morning/afternoon/evening"
+// correct for wherever they actually are — the CEO in the UK and the team
+// in India should each see a greeting that matches their own local time,
+// not one shared server timezone. Matches AskFriday.tsx's timeGreeting(),
+// which already worked this way. This is purely cosmetic (just which words
+// show), unlike due-date/overdue logic elsewhere, which stays on the single
+// shared FRIDAY_TZ so the underlying data never disagrees with itself
+// depending on who's looking. founderName comes from useFounderName() (see
+// lib/founderName.ts) — the name someone set on the Profile page, falling
+// back to Context/team.md's CEO name.
+function greetingFor(founderName: string): string {
+  const hour = new Date().getHours();
   if (hour < 12) return `Good morning, ${founderName}`;
   if (hour < 17) return `Good afternoon, ${founderName}`;
   return `Good evening, ${founderName}`;
@@ -201,26 +206,31 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
     }, 50);
   };
 
-  // Today + the next 2 days (3-day window) for the Calendar grid card. Built
-  // via Date.UTC rather than `new Date(iso + "T00:00:00")` — the latter
-  // parses as LOCAL midnight, and a later .toISOString() then converts back
-  // to UTC, silently shifting the date back a day whenever the server's
-  // local timezone is ahead of UTC (e.g. IST) — this exact bug was observed
-  // directly when building this feature.
+  // The next 3 days that actually HAVE a meeting, for the Calendar grid card
+  // — an empty day (no meetings) is skipped entirely rather than shown as
+  // "No meetings", so the card always surfaces 3 real days to look at
+  // instead of padding with blanks. Searches up to 30 days ahead; if fewer
+  // than 3 such days exist in that window, shows however many were found.
+  // Built via Date.UTC rather than `new Date(iso + "T00:00:00")` — the
+  // latter parses as LOCAL midnight, and a later .toISOString() then
+  // converts back to UTC, silently shifting the date back a day whenever
+  // the server's local timezone is ahead of UTC (e.g. IST) — this exact bug
+  // was observed directly when building this feature.
+  const SEARCH_WINDOW_DAYS = 30;
   const daysNext3 = useMemo(() => {
     const [y, m, d] = data.today.split("-").map(Number);
     const start = new Date(Date.UTC(y, m - 1, d));
-    return Array.from({ length: 3 }, (_, i) => {
+    const found: { iso: string; meetings: typeof calendar }[] = [];
+    for (let i = 0; i < SEARCH_WINDOW_DAYS && found.length < 3; i++) {
       const dt = new Date(start);
       dt.setUTCDate(start.getUTCDate() + i);
       const iso = dt.toISOString().slice(0, 10);
-      return {
-        iso,
-        meetings: calendar
-          .filter((m) => m.date === iso)
-          .sort((a, b) => a.time.localeCompare(b.time)),
-      };
-    });
+      const meetings = calendar
+        .filter((mt) => mt.date === iso)
+        .sort((a, b) => a.time.localeCompare(b.time));
+      if (meetings.length > 0) found.push({ iso, meetings });
+    }
+    return found;
   }, [data.today, calendar]);
 
   return (
@@ -248,7 +258,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- HEADER ---------------- */}
         <div className="flex flex-wrap items-center justify-between gap-4 mb-5">
           <div>
-            <h1 className="text-[25px] font-bold tracking-tight">{greetingFor(data.now, founderName)}</h1>
+            <h1 className="text-[25px] font-bold tracking-tight">{greetingFor(founderName)}</h1>
             <p className="text-sm mt-0.5" style={{ color: C.muted }}>
               CEO Dashboard · Strategic overview for BookMySales · {fmtFullDay(data.today)}
             </p>
@@ -679,6 +689,14 @@ function Calendar3DayContent({
     if (iso === today) return { top: "Today", bottom: datePart };
     return { top: fmtDay(iso).split(",")[0], bottom: datePart };
   };
+
+  if (daysNext3.length === 0) {
+    return (
+      <div className="text-xs pt-2" style={{ color: C.faint }}>
+        No meetings scheduled in the next 30 days.
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col gap-3 pt-2 max-h-56 overflow-y-auto overflow-x-hidden -mr-2.5 pr-2.5">

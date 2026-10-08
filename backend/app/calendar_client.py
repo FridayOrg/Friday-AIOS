@@ -105,13 +105,22 @@ def _access_token() -> str | None:
         return None
 
 
+_FETCH_WINDOW_DAYS = 30
+
+
 def _week_bounds(now: datetime) -> tuple[str, str]:
-    """Monday 00:00 through the following Monday 00:00 of `now`'s week, as RFC3339
-    with an explicit UTC offset (Google's Calendar API requires one) — the same
-    one-week window mock-data/calendar.json used to cover."""
+    """Monday 00:00 of `now`'s week through _FETCH_WINDOW_DAYS days later, as
+    RFC3339 with an explicit UTC offset (Google's Calendar API requires one).
+    Was a strict single calendar week (hence the name, kept so the one call
+    site below didn't need renaming) until the frontend's "next 3 days WITH a
+    meeting" Calendar card (CeoDashboard.tsx's daysNext3) needed to search
+    further ahead than "the rest of this week" to find 3 such days — a real
+    week-only window silently capped that search whenever today fell late in
+    the week. Starting from Monday (not `now`) keeps any "earlier this week"
+    framing the AI's system prompt relies on intact."""
     monday = now.date() - timedelta(days=now.weekday())
     start = datetime.combine(monday, datetime.min.time())
-    end = start + timedelta(days=7)
+    end = start + timedelta(days=_FETCH_WINDOW_DAYS)
     if now.tzinfo is not None:
         start, end = start.replace(tzinfo=now.tzinfo), end.replace(tzinfo=now.tzinfo)
     else:
