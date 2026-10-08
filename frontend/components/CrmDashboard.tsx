@@ -63,6 +63,51 @@ const TOOLTIP_STYLE = {
   itemStyle: { color: C.ink },
 };
 
+// A Pie slice's count (inside the slice, mid-radius) and its stage name
+// (just outside the slice, anchored left/right depending on which half of
+// the circle it falls on) — both directly on the chart itself rather than
+// a separate <Legend>/list elsewhere.
+const RADIAN = Math.PI / 180;
+function PieSliceLabel(props: {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  innerRadius?: number;
+  outerRadius?: number;
+  value?: number;
+  name?: string;
+  fill?: string;
+}) {
+  const { cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, value = 0, name = "", fill = C.muted } = props;
+  const countRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const countX = cx + countRadius * Math.cos(-midAngle * RADIAN);
+  const countY = cy + countRadius * Math.sin(-midAngle * RADIAN);
+
+  const nameRadius = outerRadius + 14;
+  const nameX = cx + nameRadius * Math.cos(-midAngle * RADIAN);
+  const nameY = cy + nameRadius * Math.sin(-midAngle * RADIAN);
+  const onRightHalf = Math.cos(-midAngle * RADIAN) >= 0;
+
+  return (
+    <g>
+      <text x={countX} y={countY} fill="#FFFFFF" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
+        {value}
+      </text>
+      <text
+        x={nameX}
+        y={nameY}
+        fill={fill}
+        textAnchor={onRightHalf ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={10}
+        fontWeight={500}
+      >
+        {name}
+      </text>
+    </g>
+  );
+}
+
 const RANGE_OPTIONS: { key: DateRangeKey; label: string }[] = [
   { key: "today", label: "Today" },
   { key: "week", label: "This Week" },
@@ -459,17 +504,28 @@ function DealsByStageCard({ data }: { data: CrmOverview }) {
       {rows.length === 0 ? (
         <EmptyChart label="No open deals." />
       ) : (
-        <div className="h-56 mt-2">
+        <div className="h-64 mt-2">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 20, right: 20, bottom: 0, left: 20 }}>
+            <PieChart margin={{ top: 24, right: 40, bottom: 24, left: 40 }}>
               <Pie
                 data={rows}
                 dataKey="count"
                 nameKey="stage_name"
-                innerRadius={40}
-                outerRadius={65}
+                innerRadius={36}
+                outerRadius={55}
                 paddingAngle={2}
-                label={({ value }) => value}
+                // Starts at 12 o'clock and sweeps clockwise (Recharts'
+                // default starts at 3 o'clock) so the pipeline order
+                // (Qualified -> Discovery -> Solution -> Proposal ->
+                // Decision, the row order `rows` is already in) reads
+                // clockwise from the top, matching how a clock face works.
+                startAngle={90}
+                endAngle={-270}
+                // Count inside each slice (mid-radius) and its stage name
+                // just outside it — both directly on the chart, so no
+                // separate <Legend>/list is needed (and nothing to fight
+                // Recharts' default Pie-legend alphabetizing over).
+                label={PieSliceLabel}
                 labelLine={false}
               >
                 {rows.map((_, i) => (
@@ -477,7 +533,6 @@ function DealsByStageCard({ data }: { data: CrmOverview }) {
                 ))}
               </Pie>
               <Tooltip {...TOOLTIP_STYLE} formatter={(v, _n, entry) => [`${v} deals`, (entry?.payload as { stage_name?: string })?.stage_name ?? ""]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
