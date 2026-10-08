@@ -1,15 +1,14 @@
 """Runs the Playbook rules (playbook.py) over mock-data/opportunities.json and
-mock-data/events.json and writes the resulting Actions to
-mock-data/generated_actions.json — the Tuesday AM output (tab 40).
+mock-data/events.json to produce Actions (tab 40).
 
-Written to a separate file from mock-data/actions.json on purpose: that file is
-Paval's hand-authored placeholder, already wired into the "Today's Priorities" UI
-(frontend/lib/data.ts's getActions(), frontend/app/api/actions/route.ts). Swapping
-the UI over to this real, rule-generated data is Paval's Tue PM task — see
-backend/app/README_ACTIONS_HANDOFF.md for the field-shape differences she needs to
-reconcile.
+generate_actions() is called live by GET /actions in main.py on every request,
+so "due today" / "overdue" are always computed against the real current date —
+see build_actions()'s use of config.now(). There is no cached/written-to-disk
+snapshot anymore: mock-data/generated_actions.json previously played that role
+and went stale between manual reruns (see git history), which this replaces.
 
-Run directly (`python -m app.actions_mapper` from backend/) to regenerate.
+Can still be run directly (`python -m app.actions_mapper` from backend/) for a
+quick manual check — it just prints the count rather than writing a file.
 """
 
 import json
@@ -19,17 +18,17 @@ from .playbook import build_actions
 
 OPPORTUNITIES_PATH = MOCK_DATA_DIR / "opportunities.json"
 EVENTS_PATH = MOCK_DATA_DIR / "events.json"
-ACTIONS_OUTPUT_PATH = MOCK_DATA_DIR / "generated_actions.json"
+
+
+def generate_actions() -> list[dict]:
+    opportunities = json.loads(OPPORTUNITIES_PATH.read_text(encoding="utf-8"))
+    events = json.loads(EVENTS_PATH.read_text(encoding="utf-8"))
+    return build_actions(opportunities, events)
 
 
 def main() -> None:
-    opportunities = json.loads(OPPORTUNITIES_PATH.read_text(encoding="utf-8"))
-    events = json.loads(EVENTS_PATH.read_text(encoding="utf-8"))
-
-    actions = build_actions(opportunities, events)
-
-    ACTIONS_OUTPUT_PATH.write_text(json.dumps(actions, indent=2), encoding="utf-8")
-    print(f"Wrote {len(actions)} actions to {ACTIONS_OUTPUT_PATH}")
+    actions = generate_actions()
+    print(f"Computed {len(actions)} actions (live, not written to a file)")
 
 
 if __name__ == "__main__":

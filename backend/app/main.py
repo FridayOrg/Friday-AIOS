@@ -9,6 +9,8 @@ Endpoints:
   GET  /calendar        — live meetings for the current week (see calendar_client.py),
                            in the same shape mock-data/calendar.json used to provide;
                            the frontend calls this instead of reading that file directly
+  GET  /actions         — Today's Priorities / Tasks, computed fresh on every call from
+                           the Playbook rules (see actions_mapper.py / playbook.py)
   POST /webhooks/fathom  — Fathom's "new-meeting-content-ready" event; verifies the
                            signature, stores the meeting summary (see db.py)
   GET  /meeting-summaries — stored Fathom meeting summaries, most recent first
@@ -81,7 +83,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client
+from . import actions_mapper, calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client
 from .config import GOOGLE_CALENDAR_ID, INDUSTRY_UPDATES_REFRESH_SECRET, now
 from .industry_relevance import classify_updates
 from .context_loader import (
@@ -166,6 +168,14 @@ def health():
 @app.get("/calendar")
 def calendar():
     return calendar_client.fetch_calendar_document(now())
+
+
+@app.get("/actions")
+def actions():
+    """Today's Priorities / Tasks — Playbook rules computed fresh on every call
+    (see actions_mapper.generate_actions), so due/overdue is always correct for
+    the real current date rather than frozen at whenever a script last ran."""
+    return {"actions": actions_mapper.generate_actions()}
 
 
 class ScheduleEventRequest(BaseModel):

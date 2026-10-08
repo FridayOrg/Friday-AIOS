@@ -30,14 +30,6 @@ function readJson<T>(fileName: string): T {
   return JSON.parse(raw);
 }
 
-// Plain read, no date-shifting — unlike the rest of mock-data/, actions.json
-// is real-looking data a backend will soon replace outright, so its dates
-// are used exactly as given, not re-anchored onto "today".
-function readJsonVerbatim<T>(fileName: string): T {
-  const filePath = path.join(MOCK_DATA_DIR, fileName);
-  return JSON.parse(fs.readFileSync(filePath, "utf-8"));
-}
-
 // Calendar data no longer comes from mock-data/calendar.json — it's fetched live
 // from the backend's /calendar endpoint (backend/app/calendar_client.py), which
 // reads Google Calendar directly. Proxied through the backend rather than called
@@ -141,73 +133,6 @@ export interface Task {
   status: string;
   related_client?: string;
   raised_by?: string;
-}
-
-// Field names kept exactly as the (future) backend will send them — see
-// mock-data/actions.json — so swapping this file for a real API later needs
-// no changes in getActions() or any component that consumes it.
-export interface Action {
-  actionId: string;
-  priority: string;
-  action: string;
-  owner: string;
-  due: string;
-  status: string;
-  opportunityId: string;
-  deal: string;
-  value: number;
-  whyNow: string;
-  source: string;
-  rule: string;
-  timeHorizon: string;
-  userDecision: string;
-  notes: string;
-}
-
-// Shape of backend/app/actions_mapper.py's output (mock-data/generated_actions.json)
-// — same fields as Action, but snake_case and computed live from the Playbook
-// rules (R-001–R-006) over opportunities.json + events.json, rather than
-// hand-typed. See backend/app/README_ACTIONS_HANDOFF.md.
-interface GeneratedAction {
-  action_id: string;
-  priority: string;
-  action: string;
-  owner: string;
-  due: string;
-  status: string;
-  opportunity_id: string;
-  deal: string;
-  value: number;
-  why_now: string;
-  source: string;
-  rule: string;
-  time_horizon: string;
-  user_decision: string;
-  notes: string;
-}
-
-function toAction(g: GeneratedAction): Action {
-  return {
-    actionId: g.action_id,
-    priority: g.priority,
-    action: g.action,
-    owner: g.owner,
-    due: g.due,
-    status: g.status,
-    opportunityId: g.opportunity_id,
-    deal: g.deal,
-    value: g.value,
-    whyNow: g.why_now,
-    source: g.source,
-    rule: g.rule,
-    timeHorizon: g.time_horizon,
-    userDecision: g.user_decision,
-    notes: g.notes,
-  };
-}
-
-export function getActions(): Action[] {
-  return readJsonVerbatim<GeneratedAction[]>("generated_actions.json").map(toAction);
 }
 
 export interface SpendEntry {
