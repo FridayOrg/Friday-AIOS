@@ -1,9 +1,16 @@
 "use client";
 
 import { useCallback, useRef, useState } from "react";
+import { usePathname } from "next/navigation";
 import TopNav from "./TopNav";
 import AskFriday from "./AskFriday";
 import { HighlightProvider } from "@/lib/highlight-context";
+
+// Routes that render standalone, without the nav bar / Ask Friday chrome —
+// currently just the login page itself (see middleware.ts), since AppShell
+// is mounted once in the root layout and would otherwise wrap every route,
+// including the page shown before someone has actually signed in.
+const CHROME_FREE_PATHS = ["/login"];
 
 // Ask Friday panel: draggable between a minimum of 24% of the viewport width and a
 // max of 80% (a "maximize" ceiling that still leaves the main content visible).
@@ -12,6 +19,7 @@ const MAX_PANEL_VW = 80;
 const DEFAULT_PANEL_VW = 26;
 
 export default function AppShell({ children }: { children: React.ReactNode }) {
+  const pathname = usePathname();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_VW);
   const draggingRef = useRef(false);
 
@@ -44,6 +52,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
     document.body.style.cursor = "col-resize";
     document.body.style.userSelect = "none";
   }, [onPointerMove, stopDragging]);
+
+  if (CHROME_FREE_PATHS.includes(pathname)) {
+    return <>{children}</>;
+  }
 
   return (
     <HighlightProvider>

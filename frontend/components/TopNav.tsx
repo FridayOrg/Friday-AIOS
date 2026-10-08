@@ -14,6 +14,7 @@ import {
   Bell,
   Menu,
   X,
+  LogOut,
 } from "lucide-react";
 
 const NAV_ITEMS = [
@@ -32,6 +33,11 @@ const NAV_ITEMS = [
 export default function TopNav() {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+
+  async function handleLogout() {
+    await fetch("/api/auth/logout", { method: "POST" });
+    window.location.href = "/login";
+  }
 
   return (
     <header className="sticky top-0 z-40 w-full bg-[#0F172A] border-b border-white/10 shrink-0">
@@ -83,6 +89,14 @@ export default function TopNav() {
           <div className="h-8 w-8 rounded-full bg-violet-500/20 text-violet-300 flex items-center justify-center">
             <User size={16} />
           </div>
+          <button
+            onClick={handleLogout}
+            aria-label="Sign out"
+            title="Sign out"
+            className="h-9 w-9 rounded-lg flex items-center justify-center text-slate-400 hover:bg-white/5 hover:text-slate-200"
+          >
+            <LogOut size={18} />
+          </button>
         </div>
 
         {/* Mobile: hamburger toggle */}

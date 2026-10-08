@@ -17,6 +17,13 @@ import { useEffect, useState } from "react";
 
 const STORAGE_KEY = "friday_founder_name";
 const DEFAULT_NAME = "Founder";
+// AppShell (TopNav + AskFriday) is mounted once in the root layout and never
+// unmounts across client-side navigation — including the /login -> / jump
+// after signing in — so a plain useEffect([]) in useFounderName() would
+// only ever read localStorage once, before setFounderName() has run. This
+// custom event lets every mounted useFounderName() instance re-read the
+// moment setFounderName() is called, instead of needing a remount.
+const NAME_CHANGED_EVENT = "friday-founder-name-changed";
 
 interface ContextFile {
   slug: string;
@@ -48,28 +55,45 @@ export function setFounderName(name: string): void {
   } catch {
     // storage unavailable — nothing to do, caller's in-memory state still updates
   }
+  window.dispatchEvent(new Event(NAME_CHANGED_EVENT));
 }
 
 export function useFounderName(): string {
   const [name, setName] = useState<string>(DEFAULT_NAME);
 
   useEffect(() => {
-    const stored = readStoredName();
-    if (stored) {
-      setName(stored);
-      return;
+    function resolve() {
+      const stored = readStoredName();
+      if (stored) {
+        setName(stored);
+        return;
+      }
+      fetch("/api/context")
+        .then((r) => r.json())
+        .then((data) => {
+          const files: ContextFile[] = data.files ?? [];
+          const teamDoc = files.find((f) => f.slug === "team");
+          const parsed = teamDoc ? parseCeoNameFromTeamDoc(teamDoc.content) : null;
+          if (parsed) setName(parsed);
+        })
+        .catch(() => {
+          // keep DEFAULT_NAME — context endpoint being down shouldn't break the greeting
+        });
     }
-    fetch("/api/context")
-      .then((r) => r.json())
-      .then((data) => {
-        const files: ContextFile[] = data.files ?? [];
-        const teamDoc = files.find((f) => f.slug === "team");
-        const parsed = teamDoc ? parseCeoNameFromTeamDoc(teamDoc.content) : null;
-        if (parsed) setName(parsed);
-      })
-      .catch(() => {
-        // keep DEFAULT_NAME — context endpoint being down shouldn't break the greeting
-      });
+
+    resolve();
+    // Re-resolve whenever setFounderName() runs anywhere (e.g. the login
+    // page, or the Profile page's pencil edit) — AppShell/AskFriday mount
+    // once in the root layout and never remount across navigation, so a
+    // one-shot effect alone would miss a name set after this component's
+    // first mount. Also listens for "storage" so a name change in another
+    // tab is picked up here too.
+    window.addEventListener(NAME_CHANGED_EVENT, resolve);
+    window.addEventListener("storage", resolve);
+    return () => {
+      window.removeEventListener(NAME_CHANGED_EVENT, resolve);
+      window.removeEventListener("storage", resolve);
+    };
   }, []);
 
   return name;
