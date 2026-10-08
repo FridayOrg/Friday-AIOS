@@ -2,8 +2,9 @@
 
 import { useEffect, useRef, useState } from "react";
 import { useRouter } from "next/navigation";
-import { Send, Square, Sparkles, Mic, Volume2, VolumeX, X, PlayCircle } from "lucide-react";
+import { Send, Square, Mic, Volume2, VolumeX, X, PlayCircle } from "lucide-react";
 import Markdown from "./Markdown";
+import FridayAmbientBg from "./FridayAmbientBg";
 import EmailDraftCard, { extractEmailDraft, speakableText } from "./EmailDraftCard";
 import { useHighlight } from "@/lib/highlight-context";
 import { useFounderName } from "@/lib/founderName";
@@ -23,7 +24,7 @@ const AGENT_LABEL: Record<string, string> = {
 const SAMPLE_QUESTIONS = [
   "What are the important meetings I should attend today, and why?",
   "What tasks need my attention this week?",
-  "Why should I prioritize the Northgate renewal decision?",
+  "Which open deals are most at risk, and what should I do about each?",
 ];
 
 // Mirrors backend/app/context_loader.py's DAILY_BRIEF_PROMPT exactly — kept
@@ -685,11 +686,13 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <aside className="w-full h-full flex flex-col bg-[#0F172A] border-l border-white/10">
-      <div className="px-6 pt-6 pb-4">
+    <aside className="relative w-full h-full flex flex-col border-l border-[#2563EB]">
+      <FridayAmbientBg />
+      <div className="relative z-10 px-6 pt-6 pb-4">
         <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2 text-sky-300 font-semibold">
-            <Sparkles size={18} />
+          <div className="flex items-center gap-2 text-[#2563EB] font-semibold">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/friday-mark.png" alt="" className="h-7 w-7 rounded-full object-contain bg-white p-1 shadow-sm ring-1 ring-slate-200" />
             ASK FRIDAY
           </div>
           <div className="flex items-center gap-1">
@@ -698,7 +701,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               disabled={busy}
               aria-label="Play my brief"
               title="Play my brief"
-              className="h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-white/10 disabled:opacity-40"
+              className="h-8 w-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-white/70 disabled:opacity-40"
             >
               <PlayCircle size={16} />
             </button>
@@ -709,8 +712,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               title={voiceOut ? "Spoken replies on" : "Spoken replies off"}
               className={`h-8 w-8 rounded-full flex items-center justify-center transition-colors ${
                 voiceOut
-                  ? "bg-sky-500/20 text-sky-300"
-                  : "text-slate-400 hover:text-slate-200 hover:bg-white/10"
+                  ? "bg-[#2563EB] text-white"
+                  : "text-slate-500 hover:text-slate-800 hover:bg-white/70"
               } ${speaking ? "animate-pulse" : ""}`}
             >
               {voiceOut ? <Volume2 size={16} /> : <VolumeX size={16} />}
@@ -719,22 +722,22 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               <button
                 onClick={onClose}
                 aria-label="Close chat"
-                className="lg:hidden h-8 w-8 rounded-full flex items-center justify-center text-slate-400 hover:text-slate-200 hover:bg-white/10"
+                className="lg:hidden h-8 w-8 rounded-full flex items-center justify-center text-slate-500 hover:text-slate-800 hover:bg-white/70"
               >
                 <X size={16} />
               </button>
             )}
           </div>
         </div>
-        <div className="text-sm text-slate-400 mt-0.5">
+        <div className="text-sm text-slate-500 mt-0.5">
           Your Business Advisor, always here.
-          {voiceOut && <span className="text-[10px] text-slate-300"> · Voice by ElevenLabs</span>}
+          {voiceOut && <span className="text-[10px] text-slate-500"> · Voice by ElevenLabs</span>}
         </div>
       </div>
 
       {insight && (
-        <div className="mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-500/30 bg-amber-500/10 px-3 py-2.5 text-sm">
-          <span className="flex-1 text-amber-200">
+        <div className="relative z-10 mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm">
+          <span className="flex-1 text-amber-800">
             {insight.message.replace(/\s*—\s*want details\?$/, "")}
             {" — "}
             <button
@@ -751,20 +754,20 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <button
             onClick={() => setInsight(null)}
             aria-label="Dismiss"
-            className="shrink-0 text-amber-400 hover:text-amber-200"
+            className="shrink-0 text-amber-500 hover:text-amber-700"
           >
             <X size={14} />
           </button>
         </div>
       )}
 
-      <div ref={scrollRef} className="flex-1 overflow-y-auto px-6 flex flex-col gap-5">
+      <div ref={scrollRef} className="relative z-10 flex-1 overflow-y-auto px-6 flex flex-col gap-5">
         {messages.length === 0 && (
           <div className="flex flex-col gap-3 mt-2">
-            <p className="text-sm font-medium text-slate-200">
+            <p className="text-sm font-medium text-slate-900">
               Good {timeGreeting()}, {founderName}.
             </p>
-            <p className="text-sm text-slate-400">
+            <p className="text-sm text-slate-500">
               Ask me anything about the business. I won&rsquo;t volunteer a briefing
               until you do. A few things you could start with:
             </p>
@@ -772,7 +775,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
               <button
                 key={q}
                 onClick={() => send(q)}
-                className="text-left text-sm rounded-xl border border-white/10 bg-white/5 px-4 py-3 text-slate-200 hover:border-sky-400/50 hover:bg-sky-500/10 transition-colors"
+                className="text-left text-sm rounded-xl border border-blue-100 bg-white/70 backdrop-blur-sm px-4 py-3 text-[#2563EB] shadow-sm hover:border-[#2563EB] hover:bg-white transition-colors"
               >
                 {q}
               </button>
@@ -784,7 +787,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <div key={i} className="flex flex-col gap-1.5">
             <div className="flex items-center gap-2 text-sm">
               {m.role === "user" ? (
-                <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold bg-white/10 text-slate-300">
+                <div className="h-7 w-7 rounded-full flex items-center justify-center text-xs font-semibold bg-white text-slate-600 ring-1 ring-slate-200">
                   Y
                 </div>
               ) : (
@@ -792,24 +795,24 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
                 <img
                   src="/friday-mark.png"
                   alt="Friday"
-                  className="h-7 w-7 rounded-full object-cover bg-sky-500/20"
+                  className="h-7 w-7 rounded-full object-contain bg-white p-1 shadow-sm ring-1 ring-slate-200"
                 />
               )}
-              <span className="font-medium text-slate-100">
+              <span className="font-medium text-slate-900">
                 {m.role === "user" ? "You" : "Friday"}
               </span>
               {m.agent && (
-                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-white/10 text-slate-300">
+                <span className="text-[10px] font-medium px-1.5 py-0.5 rounded-full bg-white text-slate-600 ring-1 ring-slate-200">
                   {AGENT_LABEL[m.agent]}
                 </span>
               )}
-              <span className="text-xs text-slate-400 ml-auto">{m.time}</span>
+              <span className="text-xs text-slate-500 ml-auto">{m.time}</span>
             </div>
             <div
               className={`ml-9 rounded-2xl px-4 py-3 text-sm leading-relaxed ${
                 m.role === "user"
-                  ? "bg-white/5 border border-white/10 text-slate-200 whitespace-pre-wrap"
-                  : "bg-sky-500/10 text-slate-100"
+                  ? "bg-white/80 border border-slate-200 text-slate-800 whitespace-pre-wrap"
+                  : "bg-white/70 border border-blue-100 text-slate-800 shadow-sm"
               }`}
             >
               {m.role === "friday" ? (
@@ -817,9 +820,9 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
                   <FridayMessageBody text={m.text} />
                 ) : i === messages.length - 1 && busy ? (
                   <span className="inline-flex gap-1">
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.3s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce [animation-delay:-0.15s]" />
-                    <span className="h-1.5 w-1.5 rounded-full bg-blue-400 animate-bounce" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-bounce [animation-delay:-0.3s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-bounce [animation-delay:-0.15s]" />
+                    <span className="h-1.5 w-1.5 rounded-full bg-[#2563EB] animate-bounce" />
                   </span>
                 ) : null
               ) : (
@@ -830,8 +833,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         ))}
       </div>
 
-      <div className="p-4 border-t border-white/10 bg-[#0F172A]">
-        <div className="flex items-end gap-2 rounded-xl border border-white/10 bg-white/5 px-3 py-2">
+      <div className="relative z-10 p-4">
+        <div className="flex items-end gap-2 rounded-2xl border border-slate-200 bg-white shadow-md px-3 py-2">
           <button
             onClick={toggleMic}
             disabled={busy}
@@ -841,7 +844,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             className={`h-8 w-8 shrink-0 rounded-full flex items-center justify-center transition-colors disabled:opacity-40 ${
               listening
                 ? "bg-red-500 text-white shadow-[0_0_0_4px_rgba(239,68,68,0.2)]"
-                : "text-slate-400 hover:text-slate-200 hover:bg-white/10"
+                : "text-[#2563EB] hover:bg-blue-50"
             }`}
           >
             <Mic size={15} className={listening ? "animate-pulse" : ""} />
@@ -849,7 +852,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           <textarea
             ref={textareaRef}
             rows={1}
-            className="flex-1 bg-transparent text-sm text-slate-100 outline-none placeholder:text-slate-400 resize-none py-1"
+            className="flex-1 bg-transparent text-sm text-slate-900 outline-none placeholder:text-slate-400 resize-none py-1"
             style={{ maxHeight: MAX_INPUT_HEIGHT_PX, overflowY: "auto" }}
             placeholder={listening ? "Listening… pause when you're done" : "Type or speak a message..."}
             value={input}
@@ -874,7 +877,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
             <button
               onClick={() => send()}
               disabled={!input.trim()}
-              className="h-8 w-8 shrink-0 rounded-full bg-blue-600 text-white flex items-center justify-center disabled:opacity-40"
+              className="h-8 w-8 shrink-0 rounded-full bg-[#2563EB] text-white flex items-center justify-center disabled:opacity-40"
               aria-label="Send"
             >
               <Send size={15} />
@@ -882,7 +885,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
           )}
         </div>
         {voiceNote && (
-          <p className="text-[11px] text-slate-400 mt-1.5 px-1">{voiceNote}</p>
+          <p className="text-[11px] text-slate-500 mt-1.5 px-1">{voiceNote}</p>
         )}
       </div>
     </aside>

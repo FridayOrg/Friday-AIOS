@@ -1,6 +1,6 @@
 "use client";
 
-import { Suspense, useState } from "react";
+import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { setFounderName } from "@/lib/founderName";
 
@@ -15,30 +15,34 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
 
+  // Warm up the destination route while the user is still typing.
+  useEffect(() => {
+    router.prefetch(next);
+  }, [router, next]);
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setError(null);
     setSubmitting(true);
-    try {
-      const res = await fetch("/api/auth/login", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-      if (!res.ok) {
-        const data = await res.json().catch(() => ({}));
-        setError(data.error ?? "Invalid email or password.");
-        return;
-      }
-      // Whatever name was typed in becomes the greeting name app-wide (see
-      // lib/founderName.ts — same localStorage-backed mechanism the Profile
-      // page's edit-name pencil uses).
-      setFounderName(name);
-      router.push(next);
-      router.refresh();
-    } finally {
+    const res = await fetch("/api/auth/login", {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({ email, password }),
+    }).catch(() => null);
+    if (!res || !res.ok) {
+      const data = res ? await res.json().catch(() => ({})) : {};
+      setError(data.error ?? "Invalid email or password.");
       setSubmitting(false);
+      return;
     }
+    // Whatever name was typed in becomes the greeting name app-wide (see
+    // lib/founderName.ts — same localStorage-backed mechanism the Profile
+    // page's edit-name pencil uses).
+    setFounderName(name);
+    // Stay in the "Signing in…" state until the next page takes over, instead
+    // of flipping back to "Sign in" while the dashboard loads. No router.refresh():
+    // push already renders the destination fresh with the new cookie.
+    router.push(next);
   }
 
   return (

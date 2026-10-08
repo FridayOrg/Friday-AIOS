@@ -64,7 +64,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
 
         <div className="flex flex-1 min-h-0 w-full overflow-hidden">
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-            <main className="flex-1 min-w-0 overflow-y-auto">{children}</main>
+            <main className="flex-1 min-w-0 overflow-y-auto bg-[#F5F6F8]">{children}</main>
           </div>
 
           {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
