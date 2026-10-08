@@ -2,43 +2,65 @@
 
 ## 1. Overview
 
-As a company founded in 2025 currently running its Launch Special, BookMySales.ai's client base is intentionally small and closely tracked: 5 slots reserved for the founding guarantee cohort, of which all 5 are currently filled and active. This document lists the current client roster, their guarantee status, and pricing.
+This document reflects BookMySales.ai's customers and deals as recorded in the CRM (reference date: 6 October 2026). Across 24 accounts there are 25 deals: 9 won (the current customers), 10 open (the active pipeline) and 6 lost. All values are in GBP (£).
 
-## 2. Pricing Reference (from products-services-bms.md)
+## 2. Current Customers (9 won deals)
 
-All Launch Special clients are on the **guarantee-based fee structure**: payment is tied to the doubled-meetings outcome. Below, "Baseline Monthly Meetings" reflects the client's meeting volume before BookMySales.ai began, and "Guarantee Target" is 2x that baseline.
-
-## 3. Launch Special Client Roster (5 of 5 slots filled)
-
-| # | Client Name | Industry | Baseline Monthly Meetings | Guarantee Target | Monthly Fee | Status |
+| # | Account | Deal | Offer | Value | Owner | Closed |
 |---|---|---|---|---|---|---|
-| 1 | Veltrix Software Solutions | B2B SaaS (project management tools) | 6/mo | 12/mo | $3,200/mo | Active: Month 2, on track (10 booked) |
-| 2 | Ashcombe Industrial Supply | B2B distribution/manufacturing | 4/mo | 8/mo | $2,800/mo | Active: Month 1, ramping |
-| 3 | Northgate Financial Advisory | B2B financial services | 5/mo | 10/mo | $3,000/mo | Active: Month 3, guarantee met (11 booked) |
-| 4 | Lumen Workspace Design | B2B commercial interiors/design | 3/mo | 6/mo | $2,400/mo | Active: Month 1, ramping |
-| 5 | Praxis HR Consulting | B2B HR/consulting services | 5/mo | 10/mo | $2,900/mo | Active: Month 2, on track (9 booked) |
+| 1 | Delta Accountancy | FollowUp AI Annual | FollowUp AI | £9,600 | Alex Reed | 2026-10-05 |
+| 2 | BlueHarbor Tech | ProspectIQ Team | ProspectIQ | £8,400 | Alex Reed | 2026-09-07 |
+| 3 | Willow Analytics | ProspectIQ Annual | ProspectIQ | £7,200 | Alex Reed | 2026-08-24 |
+| 4 | Redwood Finance | Pipeline Audit + Workshop | Sales Pipeline Audit | £5,000 | Priya Shah | 2026-09-17 |
+| 5 | NovaHR | FollowUp AI Pilot | FollowUp AI | £4,800 | Alex Reed | 2026-09-29 |
+| 6 | Vertex Engineering | Sales Pipeline Audit | Sales Pipeline Audit | £4,200 | Priya Shah | 2026-10-02 |
+| 7 | Cobalt Design | FollowUp AI Starter | FollowUp AI | £3,600 | Jamie Cole | 2026-09-05 |
+| 8 | Meridian Property | Sales Pipeline Audit | Sales Pipeline Audit | £3,000 | Priya Shah | 2026-08-12 |
+| 9 | Northfield IT | Pipeline Audit | Sales Pipeline Audit | £2,500 | Alex Reed | 2026-07-16 |
 
-## 4. Detail: Guarantee-Met Client
+**Total won value: £48,300** (average £5,367 per deal).
 
-### Northgate Financial Advisory
-**Industry:** B2B financial advisory services, targeting mid-market companies.
-**Where they are:** Completed Month 3 of their guarantee term with 11 booked qualified meetings against a target of 10; guarantee successfully met. Currently in discussion with Client Success (Grace Whitfield) about renewing into an ongoing retainer beyond the Launch Special terms.
-**Campaign notes:** Multi-channel approach (email + LinkedIn) outperformed email-only outreach by a notable margin for this client's ICP, per Nina Vogel's outreach reporting.
+## 3. Open Pipeline (10 deals, £124,100)
+
+| Account | Deal | Offer | Stage | Value | Win probability | Expected close | Owner |
+|---|---|---|---|---|---|---|---|
+| Atlas Logistics | Managed SDR - 12 month | Managed SDR | Proposal | £36,000 | 55% | 2026-10-10 | Priya Shah |
+| Beacon Manufacturing | Outbound Engine Rollout | Revenue Automation Sprint | Proposal | £18,000 | 60% | 2026-10-09 | Alex Reed |
+| OakBridge Consulting | Sales Automation Sprint | Revenue Automation Sprint | Solution | £14,000 | 50% | 2026-10-18 | Alex Reed |
+| Lumina Education | Revenue Automation Sprint | Revenue Automation Sprint | Discovery | £12,000 | 35% | 2026-10-22 | Priya Shah |
+| Silverline Media | ProspectIQ Expansion | ProspectIQ | Solution | £11,000 | 50% | 2026-10-17 | Alex Reed |
+| Northstar Legal | FollowUp AI - 20 users | FollowUp AI | Decision | £9,600 | 80% | 2026-10-08 | Priya Shah |
+| QuarryWorks | FollowUp AI + onboarding | FollowUp AI | Qualified | £7,800 | 25% | 2026-10-25 | Jamie Cole |
+| Stonegate Software | FollowUp AI - Pilot | FollowUp AI | Proposal | £7,200 | 60% | 2026-09-30 | Jamie Cole |
+| Crest Health | ProspectIQ Starter | ProspectIQ | Qualified | £6,000 | 30% | 2026-10-20 | Jamie Cole |
+| GreenGrid Energy | Pipeline Audit | Sales Pipeline Audit | Discovery | £2,500 | 35% | 2026-10-15 | Alex Reed |
+
+**Probability-weighted open pipeline: £63,925.**
+
+## 4. Lost Deals (6 deals, £64,500)
+
+| Account | Deal | Value | Reason lost | Owner | Closed |
+|---|---|---|---|---|---|
+| MetroBuild | Revenue Automation Sprint | £18,000 | Project postponed | Priya Shah | 2026-09-03 |
+| CedarWorks | Revenue Automation Sprint | £15,000 | Chose incumbent supplier | Priya Shah | 2026-09-25 |
+| Harbor Foods | Managed SDR Trial | £9,000 | Budget frozen until Q1 | Jamie Cole | 2026-10-03 |
+| Helix Industrial | Managed SDR Trial | £9,000 | Budget frozen | Jamie Cole | 2026-09-11 |
+| IronPeak Services | Managed SDR Pilot | £7,500 | No internal sales owner | Jamie Cole | 2026-08-18 |
+| Pioneer Labs | Managed SDR Trial | £6,000 | Not enough sales volume | Jamie Cole | 2026-07-29 |
+
+Four of the six lost deals are Managed SDR trials and pilots; the other two are Revenue Automation Sprints. Two losses cite a frozen budget.
 
 ## 5. Summary Figures
 
-- **Total Launch Special clients:** 5 of 5 slots filled
-- **Guarantee met (to date):** 1 of 5 (Northgate Financial Advisory)
-- **On track (mid-guarantee period):** 3 of 5
-- **Ramping (early stage):** 1 of 5
-- **Average monthly fee across cohort:** $2,860/mo
-- **Combined current monthly recurring revenue:** $14,300/mo across all 5 active clients
-- **Average baseline-to-target meeting increase:** from ~4.6/mo baseline to ~9.2/mo target across the cohort
-
-## 6. Post-Launch Pipeline
-
-Beyond the 5 filled Launch Special slots, BookMySales.ai is currently fielding fit-assessment inquiries for a **second cohort**, expected to move to standard (non-launch-special) guarantee pricing once the first cohort's results are documented as case studies, consistent with the strategy priority of proving the model before broader scaling.
+- **Accounts with deals:** 24
+- **Total deals:** 25 (9 won, 10 open, 6 lost)
+- **Won value:** £48,300
+- **Open pipeline value:** £124,100 (probability-weighted £63,925)
+- **Lost value:** £64,500
+- **Win rate (won vs. won + lost):** 60% by count, 43% by value
+- **Average won deal size:** £5,367
+- **Average time from deal creation to close (won deals):** about 28 days
 
 ---
 
-*This document lists BookMySales.ai's current client roster, guarantee status, and pricing. It maps directly onto a future `mock-data/pipeline.json` file using the same figures in structured JSON form.*
+*This document is derived from the CRM deal data (opportunities, deal owners, stages and values). All amounts are in GBP.*

@@ -2,7 +2,7 @@
 
 ## 1. Overview
 
-BookMySales.ai operates with a lean team of 13 people spanning two office locations, Stratford-upon-Avon, UK, and Dallas, TX, US, organized around the four stages of the company's core delivery process (lead sourcing, campaign strategy/copywriting, outreach execution, client success), plus a dedicated AI Strategy function overseeing how AI gets applied across the company's own operations. As a company built on a performance guarantee, the team structure is deliberately weighted toward roles that directly affect meeting-booking outcomes.
+BookMySales.ai operates with a lean team of 13 people spanning two office locations, Stratford-upon-Avon, UK, and Dallas, TX, US, organized around the four stages of the company's core delivery process (lead sourcing, campaign strategy/copywriting, outreach execution, client success), plus a dedicated AI Strategy function overseeing how AI gets applied across the company's own operations. Three further people (Alex Reed, Priya Shah and Jamie Cole) appear in the CRM as deal owners. As a company built on a performance guarantee, the team structure is deliberately weighted toward roles that directly affect meeting-booking outcomes.
 
 ## 1. Leadership (2 people)
 
@@ -70,7 +70,20 @@ Both AI Strategists work proposal-first: they bring a scoped recommendation (pro
 Primary: Owns the client relationship post-launch: weekly reporting, monthly progress meetings, and guarantee tracking.
 Sub-skills: Campaign performance analysis, client onboarding, renewal conversations.
 
-## 7. How Work Flows Across the Team
+## 7. CRM Deal Owners (3 people)
+
+These three people own the deals in the CRM. The company context does not give their roles, locations or skills, so only their CRM activity is listed.
+
+**Alex Reed**
+CRM deals owned: 9 (5 won for £32,500, 4 open for £45,500, none lost). Strongest record of the three: no lost deals.
+
+**Priya Shah**
+CRM deals owned: 8 (3 won for £12,200, 3 open for £57,600, 2 lost for £33,000). Holds the largest open pipeline, including the £36,000 Atlas Logistics Managed SDR proposal. Not the same person as Priya Deshmukh, Lead Sourcing Lead.
+
+**Jamie Cole**
+CRM deals owned: 8 (1 won for £3,600, 3 open for £21,000, 4 lost for £31,500). Owns all four lost Managed SDR trials and pilots.
+
+## 8. How Work Flows Across the Team
 
 For a new client under the guarantee model:
 
@@ -82,7 +95,7 @@ For a new client under the guarantee model:
 
 Separately, and on an ongoing basis rather than per-client: **AI Strategy** continuously evaluates where AI can improve either internal operations or client delivery, proposing scoped use cases that Client Success reviews before anything moves into implementation.
 
-## 8. Working Philosophy
+## 9. Working Philosophy
 
 Given the company's guarantee-based model, every role is ultimately measured against one shared outcome: booked, qualified meetings. This keeps the team unusually aligned across functions compared to a typical marketing/sales agency: data, copywriting, and outreach all report against the same weekly meeting-count metric, rather than siloed departmental KPIs.
 

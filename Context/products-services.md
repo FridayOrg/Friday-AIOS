@@ -2,29 +2,41 @@
 
 ## 1. Overview
 
-BookMySales.ai sells one core outcome, a guaranteed doubling of qualified sales meetings, delivered through a single, fully managed service (not a tiered software product). This document details the four-stage delivery process, the guarantee mechanics, and how the offering compares to alternatives.
+BookMySales.ai's headline promise is a guaranteed doubling of qualified sales meetings, delivered as a fully managed service. In the CRM, the company sells five offers: two products (FollowUp AI, ProspectIQ), two services (Sales Pipeline Audit, Revenue Automation Sprint) and one recurring service (Managed SDR). This document lists those offers with their CRM results, then details the four-stage delivery process, the guarantee mechanics, and how the offering compares to alternatives.
 
-## 2. The Core Offering: The 2x Meetings Guarantee
+## 2. Offers Sold (from the CRM)
+
+| Offer | Type | Deals (won / open / lost) | Won value | Open value | Deal sizes seen |
+|---|---|---|---|---|---|
+| FollowUp AI | Product | 3 / 3 / 0 | £18,000 | £24,600 | £3,600 to £9,600 (starter, pilot, annual, per-user) |
+| ProspectIQ | Product | 2 / 2 / 0 | £15,600 | £17,000 | £6,000 to £11,000 (starter, team, annual, expansion) |
+| Sales Pipeline Audit | Service | 4 / 1 / 0 | £14,700 | £2,500 | £2,500 to £5,000 (audit, audit plus workshop) |
+| Revenue Automation Sprint | Service | 0 / 3 / 2 | none | £44,000 | £12,000 to £18,000 |
+| Managed SDR | Recurring Service | 0 / 1 / 4 | none | £36,000 | £6,000 to £9,000 for trials/pilots, £36,000 for a 12-month deal |
+
+**What the data shows:** the lower-priced products and the Sales Pipeline Audit are where deals are being won. Managed SDR and Revenue Automation Sprint carry the largest deal values, but have no wins yet and account for all six lost deals. The CRM holds deal data only, so it carries no detailed product descriptions beyond what is above.
+
+## 3. The Core Offering: The 2x Meetings Guarantee
 
 **The promise:** BookMySales.ai doubles a client's qualified sales meetings, or the client doesn't pay.
 
 **Launch Special:** The first 5 businesses to qualify (via the "Find out if you're a fit" assessment) receive this guarantee as part of their onboarding, positioned as a founding-cohort offer.
 
-## 3. The Four-Stage Delivery Process
+## 4. The Four-Stage Delivery Process
 
-### 3.1 Lead Generation
+### 4.1 Lead Generation
 Prospects are sourced from 40+ verified databases and channels, enriched with accurate contact and company-level insights. Only leads matching the client's exact Ideal Customer Profile (ICP) make it into the active campaign list; filtering happens before outreach begins, not after.
 
-### 3.2 Customized Outreach Messaging
+### 4.2 Customized Outreach Messaging
 Every message is built using a combination of AI-assisted drafting and human copywriting, tailored to each prospect's specific pain points. The company explicitly avoids generic templated sequences; each campaign sequence is designed to stand out in a prospect's inbox.
 
-### 3.3 Multi-Channel Outreach & Follow-Up
+### 4.3 Multi-Channel Outreach & Follow-Up
 Prospects are engaged across the channels they're most active on, email, LinkedIn, and others, with automated but personalized follow-up sequences designed to stay top-of-mind without becoming spam.
 
-### 3.4 Calendar Booking
+### 4.4 Calendar Booking
 Once a lead responds with interest, they're booked directly into the client's sales team's calendar. The client's team receives ready-to-talk meetings, with no chasing or admin required on their end.
 
-## 4. Competitive Positioning
+## 5. Competitive Positioning
 
 BookMySales.ai positions itself directly against two categories of alternative, per its own published comparison:
 
@@ -38,7 +50,7 @@ BookMySales.ai positions itself directly against two categories of alternative, 
 | Cost | Fraction of an in-house SDR's cost | Expensive ($5K–$10K+/mo) | Fraction of SDR cost |
 | Team Background | Fortune 500 enterprise sales experience | Varies | Rare |
 
-## 5. Why This Matters to Clients (Problem Framing)
+## 6. Why This Matters to Clients (Problem Framing)
 
 The service is explicitly positioned against four common B2B sales bottlenecks:
 
@@ -47,7 +59,7 @@ The service is explicitly positioned against four common B2B sales bottlenecks:
 - **Low volume**: low outbound email volume directly caps pipeline size.
 - **Slow response**: delayed replies to inbound interest turn warm leads cold.
 
-## 6. Free Tools & Resources (Top-of-Funnel)
+## 7. Free Tools & Resources (Top-of-Funnel)
 
 Beyond the core paid service, BookMySales.ai offers a set of free interactive tools and diagnostics, used both as genuine value-adds and as a way for prospects to self-qualify before booking a strategy call.
 
@@ -82,18 +94,19 @@ The company also publishes educational content aimed at B2B founders: recent top
 
 This top-of-funnel content strategy supports the company's broader positioning: establishing credibility and expertise before ever asking a prospect to commit to a paid engagement.
 
-## 7. Pricing Structure
+## 8. Pricing Structure
 
 Pricing is structured around the guarantee model rather than a tiered feature menu:
 
 - **Fully customized, per-client proposals (during the launch period).** The company is explicit that no two businesses have the same growth math; a business scaling from $1M to $2M has very different resourcing needs than one scaling from $25K to $100K. Rather than fixed tiers, every proposal is built around the specific client's starting point, industry, and target speed of growth.
 - **ROI-first proposal design:** Every custom proposal is built with the explicit goal of delivering a return worth multiple times the client's investment.
+- **Observed deal sizes (CRM, GBP):** won deals range from £2,500 to £9,600, with an average of £5,367; the largest open deal is £36,000 (a 12-month Managed SDR proposal).
 - **Guarantee-based fee:** Payment is tied to hitting the doubled-meetings outcome; if the guarantee isn't met, the client doesn't pay, per the company's core promise.
 - **Cost positioning:** Regardless of the custom proposal amount, pricing is consistently kept to a fraction of the cost of hiring an in-house SDR (~$80K+/year).
 - **Launch Special terms:** The first 5 qualifying businesses receive the guarantee explicitly built into their custom onboarding proposal, as part of the company's early-cohort case-study strategy.
 - **Entry point:** Prospects go through a "Check Fitment" qualification step before receiving a custom proposal, consistent with the company's broader emphasis on qualifying fit before quoting price.
 
-## 7. Entry Point: BookMyCall
+## 9. Entry Point: BookMyCall
 
 Prospective clients begin not with a sales pitch but with a **"Find out if you're a fit"** qualification step, followed by booking a strategy call ("Book My Strategy Call" / "BookMyCall"). This mirrors the company's own product; clients experience the exact kind of qualified-meeting-booking process that BookMySales.ai sells to them.
 

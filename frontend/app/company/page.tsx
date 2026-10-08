@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { Building2 } from "lucide-react";
+import ContextDocument from "@/components/ContextDocument";
 
 interface ContextFile {
   slug: string;
@@ -60,10 +61,10 @@ export default function CompanyPage() {
             ))}
           </nav>
 
-          <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-6 min-w-0">
+          <div className="flex-1 bg-white rounded-2xl border border-gray-200 shadow-sm p-8 min-w-0">
             {active ? (
-              <article className="text-sm text-slate-700 leading-relaxed whitespace-pre-wrap font-[inherit]">
-                {active.content}
+              <article>
+                <ContextDocument text={active.content} />
               </article>
             ) : (
               <p className="text-sm text-slate-500">No context files found.</p>
