@@ -173,14 +173,6 @@ export default function ProfilePage() {
               <p className="text-sm text-slate-500">No experience details found in the team context.</p>
             )}
           </div>
-
-          <div className="px-8 pb-8">
-            <p className="text-xs text-slate-500 leading-relaxed border-t border-gray-200 pt-4">
-              Full profile management (role, and notification preferences) isn&rsquo;t built yet. This MVP has no
-              accounts or database — the name above is saved to this browser only (click the pencil to change it),
-              and everything else reflects the founder&rsquo;s details from the company&rsquo;s own context files.
-            </p>
-          </div>
         </div>
       )}
     </div>

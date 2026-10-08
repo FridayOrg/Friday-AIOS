@@ -139,7 +139,7 @@ def evaluate_opportunity(opp: dict, events: list[dict], today: date) -> list[dic
                     opp,
                     priority="High",
                     action="Review deal strategy — late-stage high-value deal has no dated next step",
-                    due=today.isoformat(),
+                    due=_next_business_day(today).isoformat(),
                     why_now="Late-stage, high-value proposal has no dated next action",
                 )
             )
@@ -151,7 +151,7 @@ def evaluate_opportunity(opp: dict, events: list[dict], today: date) -> list[dic
                     opp,
                     priority="High",
                     action="Create a dated next action or requalify the deal",
-                    due=today.isoformat(),
+                    due=_next_business_day(today).isoformat(),
                     why_now="Open deal has no next action on file",
                 )
             )
@@ -163,7 +163,7 @@ def evaluate_opportunity(opp: dict, events: list[dict], today: date) -> list[dic
                     opp,
                     priority="High",
                     action=opp["next_action"],
-                    due=today.isoformat(),
+                    due=_next_business_day(today).isoformat(),
                     why_now="A recent meeting or note created a commitment that still needs action",
                 )
             )
@@ -177,7 +177,7 @@ def evaluate_opportunity(opp: dict, events: list[dict], today: date) -> list[dic
                 opp,
                 priority="Medium",
                 action=f"Fill in missing {', '.join(missing_fields)} for this deal",
-                due=_next_business_day(today).isoformat(),
+                due=_next_business_day(_next_business_day(today)).isoformat(),
                 why_now=f"Missing core field(s): {', '.join(missing_fields)}",
             )
         )

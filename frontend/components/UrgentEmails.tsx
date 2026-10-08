@@ -32,7 +32,6 @@ interface Action {
   deal: string;
   whyNow: string;
   notes: string;
-  timeHorizon: string; // "Today" | "This Week" — as given in actions.json
 }
 
 const TIER_RANK: Record<PriorityTier, number> = { critical: 0, high: 1, low: 2 };
@@ -67,8 +66,22 @@ function actionTier(a: Action): PriorityTier {
   return "low";
 }
 
-function actionHorizon(a: Action): Horizon {
-  return a.timeHorizon === "Today" ? "Today" : "This Week";
+function isoDay(d: Date): string {
+  const m = String(d.getMonth() + 1).padStart(2, "0");
+  const day = String(d.getDate()).padStart(2, "0");
+  return `${d.getFullYear()}-${m}-${day}`;
+}
+
+// Filters work off the due date: "Today" = due today; "This Week" = due from
+// today through this Saturday (week runs Sunday–Saturday). Later items show
+// only under "All".
+function inHorizon(due: string, h: "all" | Horizon): boolean {
+  if (h === "all") return true;
+  const now = new Date();
+  const today = isoDay(now);
+  if (h === "Today") return due === today;
+  const saturday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (6 - now.getDay()));
+  return due >= today && due <= isoDay(saturday);
 }
 
 export default function UrgentEmails() {
@@ -93,12 +106,12 @@ export default function UrgentEmails() {
   const items = useMemo(
     () =>
       [...actions]
-        .map((action) => ({ action, tier: actionTier(action), horizon: actionHorizon(action) }))
+        .map((action) => ({ action, tier: actionTier(action) }))
         .sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]),
     [actions]
   );
 
-  const visibleItems = items.filter((i) => horizonFilter === "all" || i.horizon === horizonFilter);
+  const visibleItems = items.filter((i) => inHorizon(i.action.due, horizonFilter));
 
   return (
     <div>
