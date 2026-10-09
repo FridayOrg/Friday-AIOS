@@ -731,7 +731,6 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
         </div>
         <div className="text-sm text-slate-500 mt-0.5">
           Your Business Advisor, always here.
-          {voiceOut && <span className="text-[10px] text-slate-500"> · Voice by ElevenLabs</span>}
         </div>
       </div>
 
