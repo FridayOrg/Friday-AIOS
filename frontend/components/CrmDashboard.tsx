@@ -63,6 +63,51 @@ const TOOLTIP_STYLE = {
   itemStyle: { color: C.ink },
 };
 
+// A Pie slice's count (inside the slice, mid-radius) and its stage name
+// (just outside the slice, anchored left/right depending on which half of
+// the circle it falls on) — both directly on the chart itself rather than
+// a separate <Legend>/list elsewhere.
+const RADIAN = Math.PI / 180;
+function PieSliceLabel(props: {
+  cx?: number;
+  cy?: number;
+  midAngle?: number;
+  innerRadius?: number;
+  outerRadius?: number;
+  value?: number;
+  name?: string;
+  fill?: string;
+}) {
+  const { cx = 0, cy = 0, midAngle = 0, innerRadius = 0, outerRadius = 0, value = 0, name = "", fill = C.muted } = props;
+  const countRadius = innerRadius + (outerRadius - innerRadius) * 0.5;
+  const countX = cx + countRadius * Math.cos(-midAngle * RADIAN);
+  const countY = cy + countRadius * Math.sin(-midAngle * RADIAN);
+
+  const nameRadius = outerRadius + 14;
+  const nameX = cx + nameRadius * Math.cos(-midAngle * RADIAN);
+  const nameY = cy + nameRadius * Math.sin(-midAngle * RADIAN);
+  const onRightHalf = Math.cos(-midAngle * RADIAN) >= 0;
+
+  return (
+    <g>
+      <text x={countX} y={countY} fill="#FFFFFF" textAnchor="middle" dominantBaseline="central" fontSize={11} fontWeight={700}>
+        {value}
+      </text>
+      <text
+        x={nameX}
+        y={nameY}
+        fill={fill}
+        textAnchor={onRightHalf ? "start" : "end"}
+        dominantBaseline="central"
+        fontSize={10}
+        fontWeight={500}
+      >
+        {name}
+      </text>
+    </g>
+  );
+}
+
 const RANGE_OPTIONS: { key: DateRangeKey; label: string }[] = [
   { key: "today", label: "Today" },
   { key: "week", label: "This Week" },
@@ -459,17 +504,28 @@ function DealsByStageCard({ data }: { data: CrmOverview }) {
       {rows.length === 0 ? (
         <EmptyChart label="No open deals." />
       ) : (
-        <div className="h-56 mt-2">
+        <div className="h-64 mt-2">
           <ResponsiveContainer width="100%" height="100%">
-            <PieChart margin={{ top: 20, right: 20, bottom: 0, left: 20 }}>
+            <PieChart margin={{ top: 24, right: 40, bottom: 24, left: 40 }}>
               <Pie
                 data={rows}
                 dataKey="count"
                 nameKey="stage_name"
-                innerRadius={40}
-                outerRadius={65}
+                innerRadius={36}
+                outerRadius={55}
                 paddingAngle={2}
-                label={({ value }) => value}
+                // Starts at 12 o'clock and sweeps clockwise (Recharts'
+                // default starts at 3 o'clock) so the pipeline order
+                // (Qualified -> Discovery -> Solution -> Proposal ->
+                // Decision, the row order `rows` is already in) reads
+                // clockwise from the top, matching how a clock face works.
+                startAngle={90}
+                endAngle={-270}
+                // Count inside each slice (mid-radius) and its stage name
+                // just outside it — both directly on the chart, so no
+                // separate <Legend>/list is needed (and nothing to fight
+                // Recharts' default Pie-legend alphabetizing over).
+                label={PieSliceLabel}
                 labelLine={false}
               >
                 {rows.map((_, i) => (
@@ -477,7 +533,6 @@ function DealsByStageCard({ data }: { data: CrmOverview }) {
                 ))}
               </Pie>
               <Tooltip {...TOOLTIP_STYLE} formatter={(v, _n, entry) => [`${v} deals`, (entry?.payload as { stage_name?: string })?.stage_name ?? ""]} />
-              <Legend wrapperStyle={{ fontSize: 11 }} />
             </PieChart>
           </ResponsiveContainer>
         </div>
@@ -603,6 +658,11 @@ function TopDealsCard({
   data, expandedDeal, setExpandedDeal,
 }: { data: CrmOverview; expandedDeal: number | null; setExpandedDeal: (id: number | null) => void }) {
   const deals = data.top_deals ?? [];
+  // range.end is "today" for every range except a custom one (see
+  // crm_metrics.resolve_range — today/week/month/quarter/year all resolve
+  // to period-to-date, so end is always today's date, FRIDAY_TZ-anchored,
+  // same clock the rest of the CRM page's overdue/due-today logic uses).
+  const today = data.range?.end;
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}>
       <div className="px-5 py-4">
@@ -629,7 +689,7 @@ function TopDealsCard({
             </thead>
             <tbody>
               {deals.map((d) => (
-                <DealRowItem key={d.id} deal={d} expanded={expandedDeal === d.id} onToggle={() => setExpandedDeal(expandedDeal === d.id ? null : d.id)} />
+                <DealRowItem key={d.id} deal={d} today={today} expanded={expandedDeal === d.id} onToggle={() => setExpandedDeal(expandedDeal === d.id ? null : d.id)} />
               ))}
             </tbody>
           </table>
@@ -639,7 +699,10 @@ function TopDealsCard({
   );
 }
 
-function DealRowItem({ deal, expanded, onToggle }: { deal: DealRow; expanded: boolean; onToggle: () => void }) {
+function DealRowItem({
+  deal, today, expanded, onToggle,
+}: { deal: DealRow; today?: string; expanded: boolean; onToggle: () => void }) {
+  const isPastClose = !!(today && deal.expected_close_date && deal.expected_close_date < today);
   return (
     <>
       <tr
@@ -656,7 +719,19 @@ function DealRowItem({ deal, expanded, onToggle }: { deal: DealRow; expanded: bo
           {deal.value !== null ? `${deal.currency ?? ""} ${deal.value.toLocaleString("en-US")}`.trim() : "—"}
         </td>
         <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{deal.stage_name ?? "—"}</td>
-        <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{fmtDate(deal.expected_close_date)}</td>
+        <td className="px-5 py-2.5 whitespace-nowrap">
+          {isPastClose ? (
+            <span
+              className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium"
+              style={{ background: "#FEF3C7", color: "#92400E" }}
+              title="Expected close date has passed"
+            >
+              {fmtDate(deal.expected_close_date)}
+            </span>
+          ) : (
+            <span style={{ color: C.muted }}>{fmtDate(deal.expected_close_date)}</span>
+          )}
+        </td>
         <td className="px-5 py-2.5 whitespace-nowrap">
           <span className="flex items-center gap-1.5" style={{ color: C.muted }}>
             <Avatar name={deal.owner} />
@@ -741,16 +816,22 @@ function RisksCard({ data }: { data: CrmOverview }) {
   const r = data.risks;
   if (!r) return null;
 
-  const sections = [
+  // tone sets how urgently each section is highlighted — previously every
+  // section (overdue, approaching, stalled, large-no-activity) used the same
+  // pale yellow regardless of severity, so the most urgent one (an actually
+  // overdue close date) didn't stand out from the merely-worth-watching ones.
+  const sections: { title: string; items: DealRow[]; reason: (d: DealRow) => string; tone: "red" | "amber" | "blue" }[] = [
     {
       title: "Overdue Close Date",
       items: r.overdue_close_deals,
       reason: (d: DealRow) => `Expected close was ${fmtDate(d.expected_close_date)} — already past`,
+      tone: "red",
     },
     {
       title: "Approaching Close Date",
       items: r.approaching_close_deals,
       reason: (d: DealRow) => `Expected to close by ${fmtDate(d.expected_close_date)} (within ${r.approaching_close_threshold_days} days)`,
+      tone: "amber",
     },
     {
       title: "Stalled Deals",
@@ -759,13 +840,21 @@ function RisksCard({ data }: { data: CrmOverview }) {
         d.last_activity_date
           ? `No activity since ${fmtDate(d.last_activity_date)} (over ${r.stale_activity_threshold_days} days)`
           : `No recorded activity at all`,
+      tone: "amber",
     },
     {
       title: "Large Deals Without Upcoming Activity",
       items: r.large_deals_without_upcoming_activity,
       reason: () => `Above-median value with no next activity scheduled`,
+      tone: "blue",
     },
   ];
+
+  const TONE_STYLE: Record<"red" | "amber" | "blue", { bg: string; border: string; titleColor: string }> = {
+    red: { bg: "#FDECEC", border: "#F8B4B4", titleColor: C.down },
+    amber: { bg: "#FEF9E7", border: "#FDE9B5", titleColor: C.muted },
+    blue: { bg: "#EAF1FD", border: "#BFD6F8", titleColor: C.blue },
+  };
 
   const totalCount = sections.reduce((s, sec) => s + sec.items.length, 0);
 
@@ -778,13 +867,17 @@ function RisksCard({ data }: { data: CrmOverview }) {
         <p className="text-sm" style={{ color: C.faint }}>Nothing needs attention right now.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {sections.map((sec) =>
-            sec.items.length === 0 ? null : (
+          {sections.map((sec) => {
+            if (sec.items.length === 0) return null;
+            const tone = TONE_STYLE[sec.tone];
+            return (
               <div key={sec.title}>
-                <p className="text-xs font-semibold mb-1.5">{sec.title} ({sec.items.length})</p>
+                <p className="text-xs font-semibold mb-1.5" style={{ color: tone.titleColor }}>
+                  {sec.title} ({sec.items.length})
+                </p>
                 <div className="flex flex-col gap-1.5">
                   {sec.items.slice(0, 4).map((d) => (
-                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: "#FEF9E7", border: "1px solid #FDE9B5" }}>
+                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
                       <p className="text-xs font-medium" style={{ color: C.ink }}>{d.name} <span style={{ color: C.faint, fontWeight: 400 }}>· {d.company ?? "—"}</span></p>
                       <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>{sec.reason(d)}</p>
                     </div>
@@ -794,8 +887,8 @@ function RisksCard({ data }: { data: CrmOverview }) {
                   )}
                 </div>
               </div>
-            )
-          )}
+            );
+          })}
         </div>
       )}
     </div>
