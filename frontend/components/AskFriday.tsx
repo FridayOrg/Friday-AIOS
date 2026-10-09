@@ -737,8 +737,8 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
       {insight && (
         <div className="relative z-10 mx-6 mb-3 flex items-start gap-2 rounded-xl border border-amber-300 bg-amber-50 px-3 py-2.5 text-sm">
           <span className="flex-1 text-amber-800">
-            {insight.message.replace(/\s*—\s*want details\?$/, "")}
-            {" — "}
+            {insight.message.replace(/,?\s*want details\?$/, "")}
+            {", "}
             <button
               onClick={() => {
                 const q = insight.query;

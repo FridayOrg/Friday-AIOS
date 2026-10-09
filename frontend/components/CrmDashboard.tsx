@@ -824,7 +824,7 @@ function RisksCard({ data }: { data: CrmOverview }) {
     {
       title: "Overdue Close Date",
       items: r.overdue_close_deals,
-      reason: (d: DealRow) => `Expected close was ${fmtDate(d.expected_close_date)} — already past`,
+      reason: (d: DealRow) => `Expected close was ${fmtDate(d.expected_close_date)}, already past`,
       tone: "red",
     },
     {

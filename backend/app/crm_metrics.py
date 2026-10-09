@@ -807,7 +807,7 @@ def build_notable_insight(revenue: dict, risks: dict, activity_metrics: dict) ->
         return {
             "message": (
                 f"{len(overdue_deals)} deal{'s' if len(overdue_deals) != 1 else ''} "
-                f"past their expected close date (${total_value:,.0f} total) — want details?"
+                f"past their expected close date (${total_value:,.0f} total), want details?"
             ),
             "query": "What deals are overdue on their expected close date?",
         }
@@ -815,14 +815,14 @@ def build_notable_insight(revenue: dict, risks: dict, activity_metrics: dict) ->
     growth = revenue.get("growth_pct")
     if growth is not None and growth <= NOTABLE_REVENUE_DROP_PCT:
         return {
-            "message": f"Won revenue is down {abs(growth):.0f}% vs. the previous period — want details?",
+            "message": f"Won revenue is down {abs(growth):.0f}% vs. the previous period, want details?",
             "query": "Why is revenue down compared to last period?",
         }
 
     overdue_activities = activity_metrics["overdue_count"]
     if overdue_activities >= NOTABLE_OVERDUE_ACTIVITIES:
         return {
-            "message": f"{overdue_activities} overdue activities in the CRM — want details?",
+            "message": f"{overdue_activities} overdue activities in the CRM, want details?",
             "query": "What activities are overdue right now?",
         }
 
