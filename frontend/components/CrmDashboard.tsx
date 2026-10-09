@@ -658,6 +658,11 @@ function TopDealsCard({
   data, expandedDeal, setExpandedDeal,
 }: { data: CrmOverview; expandedDeal: number | null; setExpandedDeal: (id: number | null) => void }) {
   const deals = data.top_deals ?? [];
+  // range.end is "today" for every range except a custom one (see
+  // crm_metrics.resolve_range — today/week/month/quarter/year all resolve
+  // to period-to-date, so end is always today's date, FRIDAY_TZ-anchored,
+  // same clock the rest of the CRM page's overdue/due-today logic uses).
+  const today = data.range?.end;
   return (
     <div className="rounded-xl overflow-hidden" style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: "0 1px 2px rgba(16,24,40,0.04)" }}>
       <div className="px-5 py-4">
@@ -684,7 +689,7 @@ function TopDealsCard({
             </thead>
             <tbody>
               {deals.map((d) => (
-                <DealRowItem key={d.id} deal={d} expanded={expandedDeal === d.id} onToggle={() => setExpandedDeal(expandedDeal === d.id ? null : d.id)} />
+                <DealRowItem key={d.id} deal={d} today={today} expanded={expandedDeal === d.id} onToggle={() => setExpandedDeal(expandedDeal === d.id ? null : d.id)} />
               ))}
             </tbody>
           </table>
@@ -694,7 +699,10 @@ function TopDealsCard({
   );
 }
 
-function DealRowItem({ deal, expanded, onToggle }: { deal: DealRow; expanded: boolean; onToggle: () => void }) {
+function DealRowItem({
+  deal, today, expanded, onToggle,
+}: { deal: DealRow; today?: string; expanded: boolean; onToggle: () => void }) {
+  const isPastClose = !!(today && deal.expected_close_date && deal.expected_close_date < today);
   return (
     <>
       <tr
@@ -711,7 +719,19 @@ function DealRowItem({ deal, expanded, onToggle }: { deal: DealRow; expanded: bo
           {deal.value !== null ? `${deal.currency ?? ""} ${deal.value.toLocaleString("en-US")}`.trim() : "—"}
         </td>
         <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{deal.stage_name ?? "—"}</td>
-        <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{fmtDate(deal.expected_close_date)}</td>
+        <td className="px-5 py-2.5 whitespace-nowrap">
+          {isPastClose ? (
+            <span
+              className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium"
+              style={{ background: "#FEF3C7", color: "#92400E" }}
+              title="Expected close date has passed"
+            >
+              {fmtDate(deal.expected_close_date)}
+            </span>
+          ) : (
+            <span style={{ color: C.muted }}>{fmtDate(deal.expected_close_date)}</span>
+          )}
+        </td>
         <td className="px-5 py-2.5 whitespace-nowrap">
           <span className="flex items-center gap-1.5" style={{ color: C.muted }}>
             <Avatar name={deal.owner} />
@@ -796,16 +816,22 @@ function RisksCard({ data }: { data: CrmOverview }) {
   const r = data.risks;
   if (!r) return null;
 
-  const sections = [
+  // tone sets how urgently each section is highlighted — previously every
+  // section (overdue, approaching, stalled, large-no-activity) used the same
+  // pale yellow regardless of severity, so the most urgent one (an actually
+  // overdue close date) didn't stand out from the merely-worth-watching ones.
+  const sections: { title: string; items: DealRow[]; reason: (d: DealRow) => string; tone: "red" | "amber" | "blue" }[] = [
     {
       title: "Overdue Close Date",
       items: r.overdue_close_deals,
       reason: (d: DealRow) => `Expected close was ${fmtDate(d.expected_close_date)} — already past`,
+      tone: "red",
     },
     {
       title: "Approaching Close Date",
       items: r.approaching_close_deals,
       reason: (d: DealRow) => `Expected to close by ${fmtDate(d.expected_close_date)} (within ${r.approaching_close_threshold_days} days)`,
+      tone: "amber",
     },
     {
       title: "Stalled Deals",
@@ -814,13 +840,21 @@ function RisksCard({ data }: { data: CrmOverview }) {
         d.last_activity_date
           ? `No activity since ${fmtDate(d.last_activity_date)} (over ${r.stale_activity_threshold_days} days)`
           : `No recorded activity at all`,
+      tone: "amber",
     },
     {
       title: "Large Deals Without Upcoming Activity",
       items: r.large_deals_without_upcoming_activity,
       reason: () => `Above-median value with no next activity scheduled`,
+      tone: "blue",
     },
   ];
+
+  const TONE_STYLE: Record<"red" | "amber" | "blue", { bg: string; border: string; titleColor: string }> = {
+    red: { bg: "#FDECEC", border: "#F8B4B4", titleColor: C.down },
+    amber: { bg: "#FEF9E7", border: "#FDE9B5", titleColor: C.muted },
+    blue: { bg: "#EAF1FD", border: "#BFD6F8", titleColor: C.blue },
+  };
 
   const totalCount = sections.reduce((s, sec) => s + sec.items.length, 0);
 
@@ -833,13 +867,17 @@ function RisksCard({ data }: { data: CrmOverview }) {
         <p className="text-sm" style={{ color: C.faint }}>Nothing needs attention right now.</p>
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-          {sections.map((sec) =>
-            sec.items.length === 0 ? null : (
+          {sections.map((sec) => {
+            if (sec.items.length === 0) return null;
+            const tone = TONE_STYLE[sec.tone];
+            return (
               <div key={sec.title}>
-                <p className="text-xs font-semibold mb-1.5">{sec.title} ({sec.items.length})</p>
+                <p className="text-xs font-semibold mb-1.5" style={{ color: tone.titleColor }}>
+                  {sec.title} ({sec.items.length})
+                </p>
                 <div className="flex flex-col gap-1.5">
                   {sec.items.slice(0, 4).map((d) => (
-                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: "#FEF9E7", border: "1px solid #FDE9B5" }}>
+                    <div key={d.id} className="rounded-lg px-3 py-2" style={{ background: tone.bg, border: `1px solid ${tone.border}` }}>
                       <p className="text-xs font-medium" style={{ color: C.ink }}>{d.name} <span style={{ color: C.faint, fontWeight: 400 }}>· {d.company ?? "—"}</span></p>
                       <p className="text-[11px] mt-0.5" style={{ color: C.muted }}>{sec.reason(d)}</p>
                     </div>
@@ -849,8 +887,8 @@ function RisksCard({ data }: { data: CrmOverview }) {
                   )}
                 </div>
               </div>
-            )
-          )}
+            );
+          })}
         </div>
       )}
     </div>
