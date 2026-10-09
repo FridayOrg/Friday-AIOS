@@ -61,10 +61,7 @@ export default function TopNav() {
   }
 
   return (
-    <header
-      className="sticky top-0 z-40 w-full border-b border-[#2563EB] shrink-0"
-      style={{ background: NAV_BG }}
-    >
+    <header className="sticky top-0 z-40 w-full shrink-0 overflow-hidden border-b border-[#2563EB]" style={{ background: NAV_BG }}>
       <NavWaves />
       <div className="relative z-10 flex items-center justify-between h-16 px-4 lg:px-6 gap-4">
         {/* Logo */}
@@ -127,7 +124,7 @@ export default function TopNav() {
 
       {/* Mobile dropdown panel */}
       {mobileOpen && (
-        <div className="md:hidden border-t border-[#2563EB] px-4 py-3" style={{ background: NAV_BG }}>
+        <div className="md:hidden border-t border-[#2563EB]/30 px-4 py-3">
           <nav className="flex flex-col gap-1">
             {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;

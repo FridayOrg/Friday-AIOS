@@ -62,9 +62,9 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
       <div className="flex flex-col h-screen w-full overflow-hidden">
         <TopNav />
 
-        <div className="flex flex-1 min-h-0 w-full overflow-hidden">
+        <div className="flex flex-1 min-h-0 w-full overflow-hidden bg-[#F5F6F8]">
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
-            <main className="flex-1 min-w-0 overflow-y-auto bg-[#F5F6F8]">{children}</main>
+            <main className="main-scroll flex-1 min-w-0 overflow-y-auto bg-[#F5F6F8]">{children}</main>
           </div>
 
           {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
@@ -73,11 +73,11 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             role="separator"
             aria-orientation="vertical"
             aria-label="Resize Ask Friday panel"
-            className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-transparent hover:bg-blue-200 active:bg-blue-300 transition-colors"
+            className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-[#F5F6F8] hover:bg-blue-200 active:bg-blue-300 transition-colors"
           />
 
           <div
-            className="hidden lg:block shrink-0 h-full"
+            className="hidden lg:block shrink-0 h-full bg-[#F5F6F8] py-3 pr-3"
             style={{ width: `${panelWidth}vw` }}
           >
             <AskFriday />
@@ -90,10 +90,10 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
             onClick={() => setMobileChatOpen(true)}
             aria-label="Talk to Friday"
             title="Talk to Friday"
-            className="lg:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-blue-600 shadow-lg flex items-center justify-center hover:bg-blue-700 transition-colors overflow-hidden"
+            className="lg:hidden fixed bottom-5 right-5 z-40 h-14 w-14 rounded-full bg-white border-2 border-[#F59E0B] shadow-lg flex items-center justify-center hover:bg-amber-50 transition-colors overflow-hidden"
           >
             {/* eslint-disable-next-line @next/next/no-img-element */}
-            <img src="/friday-mark.png" alt="Friday" className="h-full w-full object-cover" />
+            <img src="/friday-mark.png" alt="Friday" className="h-full w-full object-contain p-2.5" />
           </button>
         )}
 

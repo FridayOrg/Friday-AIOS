@@ -686,7 +686,7 @@ export default function AskFriday({ onClose }: { onClose?: () => void }) {
   }
 
   return (
-    <aside className="relative w-full h-full flex flex-col border-l border-[#2563EB]">
+    <aside className="relative w-full h-full flex flex-col overflow-hidden lg:rounded-2xl lg:border lg:border-[#2563EB] lg:shadow-md">
       <FridayAmbientBg />
       <div className="relative z-10 px-6 pt-6 pb-4">
         <div className="flex items-center justify-between">

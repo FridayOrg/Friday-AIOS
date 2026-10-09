@@ -335,7 +335,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- DAILY BRIEF ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: CARD_SHADOW }}
+          style={{ background: CARD_BG, border: `0.5px solid ${ACCENT_BLUE}`, boxShadow: CARD_SHADOW }}
         >
           <h2 className="text-[19px] font-bold tracking-tight mb-4">Daily Brief</h2>
 
@@ -524,7 +524,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
         {/* ---------------- QUICK ACCESS: Actions | Calendar / Industry Updates | Meeting Summary ---------------- */}
         <div
           className="rounded-2xl p-5 mb-4"
-          style={{ background: CARD_BG, border: `1px solid ${C.border}`, boxShadow: CARD_SHADOW }}
+          style={{ background: CARD_BG, border: `0.5px solid ${ACCENT_BLUE}`, boxShadow: CARD_SHADOW }}
         >
           <div className="pb-4 mb-4 border-b" style={{ borderColor: C.border }}>
             <h2 className="text-[19px] font-bold tracking-tight">Quick Access</h2>
