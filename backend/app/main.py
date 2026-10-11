@@ -29,7 +29,7 @@ Endpoints:
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
-  GET  /crm/overview    — CEO CRM dashboard data sourced live from HubSpot
+  GET  /crm/overview    — CEO CRM dashboard data sourced live from the CRM
                            (deals, pipeline, activities, contacts, risks, charts);
                            see hubspot_client.py / crm_metrics.py
   GET  /settings/revenue-target — the configured monthly revenue target used
@@ -154,7 +154,7 @@ def _init_db():
 
 @app.on_event("startup")
 def _warm_crm_cache():
-    """Starts fetching HubSpot data in the background as soon as the backend
+    """Starts fetching CRM data in the background as soon as the backend
     boots (e.g. after a Render cold start), so the first CRM/Home page load
     joins a fetch that's already underway instead of starting from zero."""
     crm_metrics.pd.warm_cache_in_background()

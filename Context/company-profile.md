@@ -4,7 +4,7 @@
 
 BookMySales.ai is a B2B sales-meetings-as-a-service company, built around a single bold commitment: **we double your sales meetings, or you don't pay.** The company was founded in 2025 by a team with two decades of combined enterprise sales experience, after years spent delivering results for Fortune 500 companies. Having proven the model at the enterprise level, the founders built BookMySales.ai to bring that same systematic approach to small and mid-size B2B businesses, companies that want enterprise-grade sales infrastructure but can't justify an enterprise-size sales budget.
 
-The company operates out of two locations: **Stratford-upon-Avon, United Kingdom**, and **Dallas, Texas, United States**, giving it working coverage across both UK/European and US business hours.
+The company is based in **Stratford-upon-Avon, United Kingdom**, giving it working coverage across UK/European business hours.
 
 BookMySales.ai is currently running a **Launch Special**: the first 5 businesses to qualify get the company's "2x (Double) Meetings Guarantee" as part of onboarding, positioning early clients as founding case studies for the model.
 

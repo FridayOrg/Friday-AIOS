@@ -73,7 +73,7 @@ function glowProps(active: boolean): { className: string; style: React.CSSProper
 // HELPERS
 // ---------------------------------------------------------------------------
 
-const fmtUsd = (n: number) => `$${n.toLocaleString("en-US")}`;
+const fmtGbp = (n: number) => `£${n.toLocaleString("en-GB")}`;
 const fmtDay = (iso: string) =>
   new Date(iso + "T00:00:00").toLocaleDateString("en-US", {
     weekday: "short",
@@ -117,6 +117,7 @@ function greetingFor(founderName: string): string {
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
   { key: "tasks", title: "My Priorities", subtitle: null },
+  { key: "team", title: "Team Priorities", subtitle: null },
   { key: "calendar", title: "Calendar", subtitle: null },
   { key: "industry", title: "Industry News & Trends", subtitle: null },
   { key: "meetings", title: "Meeting Summary", subtitle: null },
@@ -130,7 +131,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
   const { tasks, calendar, meetingSummaries } = data;
   const founderName = useFounderName();
 
-  // Daily Brief's revenue/pipeline/conversion tiles are real HubSpot data
+  // Daily Brief's revenue/pipeline/conversion tiles are real CRM data
   // (see backend/app/crm_metrics.py via GET /api/crm), fetched client-side —
   // same self-contained-widget pattern as IndustryUpdates/UrgentEmails —
   // rather than the mock revenue.json/pipeline.json this used to read.
@@ -149,6 +150,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
   // still toggles it closed if the user wants to collapse it.
   const [gridOpen, setGridOpen] = useState<Record<string, boolean>>({
     tasks: true,
+    team: true,
     calendar: true,
     industry: true,
     meetings: true,
@@ -340,8 +342,8 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           <h2 className="text-[19px] font-bold tracking-tight mb-4">Daily Brief</h2>
 
         <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-          {/* Card 1: New Qualified Leads — real data from HubSpot Contacts
-              (see crm_metrics.build_qualified_leads / hubspot_client.get_leads),
+          {/* Card 1: New Qualified Leads — real data from CRM Contacts
+              (see crm_metrics.build_qualified_leads / mock_crm_client.get_leads),
               not the Deals pipeline. Absolute change (current - previous, both
               from the live 30-day windows the backend already computes) is the
               primary comparison, with %-change shown smaller/secondary next to
@@ -393,11 +395,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       vs previous {crm.qualified_leads?.window_days ?? 30} days
                     </span>,
                   ]
-                : [crm?.message ?? "HubSpot not connected"]
+                : [crm?.message ?? "CRM not connected"]
             }
           />
 
-          {/* Card 2: Open Sales Pipeline — real HubSpot data. Comparison is the
+          {/* Card 2: Open Sales Pipeline — real CRM data. Comparison is the
               absolute $ change (same display pattern as New Qualified Leads):
               value of ALL deals (any status — "opened" means "created", not
               "still open today") grouped by their own start date (add_time),
@@ -408,7 +410,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
           <BriefTile
             label="Open Sales Pipeline"
             accent={BRIEF_ACCENT.amber}
-            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.kpis!.open_pipeline_value) : "N/A"}
+            value={crmLoading ? "—" : crm?.configured ? fmtGbp(crm.kpis!.open_pipeline_value) : "N/A"}
             customComparison={
               crm?.configured &&
               crm.pipeline_rolling?.value_last_30_days != null &&
@@ -431,7 +433,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                         className="text-[15px] font-semibold"
                         style={{ color: positive ? ACCENT_UP : ACCENT_DOWN }}
                       >
-                        {positive ? "↑" : "↓"} {fmtUsd(Math.abs(absChange))}
+                        {positive ? "↑" : "↓"} {fmtGbp(Math.abs(absChange))}
                       </span>
                     </p>
                   );
@@ -445,11 +447,11 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       vs previous {crm.pipeline_rolling?.window_days ?? 30} days
                     </span>,
                   ]
-                : [crm?.message ?? "HubSpot not connected"]
+                : [crm?.message ?? "CRM not connected"]
             }
           />
 
-          {/* Card 3: Deal Win Rate — real HubSpot data, trailing window (see
+          {/* Card 3: Deal Win Rate — real CRM data, trailing window (see
               WIN_RATE_WINDOW_DAYS), compared against the equal-length window
               immediately before it. */}
           <BriefTile
@@ -484,12 +486,12 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       "no win-rate data available"
                     ),
                   ].filter(Boolean)
-                : [crm?.message ?? "HubSpot not connected"]
+                : [crm?.message ?? "CRM not connected"]
             }
             glow={glow?.section === "pipeline"}
           />
 
-          {/* Card 4: Revenue Achieved — real HubSpot data + configurable monthly
+          {/* Card 4: Revenue Achieved — real CRM data + configurable monthly
               window (see crm_metrics.REVENUE_WINDOW_DAYS), same rolling-window
               pattern as the other three Daily Brief cards — value is won
               revenue over the trailing window, badge is %-change vs the
@@ -498,7 +500,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
             key={glow?.section === "financial" ? `revenue-${glow.ts}` : "revenue"}
             label="Revenue"
             accent={BRIEF_ACCENT.amber}
-            value={crmLoading ? "—" : crm?.configured ? fmtUsd(crm.revenue_rolling?.won_revenue ?? 0) : "N/A"}
+            value={crmLoading ? "—" : crm?.configured ? fmtGbp(crm.revenue_rolling?.won_revenue ?? 0) : "N/A"}
             badge={
               crm?.configured && crm.revenue_rolling?.pct_change_vs_previous_period != null
                 ? {
@@ -514,7 +516,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                       vs previous {crm.revenue_rolling?.window_days ?? 30} days
                     </span>,
                   ]
-                : [crm?.message ?? "HubSpot not connected"]
+                : [crm?.message ?? "CRM not connected"]
             }
             glow={glow?.section === "financial"}
           />
@@ -572,6 +574,7 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   style={{ borderTop: `1px solid ${C.border}`, maxHeight: 420 }}
                 >
                   {c.key === "tasks" && <UrgentEmails />}
+                  {c.key === "team" && <UrgentEmails />}
                   {c.key === "calendar" && (
                     <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
                   )}

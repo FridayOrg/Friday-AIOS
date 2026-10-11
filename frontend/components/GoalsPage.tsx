@@ -1,4 +1,3 @@
-import { Target } from "lucide-react";
 import { C, PAGE_BG, CARD_BG } from "@/lib/dashboardTokens";
 
 // The /goals page — its own tab, reading directly from Context/strategy.md's
@@ -45,11 +44,6 @@ export default function GoalsPage({ goals }: { goals: string[] }) {
               ))}
             </ul>
           )}
-        </div>
-
-        <div className="mt-4 flex items-center gap-2 text-xs" style={{ color: C.faint }}>
-          <Target size={12} />
-          Sourced from Context/strategy.md
         </div>
       </div>
     </div>

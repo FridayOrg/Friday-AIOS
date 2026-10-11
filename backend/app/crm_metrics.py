@@ -845,10 +845,7 @@ def build_overview(
     if not pd.is_configured():
         return {
             "configured": False,
-            "message": (
-                "HubSpot is not configured — set HUBSPOT_ACCESS_TOKEN in the backend "
-                "environment to enable live CRM data."
-            ),
+            "message": "CRM is not configured. Set up the CRM connection in the backend environment to enable live CRM data.",
         }
 
     start, end, range_error = resolve_range(range_key, custom_start, custom_end, today)
@@ -865,7 +862,7 @@ def build_overview(
 
     if not all_deals and not stages:
         limitations.append(
-            "No data returned from HubSpot for deals/pipeline stages — check the access "
+            "No data returned from the CRM for deals/pipeline stages. Check the access "
             "token's scopes or whether the account actually has deals."
         )
 

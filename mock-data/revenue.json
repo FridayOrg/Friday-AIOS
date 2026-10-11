@@ -118,6 +118,6 @@
   "forecast": {
     "next_cohort_status": "fit_assessment_stage",
     "next_cohort_pricing_model": "standard",
-    "note": "Second cohort inquiries currently in fit-assessment. Expected to convert at standard (non-discounted) pricing, above current average of $2,860/client, once first cohort results are documented as case studies."
+    "note": "Second cohort inquiries currently in fit-assessment. Expected to convert at standard (non-discounted) pricing, above current average of £2,860/client, once first cohort results are documented as case studies."
   }
 }

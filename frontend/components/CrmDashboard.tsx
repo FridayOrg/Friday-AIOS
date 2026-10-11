@@ -1,15 +1,15 @@
 "use client";
 
-// The CRM page (/crm) — a CEO-facing view built entirely from live HubSpot
+// The CRM page (/crm) — a CEO-facing view built entirely from live CRM
 // data (backend/app/crm_metrics.py via GET /api/crm -> backend's
 // /crm/overview). Self-contained client widget, same convention as
 // IndustryUpdates.tsx/UrgentEmails.tsx: fetches its own data rather than
 // going through lib/data.ts, so this stays fully isolated from the existing
 // mock-data dashboard plumbing.
 //
-// Every number rendered here traces back to a specific HubSpot field —
+// Every number rendered here traces back to a specific CRM field —
 // see crm_metrics.py's per-function docstrings for the exact calculation.
-// Metrics HubSpot can't support (e.g. forecast with no probability set)
+// Metrics the CRM can't support (e.g. forecast with no probability set)
 // come back as null from the backend and are rendered as "Not available"
 // rather than a fabricated 0 — never silently coerced to zero here either.
 
@@ -127,7 +127,7 @@ const TREND_OPTIONS: { key: TrendPeriod; label: string }[] = [
 
 function fmtCurrency(n: number | null | undefined) {
   if (n === null || n === undefined) return "—";
-  return `$${n.toLocaleString("en-US", { maximumFractionDigits: 0 })}`;
+  return `£${n.toLocaleString("en-GB", { maximumFractionDigits: 0 })}`;
 }
 
 function fmtPct(n: number | null | undefined) {
@@ -267,7 +267,7 @@ export default function CrmDashboard({ today }: { today: string }) {
           </div>
         ) : !data?.configured ? (
           <div className="rounded-xl px-5 py-8 text-sm text-center" style={{ background: CARD_BG, border: `1px solid ${C.border}`, color: C.faint }}>
-            {data?.message ?? "HubSpot is not configured."}
+            {data?.message ?? "CRM is not configured."}
           </div>
         ) : (
           <div className="flex flex-col gap-4">

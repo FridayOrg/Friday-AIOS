@@ -47,7 +47,7 @@ BookMySales.ai positions itself directly against two categories of alternative, 
 | Delivery Model | Fully done-for-you | Partial, requires in-house work | DIY only |
 | Reporting | Weekly reporting + monthly progress meetings | Often manual | Rare or basic |
 | Channel Coverage | Multi-channel (email, LinkedIn, etc.), chosen by what converts | Often email-only | Often email-only |
-| Cost | Fraction of an in-house SDR's cost | Expensive ($5K–$10K+/mo) | Fraction of SDR cost |
+| Cost | Fraction of an in-house SDR's cost | Expensive (£5K–£10K+/mo) | Fraction of SDR cost |
 | Team Background | Fortune 500 enterprise sales experience | Varies | Rare |
 
 ## 6. Why This Matters to Clients (Problem Framing)
@@ -55,7 +55,7 @@ BookMySales.ai positions itself directly against two categories of alternative, 
 The service is explicitly positioned against four common B2B sales bottlenecks:
 
 - **Time waste**: sales reps spend only ~28% of their time actually selling; the rest is admin.
-- **High cost**: hiring a full-time SDR costs roughly $80K+/year, before ramp time or turnover risk.
+- **High cost**: hiring a full-time SDR costs roughly £80K+/year, before ramp time or turnover risk.
 - **Low volume**: low outbound email volume directly caps pipeline size.
 - **Slow response**: delayed replies to inbound interest turn warm leads cold.
 
@@ -98,11 +98,11 @@ This top-of-funnel content strategy supports the company's broader positioning: 
 
 Pricing is structured around the guarantee model rather than a tiered feature menu:
 
-- **Fully customized, per-client proposals (during the launch period).** The company is explicit that no two businesses have the same growth math; a business scaling from $1M to $2M has very different resourcing needs than one scaling from $25K to $100K. Rather than fixed tiers, every proposal is built around the specific client's starting point, industry, and target speed of growth.
+- **Fully customized, per-client proposals (during the launch period).** The company is explicit that no two businesses have the same growth math; a business scaling from £1M to £2M has very different resourcing needs than one scaling from £25K to £100K. Rather than fixed tiers, every proposal is built around the specific client's starting point, industry, and target speed of growth.
 - **ROI-first proposal design:** Every custom proposal is built with the explicit goal of delivering a return worth multiple times the client's investment.
 - **Observed deal sizes (CRM, GBP):** won deals range from £2,500 to £9,600, with an average of £5,367; the largest open deal is £36,000 (a 12-month Managed SDR proposal).
 - **Guarantee-based fee:** Payment is tied to hitting the doubled-meetings outcome; if the guarantee isn't met, the client doesn't pay, per the company's core promise.
-- **Cost positioning:** Regardless of the custom proposal amount, pricing is consistently kept to a fraction of the cost of hiring an in-house SDR (~$80K+/year).
+- **Cost positioning:** Regardless of the custom proposal amount, pricing is consistently kept to a fraction of the cost of hiring an in-house SDR (~£80K+/year).
 - **Launch Special terms:** The first 5 qualifying businesses receive the guarantee explicitly built into their custom onboarding proposal, as part of the company's early-cohort case-study strategy.
 - **Entry point:** Prospects go through a "Check Fitment" qualification step before receiving a custom proposal, consistent with the company's broader emphasis on qualifying fit before quoting price.
 

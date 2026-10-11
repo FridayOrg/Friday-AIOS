@@ -67,10 +67,7 @@ export default function TopNav() {
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2 shrink-0">
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <img src="/friday-mark.png" alt="Friday" className="h-8 w-8 rounded-lg object-cover shadow-sm ring-1 ring-slate-200" />
-          <span className="text-lg font-bold text-slate-900 hidden sm:inline">
-            friday<span className="text-blue-600">.</span>
-          </span>
+          <img src="/friday-logo.png" alt="Friday" className="h-8 w-auto object-contain" />
         </Link>
 
         {/* Desktop nav */}

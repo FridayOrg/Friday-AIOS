@@ -4,7 +4,7 @@ contacts.json, organizations.json) and reshapes it into the exact same dict
 shapes hubspot_client.py's get_deals()/get_stages()/get_activities()/
 get_persons()/get_organizations()/get_leads() already return, so
 crm_metrics.py (which only ever calls `pd.get_...()`) needs no changes to
-run against this instead of live HubSpot.
+run against this instead of a live CRM.
 
 V2 source pack (leads.json/contacts.json/organizations.json, added after the
 V1 gap report) covers New Qualified Leads and New Contacts properly now.
@@ -31,7 +31,7 @@ MOCK_DATA_DIR = Path(__file__).resolve().parent.parent.parent / "mock-data"
 
 # Mirrors Tab 30 "Stage Map" exactly — order_nr/deal_probability per
 # RevenueOS Stage, used the same way hubspot_client._fetch_stages() builds
-# the HubSpot pipeline-stage list.
+# the CRM pipeline-stage list.
 _STAGE_DEFS = [
     ("New Lead", 10, 10, False),
     ("Qualified", 20, 25, False),
@@ -72,7 +72,7 @@ def get_deals(status: str = "all_not_deleted") -> list[dict]:
         closed_on = o.get("closed_on")
         # V2 source pack stores probability as a 0-1 fraction (e.g. 0.6);
         # crm_metrics.build_forecast does value * probability/100, so this
-        # must be normalized back to a 0-100 scale like HubSpot/V1 used, or
+        # must be normalized back to a 0-100 scale like the CRM/V1 used, or
         # every forecast number silently comes out 100x too small.
         raw_prob = o.get("probability")
         probability = raw_prob * 100 if isinstance(raw_prob, (int, float)) and raw_prob <= 1 else raw_prob

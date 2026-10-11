@@ -81,7 +81,7 @@ export function glowProps(active: boolean, color: string): { className: string; 
   };
 }
 
-export const fmtUsd = (n: number) => `$${n.toLocaleString("en-US")}`;
+export const fmtGbp = (n: number) => `£${n.toLocaleString("en-GB")}`;
 
 export const fmtDay = (iso: string) =>
   new Date(iso + "T00:00:00").toLocaleDateString("en-US", {

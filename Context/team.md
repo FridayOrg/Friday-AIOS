@@ -2,12 +2,12 @@
 
 ## 1. Overview
 
-BookMySales.ai operates with a lean team of 13 people spanning two office locations, Stratford-upon-Avon, UK, and Dallas, TX, US, organized around the four stages of the company's core delivery process (lead sourcing, campaign strategy/copywriting, outreach execution, client success), plus a dedicated AI Strategy function overseeing how AI gets applied across the company's own operations. Three further people (Alex Reed, Priya Shah and Jamie Cole) appear in the CRM as deal owners. As a company built on a performance guarantee, the team structure is deliberately weighted toward roles that directly affect meeting-booking outcomes.
+BookMySales.ai operates with a lean team of 13 people based out of Stratford-upon-Avon, UK, organized around the four stages of the company's core delivery process (lead sourcing, campaign strategy/copywriting, outreach execution, client success), plus a dedicated AI Strategy function overseeing how AI gets applied across the company's own operations. Three further people (Alex Reed, Priya Shah and Jamie Cole) appear in the CRM as deal owners. As a company built on a performance guarantee, the team structure is deliberately weighted toward roles that directly affect meeting-booking outcomes.
 
 ## 1. Leadership (2 people)
 
-**Paval, Co-Founder & CEO (Dallas, US)**
-Primary: Overall company strategy, enterprise partnerships, US market growth.
+**Paval, Co-Founder & CEO (Stratford-upon-Avon, UK)**
+Primary: Overall company strategy, enterprise partnerships, UK market growth.
 Sub-skills: Fortune 500 sales methodology, client guarantee-fit assessment, executive relationship management.
 
 **Alistair Hume, Co-Founder & COO (Stratford-upon-Avon, UK)**

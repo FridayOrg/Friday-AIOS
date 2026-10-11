@@ -66,7 +66,7 @@ These figures, cited on the company's own site, frame the market problem BookMyS
 | SMBs citing customer acquisition as biggest challenge | 65% |
 | SMBs struggling to hire sales talent | 58% |
 | Sales rep time actually spent selling | 28% |
-| Average annual cost of a full-time SDR | $80K+ |
+| Average annual cost of a full-time SDR | £80K+ |
 
 ---
 
