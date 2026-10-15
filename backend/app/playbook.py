@@ -481,6 +481,11 @@ def evaluate_opportunity(
             # tick past midnight before escalating would just be a one-day
             # blind spot on every deal closing today.
             close_note = " No next customer meeting is booked either." if no_meeting_booked else ""
+            close_phrase = (
+                "Expected close date is today and there is no confirmed next step."
+                if expected_close == today
+                else "Expected close date has passed and there is no confirmed next step."
+            )
             actions.append(
                 _action(
                     "R-002",
@@ -489,7 +494,7 @@ def evaluate_opportunity(
                     priority="Critical",
                     action="Requalify proposal and set a new dated next step",
                     due=today.isoformat(),
-                    why_now=f"Expected close date has passed and there is no confirmed next step.{close_note}",
+                    why_now=f"{close_phrase}{close_note}",
                     notes="If inactive, move to nurture/lost rather than keep chasing.",
                     evidence=evidence,
                 )
