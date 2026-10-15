@@ -2,8 +2,10 @@
 
 import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
-import { Eye, EyeOff, Lock, Mail, ShieldCheck, User, UserRound, ArrowRight } from "lucide-react";
+import { Eye, EyeOff, Lock, Mail, TrendingUp, User, UserRound, ArrowRight } from "lucide-react";
 import { setFounderName } from "@/lib/founderName";
+
+type Tab = "guest" | "user";
 
 function LoginForm() {
   const router = useRouter();
@@ -17,6 +19,11 @@ function LoginForm() {
   const [error, setError] = useState<string | null>(null);
   const [submitting, setSubmitting] = useState(false);
   const [guestLoading, setGuestLoading] = useState(false);
+  // Purely visual — "Continue as Guest" always logs in immediately on click
+  // regardless of which tab is shown as active; the User Login form below is
+  // always rendered either way. This just mirrors the two-tab look of the
+  // design, since there's no separate "guest view" content to switch to.
+  const [activeTab, setActiveTab] = useState<Tab>("guest");
 
   // Warm up the destination route while the user is still typing.
   useEffect(() => {
@@ -49,6 +56,7 @@ function LoginForm() {
   }
 
   async function handleGuest() {
+    setActiveTab("guest");
     setError(null);
     setGuestLoading(true);
     const res = await fetch("/api/auth/guest-login", { method: "POST" }).catch(() => null);
@@ -81,34 +89,56 @@ function LoginForm() {
               {/* eslint-disable-next-line @next/next/no-img-element */}
               <img src="/friday-logo.png" alt="Friday" className="h-7 w-auto object-contain" />
             </div>
-            <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome back</h2>
-            <p className="text-sm text-slate-500">Sign in to your Friday admin account</p>
+            <h2 className="text-2xl font-bold text-slate-900 mb-2 leading-snug">
+              Smarter insights.
+              <br />
+              Better decisions.
+            </h2>
+            <p className="text-sm text-slate-500">Your AI-powered assistant for what matters most.</p>
           </div>
-          <div className="relative z-10 flex items-center gap-2 text-xs text-slate-500">
-            <ShieldCheck size={16} className="text-slate-400 shrink-0" />
-            Secure access to admin tools
+          <div className="relative z-10 flex flex-col items-center gap-2 pb-2">
+            {/* eslint-disable-next-line @next/next/no-img-element */}
+            <img src="/login-illustration.png" alt="" className="w-44 h-auto object-contain" />
+            <div className="flex items-center gap-1 text-[11px] font-medium text-emerald-600">
+              <TrendingUp size={12} />
+              Trending up
+            </div>
           </div>
         </div>
 
         {/* ---------------- RIGHT: form panel ---------------- */}
         <div className="p-8">
-          <button
-            type="button"
-            onClick={handleGuest}
-            disabled={guestLoading}
-            className="w-full flex items-center justify-center gap-2 rounded-lg border border-gray-300 text-slate-700 text-sm font-medium py-2.5 hover:bg-gray-50 disabled:opacity-50 transition-colors"
-          >
-            <UserRound size={16} />
-            {guestLoading ? "Continuing…" : "Continue as Guest"}
-          </button>
+          <div className="flex items-center gap-1 rounded-lg bg-gray-100 p-1 mb-5">
+            <button
+              type="button"
+              onClick={handleGuest}
+              disabled={guestLoading}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium transition-colors disabled:opacity-50 ${
+                activeTab === "guest" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <UserRound size={14} />
+              {guestLoading ? "Continuing…" : "Continue as Guest"}
+            </button>
+            <button
+              type="button"
+              onClick={() => setActiveTab("user")}
+              className={`flex-1 flex items-center justify-center gap-1.5 rounded-md py-2 text-sm font-medium transition-colors ${
+                activeTab === "user" ? "bg-white text-blue-600 shadow-sm" : "text-slate-500 hover:text-slate-700"
+              }`}
+            >
+              <User size={14} />
+              User Login
+            </button>
+          </div>
 
-          <div className="flex items-center gap-3 my-5">
+          <div className="flex items-center gap-3 mb-5">
             <div className="h-px flex-1 bg-gray-200" />
             <span className="text-[11px] text-slate-400">OR</span>
             <div className="h-px flex-1 bg-gray-200" />
           </div>
 
-          <h1 className="text-xl font-bold text-slate-900 mb-6">Admin Login</h1>
+          <h1 className="text-xl font-bold text-slate-900 mb-6">User Login</h1>
 
           <form onSubmit={handleSubmit} className="flex flex-col gap-4">
             <div>

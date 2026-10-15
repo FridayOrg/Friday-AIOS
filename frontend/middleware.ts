@@ -20,7 +20,8 @@ export function middleware(request: NextRequest) {
     pathname.startsWith("/_next") ||
     pathname.startsWith("/favicon") ||
     pathname === "/friday-mark.png" ||
-    pathname === "/friday-logo.png"
+    pathname === "/friday-logo.png" ||
+    pathname === "/login-illustration.png"
   ) {
     return NextResponse.next();
   }
