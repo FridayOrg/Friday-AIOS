@@ -82,9 +82,9 @@ function LoginForm() {
               <img src="/friday-logo.png" alt="Friday" className="h-7 w-auto object-contain" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2 leading-snug">
-              Smarter insights.
+              Smarter Insights.
               <br />
-              Better decisions.
+              Better Decisions.
             </h2>
             <p className="text-sm text-slate-500">Your AI-powered assistant for what matters most.</p>
           </div>
