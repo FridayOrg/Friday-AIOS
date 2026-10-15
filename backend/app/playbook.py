@@ -474,8 +474,12 @@ def evaluate_opportunity(
                     evidence=evidence,
                 )
             )
-        elif expected_close and expected_close < today:
-            # R-002 — expected close date has passed.
+        elif expected_close and expected_close <= today:
+            # R-002 — expected close date has arrived or passed. <= not <:
+            # a close date of exactly today, with no resolution, is just as
+            # urgent as one already in the past — waiting for the clock to
+            # tick past midnight before escalating would just be a one-day
+            # blind spot on every deal closing today.
             close_note = " No next customer meeting is booked either." if no_meeting_booked else ""
             actions.append(
                 _action(
