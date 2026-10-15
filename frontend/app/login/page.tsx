@@ -77,12 +77,9 @@ function LoginForm() {
             className="absolute -bottom-28 left-10 h-72 w-72 rounded-full bg-blue-300/30"
           />
           <div className="relative z-10">
-            <div className="flex items-center gap-2 mb-10">
+            <div className="mb-10">
               {/* eslint-disable-next-line @next/next/no-img-element */}
-              <img src="/friday-mark.png" alt="Friday" className="h-8 w-8 rounded-lg object-cover" />
-              <span className="text-lg font-bold text-slate-900">
-                friday<span className="text-blue-600">.</span>
-              </span>
+              <img src="/friday-logo.png" alt="Friday" className="h-7 w-auto object-contain" />
             </div>
             <h2 className="text-2xl font-bold text-slate-900 mb-2">Welcome back</h2>
             <p className="text-sm text-slate-500">Sign in to your Friday admin account</p>
