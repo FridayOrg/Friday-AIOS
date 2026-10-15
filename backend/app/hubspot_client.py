@@ -560,3 +560,77 @@ def get_leads() -> list[dict]:
     genuinely-contacted leads. See _fetch_snapshot for how both are
     computed."""
     return get_snapshot()["leads"]
+
+
+class HubspotWriteError(Exception):
+    """Raised by create_company()/create_deal() with a message safe to show
+    directly — same convention as calendar_client.CalendarWriteError: a write
+    failure must surface to the caller rather than being silently swallowed
+    the way every read function in this module is."""
+
+
+def create_company(name: str) -> str:
+    """Creates a HubSpot company and returns its id. Raises HubspotWriteError
+    on any failure (not configured, rejected, unreachable)."""
+    if not is_configured():
+        raise HubspotWriteError("HubSpot isn't configured (HUBSPOT_ACCESS_TOKEN missing) — nothing was created.")
+    try:
+        response = _client.post(
+            f"{_BASE_URL}/crm/v3/objects/companies",
+            headers=_headers(),
+            json={"properties": {"name": name}},
+        )
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise HubspotWriteError(f"HubSpot rejected the company (status {e.response.status_code}).") from e
+    except httpx.HTTPError as e:
+        raise HubspotWriteError("Could not reach HubSpot to create the company.") from e
+    return response.json()["id"]
+
+
+def create_deal(
+    name: str,
+    amount: float,
+    stage_id: str,
+    close_date: str | None = None,
+    owner_id: str | None = None,
+    company_id: str | None = None,
+) -> str:
+    """Creates a HubSpot deal (optionally associated to a company) and returns
+    its id. close_date is "YYYY-MM-DD". Raises HubspotWriteError on any
+    failure, same convention as create_company()."""
+    if not is_configured():
+        raise HubspotWriteError("HubSpot isn't configured (HUBSPOT_ACCESS_TOKEN missing) — nothing was created.")
+
+    properties = {"dealname": name, "amount": str(amount), "dealstage": stage_id, "pipeline": "default"}
+    if close_date:
+        properties["closedate"] = close_date
+    if owner_id:
+        properties["hubspot_owner_id"] = owner_id
+
+    body: dict = {"properties": properties}
+    if company_id:
+        body["associations"] = [{
+            "to": {"id": company_id},
+            "types": [{"associationCategory": "HUBSPOT_DEFINED", "associationTypeId": 5}],  # deal -> company
+        }]
+
+    try:
+        response = _client.post(f"{_BASE_URL}/crm/v3/objects/deals", headers=_headers(), json=body)
+        response.raise_for_status()
+    except httpx.HTTPStatusError as e:
+        raise HubspotWriteError(f"HubSpot rejected the deal (status {e.response.status_code}): {e.response.text[:200]}") from e
+    except httpx.HTTPError as e:
+        raise HubspotWriteError("Could not reach HubSpot to create the deal.") from e
+
+    deal_id = response.json()["id"]
+    _invalidate_snapshot()
+    return deal_id
+
+
+def _invalidate_snapshot() -> None:
+    """Forces the next get_snapshot() call to hit HubSpot directly instead of
+    serving up to _SNAPSHOT_TTL_SECONDS of stale data — called after a write
+    succeeds so it shows up immediately rather than after the cache expires."""
+    global _snapshot_at
+    _snapshot_at = 0.0

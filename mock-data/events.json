@@ -45,36 +45,6 @@
     "linked_source_id": "ACT-003"
   },
   {
-    "event_id": "EV-ACT-004",
-    "opportunity_id": "OPP-002",
-    "event_type": "Meeting",
-    "date": "2026-10-01",
-    "source": "CRM Activity",
-    "actor": "Priya Shah",
-    "summary": "Commercial review",
-    "material": true,
-    "customer_interaction": true,
-    "commitment_or_decision": "Decision date agreed",
-    "commitment_due": null,
-    "creates_action": true,
-    "linked_source_id": "ACT-004"
-  },
-  {
-    "event_id": "EV-ACT-005",
-    "opportunity_id": "OPP-002",
-    "event_type": "Call",
-    "date": "2026-10-08",
-    "source": "CRM Activity",
-    "actor": "Priya Shah",
-    "summary": "Decision check-in",
-    "material": true,
-    "customer_interaction": true,
-    "commitment_or_decision": "Pending",
-    "commitment_due": "2026-10-08",
-    "creates_action": true,
-    "linked_source_id": "ACT-005"
-  },
-  {
     "event_id": "EV-ACT-006",
     "opportunity_id": "OPP-003",
     "event_type": "Meeting",
@@ -315,21 +285,6 @@
     "linked_source_id": "NOTE-001"
   },
   {
-    "event_id": "EV-NOTE-002",
-    "opportunity_id": "OPP-002",
-    "event_type": "CRM Note",
-    "date": "2026-10-01 11:50",
-    "source": "CRM Note",
-    "actor": "Priya Shah",
-    "summary": "Daniel confirmed internal decision meeting on 8 Oct. Do not chase before then unless they ask a question.",
-    "material": true,
-    "customer_interaction": false,
-    "commitment_or_decision": "Daniel confirmed internal decision meeting on 8 Oct. Do not chase before then unless they ask a question.",
-    "commitment_due": null,
-    "creates_action": "potentially",
-    "linked_source_id": "NOTE-002"
-  },
-  {
     "event_id": "EV-NOTE-003",
     "opportunity_id": "OPP-003",
     "event_type": "CRM Note",
@@ -448,5 +403,20 @@
     "commitment_due": null,
     "creates_action": "potentially",
     "linked_source_id": "NOTE-010"
+  },
+  {
+    "event_id": "EV-ACT-021",
+    "opportunity_id": "OPP-006",
+    "event_type": "Email",
+    "date": "2026-10-02",
+    "source": "Email",
+    "actor": "Nina Patel",
+    "summary": "Security questionnaire sent",
+    "material": true,
+    "customer_interaction": true,
+    "commitment_or_decision": "Buyer sent the security questionnaire; Alex acknowledged and said he would send the response. No completed security response visible afterwards.",
+    "commitment_due": null,
+    "creates_action": true,
+    "linked_source_id": "EMAIL-021"
   }
 ]

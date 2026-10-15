@@ -20,6 +20,7 @@ pattern as GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN in calendar_client.py.
 """
 
 import base64
+import html
 import logging
 import time
 from datetime import datetime, timezone
@@ -103,7 +104,11 @@ def _parse_message(msg: dict) -> dict:
         "thread_id": msg.get("threadId", ""),
         "subject": subject,
         "sender": sender,
-        "snippet": msg.get("snippet", ""),
+        # Gmail's snippet field comes back with HTML entities un-decoded
+        # (e.g. "partners&#39; meeting" instead of "partners' meeting") —
+        # unescape() here so downstream consumers (e.g. the Why panel) show
+        # readable text instead of garbled markup.
+        "snippet": html.unescape(msg.get("snippet", "")),
         "received_at": received_at,
         "gmail_url": f"https://mail.google.com/mail/u/0/#inbox/{msg.get('id', '')}",
     }
@@ -113,16 +118,24 @@ def fetch_recent_emails(limit: int = _MAX_RESULTS) -> list[dict]:
     """Recent inbox messages (subject, sender, snippet, received_at,
     gmail_url). Empty list (never an exception) on any failure: missing/
     expired token, unreachable API, rate-limited, or a genuinely empty inbox."""
+    # Only today's messages — Gmail's after: operator is inclusive of that
+    # calendar day onward, so "today" onward with no upper bound covers just
+    # today (nothing "after" today exists yet).
+    today_str = now().strftime("%Y/%m/%d")
+    return search_emails(f"in:inbox after:{today_str}", limit=limit)
+
+
+def search_emails(query: str, limit: int = _MAX_RESULTS) -> list[dict]:
+    """Inbox messages matching an arbitrary Gmail search query (same shape as
+    fetch_recent_emails) — used to match a live email thread to a CRM
+    opportunity by sender/subject text (see playbook.py's
+    _matching_gmail_emails), not just "today". Empty list on any failure,
+    same convention as every other read function here."""
     token = _access_token()
     if token is None:
         return []
 
     headers = {"Authorization": f"Bearer {token}"}
-    # Only today's messages — Gmail's after: operator is inclusive of that
-    # calendar day onward, so "today" onward with no upper bound covers just
-    # today (nothing "after" today exists yet).
-    today_str = now().strftime("%Y/%m/%d")
-    query = f"in:inbox after:{today_str}"
     try:
         list_resp = httpx.get(
             f"{_API_BASE}/messages",

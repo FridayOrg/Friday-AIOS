@@ -23,6 +23,11 @@ type PriorityTier = "critical" | "high" | "low";
 type Horizon = "Today" | "This Week";
 type LocalStatus = "done" | "in_progress" | "dismissed";
 
+interface Evidence {
+  source: string; // "CRM" | "Meeting" | "Email" | "Calendar"
+  signal: string;
+}
+
 interface Action {
   actionId: string;
   priority: string; // "Critical" | "High" | "Low" — as given in actions.json
@@ -30,8 +35,16 @@ interface Action {
   owner: string;
   due: string;
   deal: string;
+  account: string;
+  value: number;
   whyNow: string;
   notes: string;
+  evidence: Evidence[];
+}
+
+function formatValue(value: number): string {
+  if (value >= 1000) return `£${Math.round(value / 100) / 10}k`;
+  return `£${value}`;
 }
 
 const TIER_RANK: Record<PriorityTier, number> = { critical: 0, high: 1, low: 2 };
@@ -142,11 +155,16 @@ export default function UrgentEmails() {
             const expanded = expandedActionId === item.action.actionId;
             return (
               <div key={item.action.actionId} className="py-2.5 row-separator" style={{ opacity: dimmed ? 0.5 : 1 }}>
-                <p className="text-[13px] font-medium leading-snug text-slate-900">{item.action.action}</p>
+                <p className="text-[13px] font-medium leading-snug text-slate-900">
+                  {item.action.account || item.action.deal}
+                  {typeof item.action.value === "number" && ` – ${formatValue(item.action.value)}`}
+                  {" / "}
+                  {item.action.action}
+                </p>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <div className="flex items-center gap-2 min-w-0">
                     <PriorityTag tier={item.tier} />
-                    <span className="text-xs text-slate-500 truncate">{item.action.deal}</span>
+                    <span className="text-xs text-slate-500 truncate">· {item.action.owner}</span>
                   </div>
                   <button
                     onClick={() => setExpandedActionId(expanded ? null : item.action.actionId)}
@@ -156,13 +174,22 @@ export default function UrgentEmails() {
                   </button>
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-1">
-                  <span className="text-xs text-slate-500">{item.action.owner}</span>
+                  <span className="text-xs text-slate-500">{item.action.deal}</span>
                   <span className="text-xs text-slate-500">Due {item.action.due}</span>
                 </div>
                 {expanded && (
-                  <div className="mt-2 text-xs text-slate-600 leading-snug bg-slate-50 rounded-md px-2.5 py-2">
-                    <p>{item.action.whyNow}</p>
-                    {item.action.notes && <p className="mt-1 text-slate-500">{item.action.notes}</p>}
+                  <div className="mt-2 text-xs text-slate-600 leading-snug bg-slate-50 rounded-md px-2.5 py-2 space-y-1.5">
+                    {item.action.evidence?.map((e, i) => (
+                      <p key={i}>
+                        <span className="font-medium text-slate-700">{e.source} signal: </span>
+                        {e.signal}
+                      </p>
+                    ))}
+                    <p className="pt-1 border-t border-slate-200">
+                      <span className="font-medium text-slate-700">Friday recommendation: </span>
+                      {item.action.whyNow}
+                    </p>
+                    {item.action.notes && <p className="text-slate-500">{item.action.notes}</p>}
                   </div>
                 )}
                 <div className="flex items-center gap-1 mt-1.5">

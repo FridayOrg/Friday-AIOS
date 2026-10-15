@@ -106,6 +106,11 @@ const to12h = (t: string) => {
 // lib/founderName.ts) — the name someone set on the Profile page, falling
 // back to Context/team.md's CEO name.
 function greetingFor(founderName: string): string {
+  // Guest login (see app/login/page.tsx's "Continue as Guest") sets this
+  // exact name via setFounderName("Guest") — a fixed welcome instead of the
+  // time-of-day greeting, since "Good morning, Guest" reads oddly for a
+  // one-off visitor rather than the actual founder/team.
+  if (founderName === "Guest") return "Welcome Guest";
   const hour = new Date().getHours();
   if (hour < 12) return `Good morning, ${founderName}`;
   if (hour < 17) return `Good afternoon, ${founderName}`;
@@ -116,8 +121,7 @@ function greetingFor(founderName: string): string {
 // Pipeline / Spend & Notifications live on their own /crm page (see
 // CrmDashboard.tsx) instead of a collapsible accordion here.
 const GRID_CARDS = [
-  { key: "tasks", title: "My Priorities", subtitle: null },
-  { key: "team", title: "Team Priorities", subtitle: null },
+  { key: "tasks", title: "Today's Revenue Priorities", subtitle: null },
   { key: "calendar", title: "Calendar", subtitle: null },
   { key: "industry", title: "Industry News & Trends", subtitle: null },
   { key: "meetings", title: "Meeting Summary", subtitle: null },
@@ -574,7 +578,6 @@ export default function CeoDashboard({ data }: { data: DashboardData }) {
                   style={{ borderTop: `1px solid ${C.border}`, maxHeight: 420 }}
                 >
                   {c.key === "tasks" && <UrgentEmails />}
-                  {c.key === "team" && <UrgentEmails />}
                   {c.key === "calendar" && (
                     <Calendar3DayContent daysNext3={daysNext3} today={data.today} now={data.now} glow={glow} />
                   )}

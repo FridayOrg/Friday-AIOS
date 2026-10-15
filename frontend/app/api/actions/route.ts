@@ -13,6 +13,7 @@ interface BackendAction {
   status: string;
   opportunity_id: string;
   deal: string;
+  account: string;
   value: number;
   why_now: string;
   source: string;
@@ -20,6 +21,7 @@ interface BackendAction {
   time_horizon: string;
   user_decision: string;
   notes: string;
+  evidence: { source: string; signal: string }[];
 }
 
 function toCamelCase(a: BackendAction) {
@@ -32,6 +34,7 @@ function toCamelCase(a: BackendAction) {
     status: a.status,
     opportunityId: a.opportunity_id,
     deal: a.deal,
+    account: a.account,
     value: a.value,
     whyNow: a.why_now,
     source: a.source,
@@ -39,6 +42,7 @@ function toCamelCase(a: BackendAction) {
     timeHorizon: a.time_horizon,
     userDecision: a.user_decision,
     notes: a.notes,
+    evidence: a.evidence,
   };
 }
 

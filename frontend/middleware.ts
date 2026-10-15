@@ -10,7 +10,7 @@ const AUTH_COOKIE = "friday_demo_auth";
 
 // Paths that must stay reachable without the cookie, or nobody could ever
 // log in (the login page itself, its API route, and Next's own internals).
-const PUBLIC_PATHS = ["/login", "/api/auth/login"];
+const PUBLIC_PATHS = ["/login", "/api/auth/login", "/api/auth/guest-login"];
 
 export function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
