@@ -19,7 +19,6 @@
 import { useEffect, useMemo, useState } from "react";
 import Link from "next/link";
 
-type PriorityTier = "critical" | "high" | "low";
 type Horizon = "Today" | "This Week";
 type LocalStatus = "done" | "in_progress" | "dismissed";
 
@@ -37,6 +36,7 @@ interface Action {
   deal: string;
   account: string;
   value: number;
+  expectedClose: string | null;
   whyNow: string;
   notes: string;
   evidence: Evidence[];
@@ -46,13 +46,6 @@ function formatValue(value: number): string {
   if (value >= 1000) return `£${Math.round(value / 100) / 10}k`;
   return `£${value}`;
 }
-
-const TIER_RANK: Record<PriorityTier, number> = { critical: 0, high: 1, low: 2 };
-const TIER_LABEL: Record<PriorityTier, { text: string; className: string }> = {
-  critical: { text: "Critical", className: "bg-red-200 text-red-800" },
-  high: { text: "High", className: "bg-amber-100 text-amber-700" },
-  low: { text: "Low", className: "bg-slate-100 text-slate-600" },
-};
 
 const STATUS_OPTIONS: { key: LocalStatus; label: string }[] = [
   { key: "in_progress", label: "In Progress" },
@@ -65,19 +58,32 @@ const STATUS_STYLE: Record<LocalStatus, string> = {
   dismissed: "bg-slate-400 text-white",
 };
 
-function PriorityTag({ tier }: { tier: PriorityTier }) {
-  const t = TIER_LABEL[tier] ?? TIER_LABEL.low;
-  return <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${t.className}`}>{t.text}</span>;
+// Overdue / due today -> red (most urgent); due tomorrow / due this week ->
+// amber; further out -> no badge at all, same red/amber scale as the CRM
+// dashboard's close-date column (CrmDashboard.tsx's closeDateTone). Driven
+// by the CRM's own expected close date, NOT this action's own due date —
+// two independent dates (one is "when the deal should close", the other is
+// "when Friday wants a follow-up") that happen to coincide sometimes.
+//
+// Returns the bucket's sort rank alongside its label/color so the list can
+// be ordered Overdue -> Due today -> Due tomorrow -> Due this week -> (no
+// badge, sorted last) — the same urgency scale the badge itself shows,
+// instead of a separately-maintained priority ranking.
+function closeDateTag(expectedClose: string | null): { label: string; className: string; rank: number } | null {
+  if (!expectedClose) return null;
+  const today = isoDay(new Date());
+  const date = new Date(expectedClose + "T00:00:00");
+  const base = new Date(today + "T00:00:00");
+  const days = Math.round((date.getTime() - base.getTime()) / 86400000);
+  if (Number.isNaN(days)) return null;
+  if (days < 0) return { label: "Overdue", className: "bg-red-100 text-red-700", rank: 0 };
+  if (days === 0) return { label: "Due today", className: "bg-red-100 text-red-700", rank: 1 };
+  if (days === 1) return { label: "Due tomorrow", className: "bg-amber-100 text-amber-700", rank: 2 };
+  if (days <= 7) return { label: "Due this week", className: "bg-amber-100 text-amber-700", rank: 3 };
+  return null;
 }
 
-// Every action is always shown here — actions.json already is the curated
-// "needs attention" list, nothing to filter further. Priority comes
-// straight from the file, not re-derived from any date.
-function actionTier(a: Action): PriorityTier {
-  if (a.priority === "Critical") return "critical";
-  if (a.priority === "High") return "high";
-  return "low";
-}
+const UNRANKED = 4; // no badge (further out, or no close date at all) — sorts last
 
 function isoDay(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -119,8 +125,12 @@ export default function UrgentEmails() {
   const items = useMemo(
     () =>
       [...actions]
-        .map((action) => ({ action, tier: actionTier(action) }))
-        .sort((a, b) => TIER_RANK[a.tier] - TIER_RANK[b.tier]),
+        .map((action) => ({ action }))
+        .sort((a, b) => {
+          const rankA = closeDateTag(a.action.expectedClose)?.rank ?? UNRANKED;
+          const rankB = closeDateTag(b.action.expectedClose)?.rank ?? UNRANKED;
+          return rankA - rankB;
+        }),
     [actions]
   );
 
@@ -163,7 +173,14 @@ export default function UrgentEmails() {
                 </p>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <div className="flex items-center gap-2 min-w-0">
-                    <PriorityTag tier={item.tier} />
+                    {(() => {
+                      const tag = closeDateTag(item.action.expectedClose);
+                      return tag ? (
+                        <span className={`text-[10px] font-medium px-1.5 py-0.5 rounded-full ${tag.className}`}>
+                          {tag.label}
+                        </span>
+                      ) : null;
+                    })()}
                     <span className="text-xs text-slate-500 truncate">· {item.action.owner}</span>
                   </div>
                   <button

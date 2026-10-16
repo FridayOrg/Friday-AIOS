@@ -15,6 +15,7 @@ interface BackendAction {
   deal: string;
   account: string;
   value: number;
+  expected_close: string | null;
   why_now: string;
   source: string;
   rule: string;
@@ -36,6 +37,7 @@ function toCamelCase(a: BackendAction) {
     deal: a.deal,
     account: a.account,
     value: a.value,
+    expectedClose: a.expected_close,
     whyNow: a.why_now,
     source: a.source,
     rule: a.rule,

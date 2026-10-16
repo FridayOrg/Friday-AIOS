@@ -262,7 +262,7 @@ def _deal_activity_dates(
     return out
 
 
-_DEAL_PROPERTIES = "dealname,amount,dealstage,pipeline,closedate,createdate,hubspot_owner_id,hs_lastmodifieddate,closed_lost_reason"
+_DEAL_PROPERTIES = "dealname,amount,dealstage,pipeline,closedate,createdate,hubspot_owner_id,hs_lastmodifieddate,closed_lost_reason,hs_next_step"
 
 
 def _deal_status(stage: dict | None) -> str:
@@ -382,6 +382,7 @@ def _fetch_snapshot() -> dict:
             "last_activity_date": activity.get("last_activity_date"),
             "next_activity_date": activity.get("next_activity_date"),
             "lost_reason": p.get("closed_lost_reason"),
+            "next_step": p.get("hs_next_step"),
         })
 
     activities = []

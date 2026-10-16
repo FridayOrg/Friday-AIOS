@@ -72,6 +72,11 @@ def _action(rule: str, opp: dict, today: date, **fields) -> dict:
         "deal": opp.get("deal"),
         "account": opp.get("account"),
         "value": opp.get("value"),
+        # The CRM's own expected close date (not this action's own due date,
+        # which is when Friday wants a follow-up — two independent dates
+        # that happen to coincide sometimes). Live for Northstar/OakBridge/
+        # Stonegate, mock-data/opportunities.json for every other deal.
+        "expected_close": opp.get("expected_close"),
         "rule": rule,
         "source": source,
         "time_horizon": time_horizon,
@@ -116,19 +121,30 @@ def _has_pending_seller_commitment(opp_id: str, events: list[dict]) -> bool:
     )
 
 
-def _synthesize_commitment_events(opportunities: list[dict], calendar_events: list[dict]) -> list[dict]:
-    """Bridges live Calendar data into the events shape _future_commitment_event
-    (R-003's trigger) and _has_pending_seller_commitment (R-004's trigger)
-    already know how to read — for opportunities flagged
-    `"live_commitments_from_calendar"` (currently just Northstar, which has NO
-    mock-data/events.json record to read a commitment_due from at all). Without
-    this, a live-sourced opportunity with a real future meeting booked would
-    never trigger R-003's "do not chase before the agreed date" rule — the
-    rule logic itself is untouched, this just gives it live data to read."""
+def _synthesize_commitment_events(
+    opportunities: list[dict], calendar_events: list[dict], meeting_summaries: list[dict]
+) -> list[dict]:
+    """Bridges live Calendar AND Meeting Summary data into the events shape
+    _future_commitment_event (R-003's trigger) and _has_pending_seller_
+    commitment (R-004's trigger) already know how to read — for opportunities
+    flagged `"live_commitments_from_calendar"` (currently Northstar and
+    OakBridge, which have NO mock-data/events.json record to read a
+    commitment_due from at all).
+
+    Two independent sources, because a buyer's agreed decision date doesn't
+    always show up as OUR calendar event — e.g. Northstar's "partners'
+    meeting" is internal to the buyer, never booked on our calendar at all,
+    so Calendar evidence correctly shows "no meeting" even though a real
+    agreed date exists. That date lives instead in the Fathom meeting
+    summary's action-item due_date (set when the commitment was actually
+    captured in the meeting). Without reading both, a deal like this would
+    never trigger R-003 and would incorrectly fall through to a generic
+    "no next action" rule despite the buyer having given a clear date."""
     synthesized = []
     for opp in opportunities:
         if not opp.get("live_commitments_from_calendar"):
             continue
+
         for e in _matching_calendar_events(opp, calendar_events):
             d = _parse_date(e.get("date"))
             if not d:
@@ -145,6 +161,25 @@ def _synthesize_commitment_events(opportunities: list[dict], calendar_events: li
                 "commitment_or_decision": None,
                 "creates_action": False,
             })
+
+        for m in _matching_meeting_summaries(opp, meeting_summaries):
+            for item in m.get("action_items") or []:
+                due = item.get("due_date")
+                d = _parse_date(due)
+                if not d:
+                    continue
+                synthesized.append({
+                    "event_id": f"LIVE-MEETING-{opp['opportunity_id']}-{m.get('recording_id', '')}",
+                    "opportunity_id": opp["opportunity_id"],
+                    "event_type": "CRM Note",
+                    "date": due,
+                    "commitment_due": due,
+                    "summary": item.get("text") or "Buyer-agreed decision date",
+                    "material": True,
+                    "customer_interaction": True,
+                    "commitment_or_decision": None,
+                    "creates_action": False,
+                })
     return synthesized
 
 
@@ -267,7 +302,12 @@ def build_live_opportunity(opportunity_id: str, account: str, contact_person: st
         "value": match.get("value"),
         "currency": "GBP",
         "expected_close": (match.get("expected_close_date") or "")[:10] or None,
-        "next_action": None,
+        # HubSpot's native "Next step" deal property (hs_next_step) — reads as
+        # the opportunity's next_action here so R-004 (a pending commitment
+        # still needs following up on) can fire for live deals, same as it
+        # does for mock ones, instead of always falling through to R-001's
+        # generic "no next action on file" for lack of this one field.
+        "next_action": match.get("next_step"),
         "next_action_due": None,
         "crm_source": "hubspot",
         "email_source": "gmail",
@@ -290,14 +330,16 @@ def _matching_gmail_emails(opp: dict, limit: int = 5) -> list[dict]:
     internal chat thread) wouldn't match, since subject-only is a much
     narrower net than searching every word of every email.
 
-    Scoped to `newer_than:2d` (Gmail search operator) so a stale thread from
-    weeks ago never gets read as current evidence. Returns [] on no match or
-    any failure, same convention as the other live-data matchers here."""
+    Scoped to `newer_than:14d` (Gmail search operator) — two weeks back, same
+    window as the live Calendar lookup — so a stale thread from months ago
+    never gets read as current evidence, while a genuinely recent exchange
+    still counts. Returns [] on no match or any failure, same convention as
+    the other live-data matchers here."""
     account = (opp.get("account") or "").strip()
     if not account:
         return []
     try:
-        results = gmail_client.search_emails(f'subject:"{account}" newer_than:2d', limit=limit)
+        results = gmail_client.search_emails(f'subject:"{account}" newer_than:14d', limit=limit)
     except Exception as e:
         logger.warning("Could not search Gmail for CRM evidence: %s", e)
         return []
@@ -342,21 +384,29 @@ def _matching_calendar_events(opp: dict, calendar_events: list[dict]) -> list[di
 
 def _calendar_signal(opp: dict, calendar_events: list[dict], today: date) -> str:
     """Derived from the real Calendar feature, not mock-data/events.json: is
-    there a customer meeting already on the books for this opportunity, today
-    or later? A same-day meeting is reported distinctly ("scheduled for
-    today") rather than folded into "no future meeting" — a meeting happening
-    today is clearly not "nothing booked", even though its date isn't,
-    strictly speaking, in the future."""
-    upcoming = [
-        e for e in _matching_calendar_events(opp, calendar_events)
-        if (d := _parse_date(e.get("date"))) and d >= today
-    ]
+    there a customer meeting already on the books for this opportunity? Looks
+    both directions — a same-day meeting is reported distinctly ("scheduled
+    for today") rather than folded into "no future meeting", and if nothing
+    is upcoming, a meeting within the past 2 weeks is reported instead (e.g.
+    "technical review completed") rather than just saying nothing's booked,
+    since a recently-completed meeting is still meaningful calendar evidence.
+    calendar_events itself is already scoped to a past-2-weeks/future-2-weeks
+    window by build_actions() (fetch_meetings_window)."""
+    matches = _matching_calendar_events(opp, calendar_events)
+    upcoming = [e for e in matches if (d := _parse_date(e.get("date"))) and d >= today]
     if upcoming:
         upcoming.sort(key=lambda e: e["date"])
         nxt = upcoming[0]
         d = _parse_date(nxt["date"])
         when = "today" if d == today else f"for {nxt['date']}"
         return f"Meeting scheduled {when}: \"{nxt.get('name', '')}\"."
+
+    past = [e for e in matches if (d := _parse_date(e.get("date"))) and d < today]
+    if past:
+        past.sort(key=lambda e: e["date"], reverse=True)
+        last = past[0]
+        return f"Last meeting was on {last['date']}: \"{last.get('name', '')}\". No future meeting booked."
+
     return "No future customer meeting booked."
 
 
@@ -429,7 +479,7 @@ def evaluate_opportunity(
     value = opp.get("value")
     evidence = _build_evidence(opp, events, today, meeting_summaries, calendar_events)
     calendar_note = next((e["signal"] for e in evidence if e["source"] == "Calendar"), "")
-    no_meeting_booked = calendar_note.startswith("No future")
+    no_meeting_booked = "No future" in calendar_note
 
     if opp.get("status") == "Open":
         future_event = _future_commitment_event(opp["opportunity_id"], events, today)
@@ -442,16 +492,16 @@ def evaluate_opportunity(
             is_today = _parse_date(agreed_date) == today
             follow_up = _next_business_day(_parse_date(agreed_date) or today).isoformat()
             action_text = (
-                f"Wait for today's scheduled decision ({future_event.get('summary', 'meeting')}); no need to contact the buyer first"
+                "Wait for today's scheduled decision; no need to contact the buyer first"
                 if is_today
                 else f"Do not contact buyer before agreed decision date ({agreed_date})"
             )
             why_now_text = (
-                f"Buyer confirmed {future_event.get('summary', 'a decision')} for today; "
+                f"Buyer confirmed a decision is expected today; "
                 f"no action needed until it happens. Follow up on {follow_up} if no decision is received."
                 if is_today
                 else (
-                    f"Buyer confirmed {future_event.get('summary', 'a decision')} for {agreed_date}; "
+                    f"Buyer confirmed an agreed decision date of {agreed_date}; "
                     f"no action needed today. Follow up on {follow_up} if no decision is received."
                 )
             )
@@ -494,7 +544,7 @@ def evaluate_opportunity(
                     priority="Critical",
                     action="Requalify proposal and set a new dated next step",
                     due=today.isoformat(),
-                    why_now=f"{close_phrase}{close_note}",
+                    why_now=opp.get("suggestion_override") or f"{close_phrase}{close_note} Requalify this deal today, or set a new dated next step if it's still genuinely active.",
                     notes="If inactive, move to nurture/lost rather than keep chasing.",
                     evidence=evidence,
                 )
@@ -509,7 +559,7 @@ def evaluate_opportunity(
                     priority="High",
                     action="Review deal strategy — late-stage high-value deal has no dated next step",
                     due=_next_business_day(today).isoformat(),
-                    why_now="Late-stage, high-value proposal has no dated next action",
+                    why_now="Late-stage, high-value proposal has no dated next action. Book a strategy review with the deal owner before this stalls at its most valuable stage.",
                     evidence=evidence,
                 )
             )
@@ -523,12 +573,19 @@ def evaluate_opportunity(
                     priority="High",
                     action="Create a dated next action or requalify the deal",
                     due=_next_business_day(today).isoformat(),
-                    why_now="Open deal has no next action on file",
+                    why_now="Open deal has no next action on file. Set a dated next step now, or requalify the deal if it's gone cold.",
                     evidence=evidence,
                 )
             )
-        elif _has_pending_seller_commitment(opp["opportunity_id"], events):
+        elif _has_pending_seller_commitment(opp["opportunity_id"], events) or opp.get("crm_source") == "hubspot":
             # R-004 — a meeting/note commitment still needs following up on.
+            # For live HubSpot-sourced deals there's no mock-data/events.json
+            # row to check creates_action against — but a populated next_action
+            # (HubSpot's own hs_next_step field) already means exactly that: a
+            # known next step exists and hasn't been marked done. Without this,
+            # a live deal with next_action set but no local "commitment event"
+            # would match neither R-001 (has a next action) nor this branch
+            # (no event to find), and silently produce zero actions.
             meeting_note = " and propose a follow-up" if no_meeting_booked else ""
             actions.append(
                 _action(
@@ -538,11 +595,21 @@ def evaluate_opportunity(
                     priority="High",
                     action=f"{opp['next_action']}{meeting_note}",
                     due=_next_business_day(today).isoformat(),
-                    why_now=(
-                        "A recent meeting or note created a commitment that still needs action, "
-                        "and the promised follow-up is overdue with no next meeting booked."
+                    # suggestion_override (opportunities.json, optional): a
+                    # hand-written suggestion for this specific deal, used
+                    # verbatim instead of the generic template below — for
+                    # cases where the generic phrasing ("do {next_action}")
+                    # reads worse than a suggestion written for the exact
+                    # situation (e.g. naming who to confirm with first).
+                    why_now=opp.get("suggestion_override") or (
+                        f"A recent meeting or note created a commitment that still needs action, "
+                        f"and the promised follow-up is overdue with no next meeting booked — "
+                        f"{opp['next_action'][0].lower() + opp['next_action'][1:]} today and get a follow-up meeting on the calendar."
                         if no_meeting_booked
-                        else "A recent meeting or note created a commitment that still needs action"
+                        else (
+                            f"A recent meeting or note created a commitment that still needs action — "
+                            f"{opp['next_action'][0].lower() + opp['next_action'][1:]} as soon as possible."
+                        )
                     ),
                     evidence=evidence,
                 )
@@ -559,7 +626,7 @@ def evaluate_opportunity(
                 priority="Medium",
                 action=f"Fill in missing {', '.join(missing_fields)} for this deal",
                 due=_next_business_day(_next_business_day(today)).isoformat(),
-                why_now=f"Missing core field(s): {', '.join(missing_fields)}",
+                why_now=f"Missing core field(s): {', '.join(missing_fields)}. Fill these in so the Playbook can evaluate this deal correctly — missing fields can hide a deal that actually needs attention.",
                 evidence=evidence,
             )
         )
@@ -577,12 +644,15 @@ def build_actions(opportunities: list[dict], events: list[dict], today: date | N
         meeting_summaries = []
 
     try:
-        calendar_events = calendar_client.fetch_meetings(now())
+        # Past 2 weeks + future 2 weeks — wide enough to catch a recently
+        # completed meeting ("technical review completed") as well as
+        # anything upcoming, without pulling in stale history.
+        calendar_events = calendar_client.fetch_meetings_window(now(), days_back=14, days_forward=14)
     except Exception as e:
         logger.warning("Could not read calendar events for the playbook: %s", e)
         calendar_events = []
 
-    events = events + _synthesize_commitment_events(opportunities, calendar_events)
+    events = events + _synthesize_commitment_events(opportunities, calendar_events, meeting_summaries)
 
     actions = []
     for opp in opportunities:

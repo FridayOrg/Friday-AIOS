@@ -90,51 +90,6 @@
     "linked_source_id": "ACT-008"
   },
   {
-    "event_id": "EV-ACT-009",
-    "opportunity_id": "OPP-006",
-    "event_type": "Meeting",
-    "date": "2026-09-30",
-    "source": "CRM Activity",
-    "actor": "Alex Reed",
-    "summary": "Technical workshop",
-    "material": true,
-    "customer_interaction": true,
-    "commitment_or_decision": "Technical blocker",
-    "commitment_due": null,
-    "creates_action": true,
-    "linked_source_id": "ACT-009"
-  },
-  {
-    "event_id": "EV-ACT-010",
-    "opportunity_id": "OPP-006",
-    "event_type": "Task",
-    "date": "2026-10-07",
-    "source": "CRM Activity",
-    "actor": "Alex Reed",
-    "summary": "Send security answers",
-    "material": false,
-    "customer_interaction": false,
-    "commitment_or_decision": "Pending",
-    "commitment_due": "2026-10-07",
-    "creates_action": true,
-    "linked_source_id": "ACT-010"
-  },
-  {
-    "event_id": "EV-ACT-011",
-    "opportunity_id": "OPP-007",
-    "event_type": "Email",
-    "date": "2026-09-22",
-    "source": "CRM Activity",
-    "actor": "Jamie Cole",
-    "summary": "Proposal follow-up",
-    "material": false,
-    "customer_interaction": true,
-    "commitment_or_decision": "No response",
-    "commitment_due": null,
-    "creates_action": false,
-    "linked_source_id": "ACT-011"
-  },
-  {
     "event_id": "EV-ACT-012",
     "opportunity_id": "OPP-019",
     "event_type": "Task",
@@ -315,36 +270,6 @@
     "linked_source_id": "NOTE-004"
   },
   {
-    "event_id": "EV-NOTE-005",
-    "opportunity_id": "OPP-006",
-    "event_type": "CRM Note",
-    "date": "2026-09-30 17:05",
-    "source": "CRM Note",
-    "actor": "Alex Reed",
-    "summary": "Technical team is positive but security questionnaire must be answered before commercial review.",
-    "material": true,
-    "customer_interaction": false,
-    "commitment_or_decision": "Technical team is positive but security questionnaire must be answered before commercial review.",
-    "commitment_due": null,
-    "creates_action": "potentially",
-    "linked_source_id": "NOTE-005"
-  },
-  {
-    "event_id": "EV-NOTE-006",
-    "opportunity_id": "OPP-007",
-    "event_type": "CRM Note",
-    "date": "2026-09-22 09:40",
-    "source": "CRM Note",
-    "actor": "Jamie Cole",
-    "summary": "No reply after proposal follow-up. Need to requalify rather than keep chasing indefinitely.",
-    "material": true,
-    "customer_interaction": false,
-    "commitment_or_decision": "No reply after proposal follow-up. Need to requalify rather than keep chasing indefinitely.",
-    "commitment_due": null,
-    "creates_action": "potentially",
-    "linked_source_id": "NOTE-006"
-  },
-  {
     "event_id": "EV-NOTE-007",
     "opportunity_id": "OPP-010",
     "event_type": "CRM Note",
@@ -403,20 +328,5 @@
     "commitment_due": null,
     "creates_action": "potentially",
     "linked_source_id": "NOTE-010"
-  },
-  {
-    "event_id": "EV-ACT-021",
-    "opportunity_id": "OPP-006",
-    "event_type": "Email",
-    "date": "2026-10-02",
-    "source": "Email",
-    "actor": "Nina Patel",
-    "summary": "Security questionnaire sent",
-    "material": true,
-    "customer_interaction": true,
-    "commitment_or_decision": "Buyer sent the security questionnaire; Alex acknowledged and said he would send the response. No completed security response visible afterwards.",
-    "commitment_due": null,
-    "creates_action": true,
-    "linked_source_id": "EMAIL-021"
   }
 ]

@@ -699,10 +699,27 @@ function TopDealsCard({
   );
 }
 
+// Overdue / due today -> red (most urgent); due tomorrow / due this week ->
+// amber (worth watching, not yet urgent); anything further out or past
+// values -> the default muted color, same scale CRM reps already read
+// close dates by. Plain ISO-string comparison, same convention as isPastClose
+// used before and as UrgentEmails.tsx's own due-date bucketing.
+function closeDateTone(dateStr: string | null, today?: string): { bg: string; color: string; label: string } | null {
+  if (!dateStr || !today) return null;
+  const date = new Date(dateStr + "T00:00:00");
+  const base = new Date(today + "T00:00:00");
+  const days = Math.round((date.getTime() - base.getTime()) / 86400000);
+  if (days < 0) return { bg: "#FEE2E2", color: "#991B1B", label: "Expected close date has passed" };
+  if (days === 0) return { bg: "#FEE2E2", color: "#991B1B", label: "Expected close date is today" };
+  if (days === 1) return { bg: "#FEF3C7", color: "#92400E", label: "Expected close date is tomorrow" };
+  if (days <= 7) return { bg: "#FEF3C7", color: "#92400E", label: "Expected close date is this week" };
+  return null;
+}
+
 function DealRowItem({
   deal, today, expanded, onToggle,
 }: { deal: DealRow; today?: string; expanded: boolean; onToggle: () => void }) {
-  const isPastClose = !!(today && deal.expected_close_date && deal.expected_close_date < today);
+  const closeTone = closeDateTone(deal.expected_close_date, today);
   return (
     <>
       <tr
@@ -720,11 +737,11 @@ function DealRowItem({
         </td>
         <td className="px-5 py-2.5 whitespace-nowrap" style={{ color: C.muted }}>{deal.stage_name ?? "—"}</td>
         <td className="px-5 py-2.5 whitespace-nowrap">
-          {isPastClose ? (
+          {closeTone ? (
             <span
               className="inline-flex items-center px-1.5 py-0.5 rounded-full text-[11px] font-medium"
-              style={{ background: "#FEF3C7", color: "#92400E" }}
-              title="Expected close date has passed"
+              style={{ background: closeTone.bg, color: closeTone.color }}
+              title={closeTone.label}
             >
               {fmtDate(deal.expected_close_date)}
             </span>

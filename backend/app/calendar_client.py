@@ -201,6 +201,29 @@ def _invalidate_meetings_cache() -> None:
 
 
 def _fetch_meetings_uncached(now: datetime) -> list[dict]:
+    time_min, time_max = _week_bounds(now)
+    return _fetch_events_between(time_min, time_max)
+
+
+def fetch_meetings_window(now: datetime, days_back: int, days_forward: int) -> list[dict]:
+    """Live meetings in an explicit [today - days_back, today + days_forward]
+    window, independent of fetch_meetings()'s cached "current week forward"
+    window — used by playbook.py's evidence matching, which needs to see
+    recent PAST meetings too (e.g. "technical review completed"), not just
+    upcoming ones. Not cached: callers needing repeat-call efficiency within
+    one request should call this once and reuse the result, same as
+    build_actions() already does for fetch_meetings(). Same never-raises
+    convention as every other read function here."""
+    start = now - timedelta(days=days_back)
+    end = now + timedelta(days=days_forward)
+    if now.tzinfo is not None:
+        start, end = start.replace(tzinfo=now.tzinfo), end.replace(tzinfo=now.tzinfo)
+    else:
+        start, end = start.astimezone(), end.astimezone()
+    return _fetch_events_between(start.isoformat(), end.isoformat())
+
+
+def _fetch_events_between(time_min: str, time_max: str) -> list[dict]:
     token = _access_token()
     if token is None:
         return []
@@ -208,7 +231,6 @@ def _fetch_meetings_uncached(now: datetime) -> list[dict]:
         logger.warning("GOOGLE_CALENDAR_ID not set; live calendar disabled.")
         return []
 
-    time_min, time_max = _week_bounds(now)
     url = _EVENTS_URL.format(calendar_id=quote(GOOGLE_CALENDAR_ID, safe=""))
     try:
         response = httpx.get(

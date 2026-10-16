@@ -41,7 +41,30 @@ EVENTS_PATH = MOCK_DATA_DIR / "events.json"
 # opportunities.json record at all — see module docstring.
 _LIVE_OPPORTUNITIES = [
     ("OPP-002", "Northstar Legal"),
+    ("OPP-006", "OakBridge Consulting"),
+    ("OPP-007", "Stonegate Software"),
 ]
+
+# opportunity_id -> hand-written suggestion text, used verbatim in place of
+# the rule's generic phrasing (R-002's "requalify or set a next step" / R-004's
+# "do {next_action}") — see playbook._action's suggestion_override handling
+# for why this exists per-deal instead of as a generic template (some
+# situations read better with specific phrasing, e.g. naming who to confirm
+# with first, than any generic sentence could).
+_SUGGESTION_OVERRIDES = {
+    "OPP-002": (
+        "The deal was expected to close on 14 October, and the buyer planned to discuss the "
+        "proposal at the partners' meeting that day. Pricing was acceptable, but the final "
+        "decision is unconfirmed, and no future meeting is booked. Check whether the partners' "
+        "meeting took place and what was decided. If the deal is still active, agree on a "
+        "dated next step and update HubSpot with a realistic close date. If the opportunity is "
+        "no longer progressing, requalify it."
+    ),
+    "OPP-006": (
+        "Confirm with Alex whether the security answers have been sent. If not, have him "
+        "complete and send them immediately, then arrange a follow-up with the buyer."
+    ),
+}
 
 
 def generate_actions() -> list[dict]:
@@ -51,6 +74,8 @@ def generate_actions() -> list[dict]:
     for opportunity_id, account in _LIVE_OPPORTUNITIES:
         live_opp = build_live_opportunity(opportunity_id, account)
         if live_opp:
+            if opportunity_id in _SUGGESTION_OVERRIDES:
+                live_opp["suggestion_override"] = _SUGGESTION_OVERRIDES[opportunity_id]
             opportunities.append(live_opp)
         else:
             logger.warning("No live HubSpot deal found for %s (%s) — skipped.", account, opportunity_id)
