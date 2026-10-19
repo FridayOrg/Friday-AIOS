@@ -91,23 +91,32 @@ function isoDay(d: Date): string {
   return `${d.getFullYear()}-${m}-${day}`;
 }
 
-// Filters work off the due date: "Today" = due today; "This Week" = due from
-// today through this Saturday (week runs Sunday–Saturday). Later items show
-// only under "All".
-function inHorizon(due: string, h: "all" | Horizon): boolean {
+// Filters work off the CRM's own expected close date (not this action's own
+// due date — see closeDateTag's comment on why those are two independent
+// dates), same field the close-date badge and sort order already use, so
+// the filter and what's actually shown agree with each other. "Today" =
+// closes today; "This Week" = closes within the next 7 days (today through
+// today+6, the same rolling window closeDateTag's "Due this week" bucket
+// uses) — a deal closing next week or later simply doesn't show until that
+// week actually arrives, rather than being visible early under a calendar-
+// week definition.
+function inHorizon(expectedClose: string | null, h: "all" | Horizon): boolean {
   if (h === "all") return true;
+  if (!expectedClose) return false;
   const now = new Date();
   const today = isoDay(now);
-  if (h === "Today") return due === today;
-  const saturday = new Date(now.getFullYear(), now.getMonth(), now.getDate() + (6 - now.getDay()));
-  return due >= today && due <= isoDay(saturday);
+  if (h === "Today") return expectedClose === today;
+  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 6);
+  return expectedClose >= today && expectedClose <= isoDay(weekEnd);
 }
 
 export default function UrgentEmails() {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
-  const [horizonFilter, setHorizonFilter] = useState<"all" | Horizon>("all");
+  // Defaults to "This Week", not "all" — deals closing next week or later
+  // shouldn't clutter the list before their week actually arrives.
+  const [horizonFilter, setHorizonFilter] = useState<"all" | Horizon>("This Week");
   const [localStatus, setLocalStatus] = useState<Record<string, LocalStatus>>({});
 
   useEffect(() => {
@@ -134,7 +143,7 @@ export default function UrgentEmails() {
     [actions]
   );
 
-  const visibleItems = items.filter((i) => inHorizon(i.action.due, horizonFilter));
+  const visibleItems = items.filter((i) => inHorizon(i.action.expectedClose, horizonFilter));
 
   return (
     <div>

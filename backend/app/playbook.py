@@ -65,6 +65,15 @@ def _action(rule: str, opp: dict, today: date, **fields) -> dict:
     source, time_horizon = _RULE_META[rule]
     if "priority" in fields and "due" in fields:
         fields["priority"] = _escalate_priority(fields["priority"], fields["due"], today)
+    # action_override (opportunities.json, optional): replaces the row's
+    # headline action text, same mechanism as suggestion_override for the
+    # why_now text — without this, a deal with a hand-written, specific
+    # recommendation (e.g. Atlas Logistics: "send references and an exit
+    # clause to procurement") could still show a generic rule-template
+    # headline ("Create a dated next action or requalify the deal") that
+    # doesn't match what the detailed recommendation actually says to do.
+    if "action" in fields and opp.get("action_override"):
+        fields["action"] = opp["action_override"]
     return {
         "owner": opp.get("owner"),
         "status": "Open",
@@ -560,7 +569,7 @@ def evaluate_opportunity(
                     opp,
                     today,
                     priority="High",
-                    action="Review deal strategy — late-stage high-value deal has no dated next step",
+                    action="Review deal strategy for a late-stage, high-value deal with no dated next step",
                     due=_next_business_day(today).isoformat(),
                     why_now=opp.get("suggestion_override") or "Late-stage, high-value proposal has no dated next action. Book a strategy review with the deal owner before this stalls at its most valuable stage.",
                     evidence=evidence,
@@ -615,12 +624,12 @@ def evaluate_opportunity(
                     # situation (e.g. naming who to confirm with first).
                     why_now=opp.get("suggestion_override") or (
                         f"A recent meeting or note created a commitment that still needs action, "
-                        f"and the promised follow-up is overdue with no next meeting booked — "
-                        f"{opp['next_action'][0].lower() + opp['next_action'][1:]} today and get a follow-up meeting on the calendar."
+                        f"and the promised follow-up is overdue with no next meeting booked. "
+                        f"{opp['next_action'][0].upper() + opp['next_action'][1:]} today and get a follow-up meeting on the calendar."
                         if no_meeting_booked
                         else (
-                            f"A recent meeting or note created a commitment that still needs action — "
-                            f"{opp['next_action'][0].lower() + opp['next_action'][1:]} as soon as possible."
+                            f"A recent meeting or note created a commitment that still needs action. "
+                            f"{opp['next_action'][0].upper() + opp['next_action'][1:]} as soon as possible."
                         )
                     ),
                     evidence=evidence,
@@ -638,7 +647,7 @@ def evaluate_opportunity(
                 priority="Medium",
                 action=f"Fill in missing {', '.join(missing_fields)} for this deal",
                 due=_next_business_day(_next_business_day(today)).isoformat(),
-                why_now=f"Missing core field(s): {', '.join(missing_fields)}. Fill these in so the Playbook can evaluate this deal correctly — missing fields can hide a deal that actually needs attention.",
+                why_now=f"Missing core field(s): {', '.join(missing_fields)}. Fill these in so the Playbook can evaluate this deal correctly, since missing fields can hide a deal that actually needs attention.",
                 evidence=evidence,
             )
         )

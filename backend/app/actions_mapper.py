@@ -82,6 +82,15 @@ _SUGGESTION_OVERRIDES = {
     ),
 }
 
+# opportunity_id -> hand-written row headline, used in place of the rule's
+# generic action text (R-001's "Create a dated next action or requalify the
+# deal" / R-002's "Requalify proposal and set a new dated next step") — same
+# "the detailed recommendation is specific, so the headline should be too"
+# reasoning as _SUGGESTION_OVERRIDES, just for the title instead of the body.
+_ACTION_OVERRIDES = {
+    "OPP-002": "Check partners' meeting outcome and reset the next step, or requalify",
+}
+
 
 def generate_actions() -> list[dict]:
     opportunities = json.loads(OPPORTUNITIES_PATH.read_text(encoding="utf-8"))
@@ -101,6 +110,9 @@ def generate_actions() -> list[dict]:
             override = _SUGGESTION_OVERRIDES.get(opportunity_id) or (mock_by_id.get(opportunity_id) or {}).get("suggestion_override")
             if override:
                 live_opp["suggestion_override"] = override
+            action_override = _ACTION_OVERRIDES.get(opportunity_id) or (mock_by_id.get(opportunity_id) or {}).get("action_override")
+            if action_override:
+                live_opp["action_override"] = action_override
             opportunities.append(live_opp)
         elif opportunity_id in mock_by_id:
             # Live fetch failed (HubSpot down, rate limited, etc.) — fall back
