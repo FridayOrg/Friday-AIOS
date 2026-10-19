@@ -192,7 +192,6 @@ export default function UrgentEmails() {
                 </div>
                 <div className="flex items-center justify-between gap-2 mt-1">
                   <span className="text-xs text-slate-500">{item.action.deal}</span>
-                  <span className="text-xs text-slate-500">Due {item.action.due}</span>
                 </div>
                 {expanded && (
                   <div className="mt-2 text-xs text-slate-600 leading-snug bg-slate-50 rounded-md px-2.5 py-2 space-y-1.5">

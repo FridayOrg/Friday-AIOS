@@ -485,6 +485,9 @@ def evaluate_opportunity(
         future_event = _future_commitment_event(opp["opportunity_id"], events, today)
         expected_close = _parse_date(opp.get("expected_close"))
         has_next_action = bool(opp.get("next_action"))
+        next_action_overdue = bool(
+            opp.get("next_action") and (d := _parse_date(opp.get("next_action_due"))) and d < today
+        )
 
         if future_event:
             # R-003 — buyer gave a decision date today or later; do not chase early.
@@ -520,7 +523,7 @@ def evaluate_opportunity(
                     # there's genuinely nothing to act on until it's missed.
                     due=follow_up,
                     status="Scheduled",
-                    why_now=why_now_text,
+                    why_now=opp.get("suggestion_override") or why_now_text,
                     evidence=evidence,
                 )
             )
@@ -559,7 +562,7 @@ def evaluate_opportunity(
                     priority="High",
                     action="Review deal strategy — late-stage high-value deal has no dated next step",
                     due=_next_business_day(today).isoformat(),
-                    why_now="Late-stage, high-value proposal has no dated next action. Book a strategy review with the deal owner before this stalls at its most valuable stage.",
+                    why_now=opp.get("suggestion_override") or "Late-stage, high-value proposal has no dated next action. Book a strategy review with the deal owner before this stalls at its most valuable stage.",
                     evidence=evidence,
                 )
             )
@@ -573,11 +576,11 @@ def evaluate_opportunity(
                     priority="High",
                     action="Create a dated next action or requalify the deal",
                     due=_next_business_day(today).isoformat(),
-                    why_now="Open deal has no next action on file. Set a dated next step now, or requalify the deal if it's gone cold.",
+                    why_now=opp.get("suggestion_override") or "Open deal has no next action on file. Set a dated next step now, or requalify the deal if it's gone cold.",
                     evidence=evidence,
                 )
             )
-        elif _has_pending_seller_commitment(opp["opportunity_id"], events) or opp.get("crm_source") == "hubspot":
+        elif _has_pending_seller_commitment(opp["opportunity_id"], events) or opp.get("crm_source") == "hubspot" or next_action_overdue:
             # R-004 — a meeting/note commitment still needs following up on.
             # For live HubSpot-sourced deals there's no mock-data/events.json
             # row to check creates_action against — but a populated next_action
@@ -586,6 +589,15 @@ def evaluate_opportunity(
             # a live deal with next_action set but no local "commitment event"
             # would match neither R-001 (has a next action) nor this branch
             # (no event to find), and silently produce zero actions.
+            #
+            # next_action_overdue covers the same gap for MOCK deals: a deal
+            # can have a next_action with a next_action_due in the past, but
+            # no qualifying events.json row (either no row at all, like
+            # QuarryWorks, or one marked material=false because it's an
+            # internal task rather than a customer-facing touchpoint, like
+            # Lumina Education's workshop-booking task) — without this, an
+            # 11-day-overdue commitment would silently produce zero actions
+            # just because nobody logged a "material" event for it.
             meeting_note = " and propose a follow-up" if no_meeting_booked else ""
             actions.append(
                 _action(

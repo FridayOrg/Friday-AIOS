@@ -10,20 +10,28 @@ and went stale between manual reruns (see git history), which this replaces.
 Can still be run directly (`python -m app.actions_mapper` from backend/) for a
 quick manual check — it just prints the count rather than writing a file.
 
-Northstar Legal has NO entry in mock-data/opportunities.json (removed
-deliberately) — it's built live from HubSpot via playbook.build_live_opportunity()
-below instead, as a proof the Playbook can run entirely against the real
-system of record for one opportunity rather than the demo CRM snapshot.
-See build_live_opportunity's docstring for what "live" covers (CRM, Meeting,
-Calendar, Email) and _LIVE_OPPORTUNITIES for how to add another one.
+Every opportunity in _LIVE_OPPORTUNITIES is evaluated against the real
+system of record (HubSpot/Fathom/Calendar/Gmail) via
+playbook.build_live_opportunity() instead of its mock-data/opportunities.json
+record, even when that record still exists in the file — the mock entry is
+deliberately KEPT in the file (not deleted) as a fallback: if the live
+HubSpot fetch fails for any reason (API down, rate limited), generate_actions()
+falls back to that opportunity's mock record rather than silently dropping
+it from the dashboard. At runtime the two are mutually exclusive per
+opportunity_id — never both, which would double it up in the list.
 
-No contact name is hardcoded here for Northstar either — matching against
-live Meeting/Calendar/Email data is done by account name alone
+Northstar Legal (OPP-002) has no mock-data entry at all (it never existed
+there) — its suggestion_override text lives in _SUGGESTION_OVERRIDES below
+since there's no mock record to read one from. OakBridge is the same. The
+newer live-wired deals (below) keep their mock record AND whatever
+"suggestion_override" is already written into it — build_live_opportunity
+doesn't know about that text on its own, so generate_actions() copies it
+across from the mock record it's replacing.
+
+No contact name is hardcoded here for any of these — matching against live
+Meeting/Calendar/Email data is done by account name alone
 (playbook._mentions), since HubSpot has no contact actually associated with
-this deal to fetch live. A hardcoded "Daniel Price" string would have been
-exactly the kind of non-integration-sourced value this file is meant to avoid
-for Northstar; if a real contact gets added in HubSpot later, build_live_
-opportunity can be extended to read it via the deal->contact Associations API.
+any of these deals to fetch live.
 """
 
 import json
@@ -37,12 +45,20 @@ logger = logging.getLogger(__name__)
 OPPORTUNITIES_PATH = MOCK_DATA_DIR / "opportunities.json"
 EVENTS_PATH = MOCK_DATA_DIR / "events.json"
 
-# (opportunity_id, account name) for opportunities with no mock-data/
-# opportunities.json record at all — see module docstring.
+# (opportunity_id, account name) — every deal here is evaluated against the
+# real system of record instead of its mock-data record, which stays in the
+# file as a fallback (see module docstring).
 _LIVE_OPPORTUNITIES = [
     ("OPP-002", "Northstar Legal"),
     ("OPP-006", "OakBridge Consulting"),
     ("OPP-007", "Stonegate Software"),
+    ("OPP-001", "Beacon Manufacturing"),
+    ("OPP-003", "GreenGrid Energy"),
+    ("OPP-004", "Atlas Logistics"),
+    ("OPP-005", "Crest Health"),
+    ("OPP-008", "Lumina Education"),
+    ("OPP-009", "QuarryWorks"),
+    ("OPP-010", "Silverline Media"),
 ]
 
 # opportunity_id -> hand-written suggestion text, used verbatim in place of
@@ -71,14 +87,29 @@ def generate_actions() -> list[dict]:
     opportunities = json.loads(OPPORTUNITIES_PATH.read_text(encoding="utf-8"))
     events = json.loads(EVENTS_PATH.read_text(encoding="utf-8"))
 
+    mock_by_id = {o["opportunity_id"]: o for o in opportunities}
+    live_ids = {opportunity_id for opportunity_id, _ in _LIVE_OPPORTUNITIES}
+    # Pull every live-wired opportunity's mock record OUT of the active list —
+    # it stays in the file (never deleted), but at runtime it's replaced by
+    # the live version, not shown alongside it (which would double the deal
+    # up in the dashboard).
+    opportunities = [o for o in opportunities if o["opportunity_id"] not in live_ids]
+
     for opportunity_id, account in _LIVE_OPPORTUNITIES:
         live_opp = build_live_opportunity(opportunity_id, account)
         if live_opp:
-            if opportunity_id in _SUGGESTION_OVERRIDES:
-                live_opp["suggestion_override"] = _SUGGESTION_OVERRIDES[opportunity_id]
+            override = _SUGGESTION_OVERRIDES.get(opportunity_id) or (mock_by_id.get(opportunity_id) or {}).get("suggestion_override")
+            if override:
+                live_opp["suggestion_override"] = override
             opportunities.append(live_opp)
+        elif opportunity_id in mock_by_id:
+            # Live fetch failed (HubSpot down, rate limited, etc.) — fall back
+            # to the mock record rather than silently dropping this deal from
+            # the dashboard mid-demo.
+            logger.warning("Live HubSpot fetch failed for %s (%s) — falling back to mock data.", account, opportunity_id)
+            opportunities.append(mock_by_id[opportunity_id])
         else:
-            logger.warning("No live HubSpot deal found for %s (%s) — skipped.", account, opportunity_id)
+            logger.warning("No live HubSpot deal found for %s (%s) and no mock fallback exists — skipped.", account, opportunity_id)
 
     return build_actions(opportunities, events)
 

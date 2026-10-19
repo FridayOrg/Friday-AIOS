@@ -14,7 +14,7 @@
     "currency": "GBP",
     "probability": 0.6,
     "created_date": "2026-08-18",
-    "expected_close": "2026-10-09",
+    "expected_close": "2026-11-05",
     "closed_on": null,
     "lost_reason": null,
     "last_interaction": "2026-09-24",
@@ -23,7 +23,8 @@
     "primary_offer": "Revenue Automation Sprint",
     "offer_type": "Service",
     "source": "Referral",
-    "data_quality": "Missing next action"
+    "data_quality": "Missing next action",
+    "suggestion_override": "Maya liked the phased rollout approach — Phase 1 for the UK team, then a US rollout once the first 60 days hit the adoption target — but there has been no response since the proposal follow-up on 24 September, and no next action is on file. Send a short check-in referencing the phased plan she liked; if there is still no response within a week, requalify or move this to nurture."
   },
   {
     "opportunity_id": "OPP-003",
@@ -40,7 +41,7 @@
     "currency": "GBP",
     "probability": 0.35,
     "created_date": "2026-09-25",
-    "expected_close": "2026-10-15",
+    "expected_close": "2026-10-27",
     "closed_on": null,
     "lost_reason": null,
     "last_interaction": "2026-10-01",
@@ -49,7 +50,8 @@
     "primary_offer": "Sales Pipeline Audit",
     "offer_type": "Service",
     "source": "Website",
-    "data_quality": "OK"
+    "data_quality": "OK",
+    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent — the next action was due 6 October and is still outstanding. Send the fixed-price scope today; if there's no response within a few days, deprioritize this one."
   },
   {
     "opportunity_id": "OPP-004",
@@ -66,7 +68,7 @@
     "currency": "GBP",
     "probability": 0.55,
     "created_date": "2026-07-30",
-    "expected_close": "2026-10-10",
+    "expected_close": "2026-10-28",
     "closed_on": null,
     "lost_reason": null,
     "last_interaction": "2026-09-23",
@@ -75,7 +77,8 @@
     "primary_offer": "Managed SDR",
     "offer_type": "Recurring Service",
     "source": "Partner",
-    "data_quality": "Missing next action"
+    "data_quality": "Missing next action",
+    "suggestion_override": "Procurement asked for two customer references and a clearer exit clause before progressing, but neither has been sent and there's no next action on file. Prepare the references and exit clause language and send this week — this is a high-value deal stalling on a solvable procurement request, not a lost cause."
   },
   {
     "opportunity_id": "OPP-005",
@@ -101,7 +104,8 @@
     "primary_offer": "ProspectIQ",
     "offer_type": "Product",
     "source": "Website",
-    "data_quality": "OK"
+    "data_quality": "OK",
+    "suggestion_override": "The first discovery call was scheduled for 7 October, but no outcome was logged — it's unclear whether it actually took place. Confirm whether the call happened; if not, get it re-booked before the 20 October close date arrives with nothing to show for it."
   },
   {
     "opportunity_id": "OPP-008",
@@ -127,7 +131,8 @@
     "primary_offer": "Revenue Automation Sprint",
     "offer_type": "Service",
     "source": "Website",
-    "data_quality": "OK"
+    "data_quality": "OK",
+    "suggestion_override": "The solution workshop was due to be booked by 9 October and still hasn't happened — ten days overdue, with the close date only three days away. Book the workshop today, or treat this as stalling rather than progressing if it slips further."
   },
   {
     "opportunity_id": "OPP-009",
@@ -153,7 +158,8 @@
     "primary_offer": "FollowUp AI",
     "offer_type": "Product",
     "source": "Partner",
-    "data_quality": "OK"
+    "data_quality": "OK",
+    "suggestion_override": "Rachel confirmed internal budget approval will be discussed at their ops review on 24 October, and asked us not to chase before then unless something changes. No action needed today — follow up on 25 October if no decision is received."
   },
   {
     "opportunity_id": "OPP-010",
@@ -170,7 +176,7 @@
     "currency": "GBP",
     "probability": 0.5,
     "created_date": "2026-09-18",
-    "expected_close": "2026-10-17",
+    "expected_close": "2026-11-03",
     "closed_on": null,
     "lost_reason": null,
     "last_interaction": "2026-10-04",
@@ -179,7 +185,8 @@
     "primary_offer": "ProspectIQ",
     "offer_type": "Product",
     "source": "Existing Customer",
-    "data_quality": "OK"
+    "data_quality": "OK",
+    "suggestion_override": "Tom asked for pricing on 15 additional users plus annual discount options on 4 October, but the expansion pricing still hasn't been sent — overdue since 7 October. Send the pricing today; this is an existing, engaged customer, so the fastest path to closing is simply completing what was promised."
   },
   {
     "opportunity_id": "OPP-011",
