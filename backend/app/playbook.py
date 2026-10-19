@@ -443,7 +443,7 @@ def _build_evidence(opp: dict, events: list[dict], today: date, meeting_summarie
             # other evidence bucket, not a dump of every matching thread.
             mail = matches[0] if matches else None
             if mail:
-                text = mail.get("snippet") or mail.get("subject") or ""
+                text = mail.get("summary") or mail.get("snippet") or mail.get("subject") or ""
                 if text:
                     evidence.append({"source": "Email", "signal": f"{text} (Live from Gmail: \"{mail.get('subject', '')}\")"})
     else:
@@ -527,18 +527,18 @@ def evaluate_opportunity(
                     evidence=evidence,
                 )
             )
-        elif expected_close and expected_close <= today:
-            # R-002 — expected close date has arrived or passed. <= not <:
-            # a close date of exactly today, with no resolution, is just as
-            # urgent as one already in the past — waiting for the clock to
-            # tick past midnight before escalating would just be a one-day
-            # blind spot on every deal closing today.
+        elif expected_close and expected_close < today:
+            # R-002 — expected close date has genuinely passed. Strictly <,
+            # not <=: a close date of exactly today still gets one more
+            # chance to fall through to a more specific rule first (R-005/
+            # R-001/R-004) — if there's a concrete next step on file (e.g.
+            # OakBridge's "confirm with Alex whether security answers have
+            # been sent"), that's more useful than this rule's generic
+            # "reassess whether this deal is real" framing. Only once the
+            # date has actually passed with nothing resolved does Requalify
+            # become the right call.
             close_note = " No next customer meeting is booked either." if no_meeting_booked else ""
-            close_phrase = (
-                "Expected close date is today and there is no confirmed next step."
-                if expected_close == today
-                else "Expected close date has passed and there is no confirmed next step."
-            )
+            close_phrase = "Expected close date has passed and there is no confirmed next step."
             actions.append(
                 _action(
                     "R-002",

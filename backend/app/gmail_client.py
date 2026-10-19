@@ -22,6 +22,7 @@ pattern as GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN in calendar_client.py.
 import base64
 import html
 import logging
+import re
 import time
 from datetime import datetime, timezone
 from email.mime.text import MIMEText
@@ -87,6 +88,59 @@ def _header(headers: list[dict], name: str) -> str | None:
     return None
 
 
+_QUOTE_CHAIN_RE = re.compile(r"\n\s*On .{0,80} wrote:|\n-{2,}\s*Original Message\s*-{2,}", re.IGNORECASE)
+_SENTENCE_SPLIT_RE = re.compile(r"(?<=[.!?])\s+")
+_TAG_RE = re.compile(r"<[^>]+>")
+
+
+def _extract_plain_text(payload: dict) -> str:
+    """Walks a Gmail message payload's MIME tree for the first text/plain
+    part (falling back to text/html, tags stripped, if that's all there is),
+    decoding the base64url body. Returns "" if nothing usable is found —
+    callers fall back to the snippet, never raise."""
+    mime_type = payload.get("mimeType", "")
+    body_data = (payload.get("body") or {}).get("data")
+
+    if mime_type == "text/plain" and body_data:
+        return base64.urlsafe_b64decode(body_data + "=" * (-len(body_data) % 4)).decode("utf-8", errors="replace")
+
+    html_fallback = None
+    if mime_type == "text/html" and body_data:
+        html_fallback = base64.urlsafe_b64decode(body_data + "=" * (-len(body_data) % 4)).decode("utf-8", errors="replace")
+
+    for part in payload.get("parts") or []:
+        text = _extract_plain_text(part)
+        if text:
+            return text
+
+    return _TAG_RE.sub(" ", html_fallback) if html_fallback else ""
+
+
+def _summarize_body(text: str, max_sentences: int = 2, max_chars: int = 220) -> str:
+    """A short, sentence-bounded summary of an email body — the first couple
+    of complete sentences of the NEW content (quoted reply chains cut off
+    first), not Gmail's own snippet field, which truncates at a fixed
+    character count mid-word/mid-sentence with no indication it's
+    incomplete. Deterministic (first sentences, not genuine summarization —
+    this system doesn't use an LLM), but reads as a clean, complete thought
+    instead of a sentence that just stops."""
+    if not text:
+        return ""
+    # Cut at the first quoted-reply-chain marker, so a long thread's summary
+    # reflects the newest message, not whatever's quoted below it.
+    match = _QUOTE_CHAIN_RE.search(text)
+    if match:
+        text = text[: match.start()]
+    text = re.sub(r"\s+", " ", text).strip()
+    if not text:
+        return ""
+    sentences = _SENTENCE_SPLIT_RE.split(text)
+    summary = " ".join(sentences[:max_sentences]).strip()
+    if len(summary) > max_chars:
+        summary = summary[:max_chars].rsplit(" ", 1)[0] + "…"
+    return summary
+
+
 def _parse_message(msg: dict) -> dict:
     headers = msg.get("payload", {}).get("headers", [])
     subject = _header(headers, "Subject") or "(no subject)"
@@ -99,6 +153,9 @@ def _parse_message(msg: dict) -> dict:
         else None
     )
 
+    body_text = _extract_plain_text(msg.get("payload", {}) or {})
+    summary = _summarize_body(body_text) if body_text else ""
+
     return {
         "id": msg.get("id", ""),
         "thread_id": msg.get("threadId", ""),
@@ -109,6 +166,10 @@ def _parse_message(msg: dict) -> dict:
         # unescape() here so downstream consumers (e.g. the Why panel) show
         # readable text instead of garbled markup.
         "snippet": html.unescape(msg.get("snippet", "")),
+        # A clean, sentence-bounded summary built from the full body (see
+        # _summarize_body) — falls back to the raw snippet if the body
+        # couldn't be parsed for any reason, so callers always get something.
+        "summary": summary or html.unescape(msg.get("snippet", "")),
         "received_at": received_at,
         "gmail_url": f"https://mail.google.com/mail/u/0/#inbox/{msg.get('id', '')}",
     }
@@ -163,10 +224,13 @@ def search_emails(query: str, limit: int = _MAX_RESULTS) -> list[dict]:
     emails = []
     for msg_id in message_ids:
         try:
+            # format=full (not metadata) so _parse_message has the actual
+            # body to build a real summary from — not just Gmail's own
+            # pre-truncated snippet.
             resp = httpx.get(
                 f"{_API_BASE}/messages/{msg_id}",
                 headers=headers,
-                params={"format": "metadata", "metadataHeaders": ["Subject", "From"]},
+                params={"format": "full"},
                 timeout=_TIMEOUT_SECONDS,
             )
             resp.raise_for_status()
