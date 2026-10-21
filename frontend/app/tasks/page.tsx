@@ -8,14 +8,16 @@ import { CheckSquare } from "lucide-react";
 // only actions.json.
 interface Action {
   actionId: string;
-  priority: string; // "Critical" | "High" | "Low" — as given in actions.json
+  priority: string; // kept on the data model, not displayed here anymore — see closeDateTag
   action: string;
   owner: string;
   due: string;
   status: string;
   opportunityId: string;
   deal: string;
+  account: string;
   value: number;
+  expectedClose: string | null;
   whyNow: string;
   source: string;
   rule: string;
@@ -24,22 +26,29 @@ interface Action {
   notes: string;
 }
 
-const PRIORITY_STYLE: Record<string, string> = {
-  critical: "bg-red-200 text-red-800",
-  high: "bg-red-100 text-red-700",
-  low: "bg-gray-100 text-slate-600",
-};
-
-const PRIORITY_RANK: Record<string, number> = { critical: 0, high: 1, low: 2 };
-
-const PRIORITY_FILTERS = ["all", "critical", "high", "low"] as const;
-type PriorityFilter = (typeof PRIORITY_FILTERS)[number];
-
-function normalizeActionPriority(p: string): "critical" | "high" | "low" {
-  if (p === "Critical") return "critical";
-  if (p === "High") return "high";
-  return "low";
+// Same scheme as UrgentEmails.tsx's closeDateTag — driven by the CRM's own
+// expected close date, not the old Critical/High/Low priority tier, so this
+// page and Today's Revenue Priorities agree on what "urgent" means instead
+// of showing two different classification systems for the same deals.
+function closeDateTag(expectedClose: string | null): { label: string; className: string; rank: number } | null {
+  if (!expectedClose) return null;
+  const today = new Date();
+  const todayStr = `${today.getFullYear()}-${String(today.getMonth() + 1).padStart(2, "0")}-${String(today.getDate()).padStart(2, "0")}`;
+  const date = new Date(expectedClose + "T00:00:00");
+  const base = new Date(todayStr + "T00:00:00");
+  const days = Math.round((date.getTime() - base.getTime()) / 86400000);
+  if (Number.isNaN(days)) return null;
+  if (days < 0) return { label: "Overdue", className: "bg-red-200 text-red-800", rank: 0 };
+  if (days === 0) return { label: "Due today", className: "bg-red-100 text-red-700", rank: 1 };
+  if (days === 1) return { label: "Due tomorrow", className: "bg-amber-100 text-amber-700", rank: 2 };
+  if (days <= 7) return { label: "Due this week", className: "bg-amber-100 text-amber-700", rank: 3 };
+  return { label: "Later", className: "bg-gray-100 text-slate-600", rank: 4 };
 }
+
+const UNRANKED = 5;
+
+const CLOSE_FILTERS = ["all", "Overdue", "Due today", "Due tomorrow", "Due this week"] as const;
+type CloseFilter = (typeof CLOSE_FILTERS)[number];
 
 function FilterPill({
   active,
@@ -67,7 +76,7 @@ function FilterPill({
 export default function TasksPage() {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
-  const [priorityFilter, setPriorityFilter] = useState<PriorityFilter>("all");
+  const [closeFilter, setCloseFilter] = useState<CloseFilter>("all");
   const [expandedId, setExpandedId] = useState<string | null>(null);
 
   useEffect(() => {
@@ -80,14 +89,10 @@ export default function TasksPage() {
 
   const visibleActions = useMemo(() => {
     return actions
-      .filter((a) => priorityFilter === "all" || normalizeActionPriority(a.priority) === priorityFilter)
+      .filter((a) => closeFilter === "all" || closeDateTag(a.expectedClose)?.label === closeFilter)
       .slice()
-      .sort(
-        (a, b) =>
-          (PRIORITY_RANK[normalizeActionPriority(a.priority)] ?? 99) -
-          (PRIORITY_RANK[normalizeActionPriority(b.priority)] ?? 99)
-      );
-  }, [actions, priorityFilter]);
+      .sort((a, b) => (closeDateTag(a.expectedClose)?.rank ?? UNRANKED) - (closeDateTag(b.expectedClose)?.rank ?? UNRANKED));
+  }, [actions, closeFilter]);
 
   return (
     <div className="p-8 max-w-4xl mx-auto min-h-full bg-[#F5F6F8]">
@@ -102,9 +107,9 @@ export default function TasksPage() {
         <>
           <div className="flex flex-col gap-2 mb-5">
             <div className="flex flex-wrap items-center gap-2">
-              {PRIORITY_FILTERS.map((p) => (
-                <FilterPill key={p} active={priorityFilter === p} onClick={() => setPriorityFilter(p)}>
-                  {p === "all" ? "all priority" : p}
+              {CLOSE_FILTERS.map((f) => (
+                <FilterPill key={f} active={closeFilter === f} onClick={() => setCloseFilter(f)}>
+                  {f === "all" ? "all" : f}
                 </FilterPill>
               ))}
             </div>
@@ -116,7 +121,7 @@ export default function TasksPage() {
             )}
             {visibleActions.map((a) => {
               const expanded = expandedId === a.actionId;
-              const priority = normalizeActionPriority(a.priority);
+              const tag = closeDateTag(a.expectedClose);
               return (
                 <div
                   key={a.actionId}
@@ -125,13 +130,11 @@ export default function TasksPage() {
                   <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-2">
                     <h3 className="text-sm font-semibold text-slate-900">{a.action}</h3>
                     <div className="flex items-center gap-2 shrink-0">
-                      <span
-                        className={`text-[11px] font-medium px-2 py-0.5 rounded-full capitalize ${
-                          PRIORITY_STYLE[priority] ?? "bg-gray-100 text-slate-600"
-                        }`}
-                      >
-                        {a.priority}
-                      </span>
+                      {tag && (
+                        <span className={`text-[11px] font-medium px-2 py-0.5 rounded-full ${tag.className}`}>
+                          {tag.label}
+                        </span>
+                      )}
                       <button
                         onClick={() => setExpandedId(expanded ? null : a.actionId)}
                         className="text-xs font-medium text-sky-600"
@@ -141,7 +144,7 @@ export default function TasksPage() {
                     </div>
                   </div>
                   <div className="flex flex-wrap items-center gap-x-4 gap-y-1 text-xs text-slate-500 mt-1">
-                    <span>Due {a.due}</span>
+                    <span>{a.account || a.deal}</span>
                     <span>Deal: {a.deal}</span>
                     <span>Owner: {a.owner}</span>
                   </div>

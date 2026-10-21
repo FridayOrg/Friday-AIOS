@@ -42,17 +42,17 @@
     "currency": "GBP",
     "probability": 0.35,
     "created_date": "2026-09-25",
-    "expected_close": "2026-10-27",
+    "expected_close": "2026-11-09",
     "closed_on": null,
     "lost_reason": null,
-    "last_interaction": "2026-10-01",
+    "last_interaction": "2026-10-13",
     "next_action": "Send audit scope and price",
-    "next_action_due": "2026-10-06",
+    "next_action_due": "2026-10-23",
     "primary_offer": "Sales Pipeline Audit",
     "offer_type": "Service",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent. The next action was due 6 October and is still outstanding. Send the fixed-price scope today; if there's no response within a few days, deprioritize this one."
+    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent. A scope review call is booked for 26 October, so the pricing needs to go out before then. Send the fixed-price scope today; if there's no response within a few days, deprioritize this one."
   },
   {
     "opportunity_id": "OPP-004",
@@ -107,7 +107,8 @@
     "offer_type": "Product",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "The first discovery call was scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. Confirm whether the call happened; if not, get it re-booked before the 20 October close date arrives with nothing to show for it."
+    "action_override": "Confirm discovery call outcome or requalify",
+    "suggestion_override": "The first discovery call was scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. The close date has now passed with nothing confirmed. Confirm whether the call happened; if not, get it re-booked or requalify the deal."
   },
   {
     "opportunity_id": "OPP-008",
@@ -124,17 +125,17 @@
     "currency": "GBP",
     "probability": 0.35,
     "created_date": "2026-09-29",
-    "expected_close": "2026-10-22",
+    "expected_close": "2026-11-12",
     "closed_on": null,
     "lost_reason": null,
-    "last_interaction": "2026-10-02",
-    "next_action": "Book solution workshop",
-    "next_action_due": "2026-10-09",
+    "last_interaction": "2026-10-21",
+    "next_action": "Prepare workshop agenda and confirm attendees",
+    "next_action_due": "2026-10-23",
     "primary_offer": "Revenue Automation Sprint",
     "offer_type": "Service",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "The solution workshop was due to be booked by 9 October and still hasn't happened. It's ten days overdue, with the close date only three days away. Book the workshop today, or treat this as stalling rather than progressing if it slips further."
+    "suggestion_override": "The solution workshop was overdue since 9 October, but it has now been booked for 23 October. Prepare the agenda and confirm attendees before then so the session is productive, not just scheduled."
   },
   {
     "opportunity_id": "OPP-009",
@@ -181,14 +182,14 @@
     "expected_close": "2026-11-03",
     "closed_on": null,
     "lost_reason": null,
-    "last_interaction": "2026-10-04",
+    "last_interaction": "2026-10-16",
     "next_action": "Send expansion pricing",
-    "next_action_due": "2026-10-07",
+    "next_action_due": "2026-10-19",
     "primary_offer": "ProspectIQ",
     "offer_type": "Product",
     "source": "Existing Customer",
     "data_quality": "OK",
-    "suggestion_override": "Tom asked for pricing on 15 additional users plus annual discount options on 4 October, but the expansion pricing still hasn't been sent. It's overdue since 7 October. Send the pricing today; this is an existing, engaged customer, so the fastest path to closing is simply completing what was promised."
+    "suggestion_override": "Tom asked for pricing on 15 additional users plus annual discount options on 16 October, but the expansion pricing still hasn't been sent. It's overdue since 19 October. Send the pricing today; this is an existing, engaged customer, so the fastest path to closing is simply completing what was promised."
   },
   {
     "opportunity_id": "OPP-011",

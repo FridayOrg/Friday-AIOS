@@ -133,43 +133,30 @@ def _has_pending_seller_commitment(opp_id: str, events: list[dict]) -> bool:
 def _synthesize_commitment_events(
     opportunities: list[dict], calendar_events: list[dict], meeting_summaries: list[dict]
 ) -> list[dict]:
-    """Bridges live Calendar AND Meeting Summary data into the events shape
+    """Bridges Fathom meeting-summary commitments into the events shape
     _future_commitment_event (R-003's trigger) and _has_pending_seller_
     commitment (R-004's trigger) already know how to read — for opportunities
     flagged `"live_commitments_from_calendar"` (currently Northstar and
     OakBridge, which have NO mock-data/events.json record to read a
     commitment_due from at all).
 
-    Two independent sources, because a buyer's agreed decision date doesn't
-    always show up as OUR calendar event — e.g. Northstar's "partners'
-    meeting" is internal to the buyer, never booked on our calendar at all,
-    so Calendar evidence correctly shows "no meeting" even though a real
-    agreed date exists. That date lives instead in the Fathom meeting
-    summary's action-item due_date (set when the commitment was actually
-    captured in the meeting). Without reading both, a deal like this would
-    never trigger R-003 and would incorrectly fall through to a generic
-    "no next action" rule despite the buyer having given a clear date."""
+    Deliberately NOT sourced from live Calendar events anymore (an earlier
+    version of this function synthesized a commitment from ANY future
+    calendar event, on the theory that a scheduled meeting is itself a
+    reason to wait) — that was wrong: a routine follow-up/review call being
+    on the books doesn't mean the buyer told us not to chase, it's just a
+    scheduled touchpoint. Booking a future call for a deal (e.g. GreenGrid's
+    scope review) was incorrectly flipping it to R-003 "do not contact
+    before this date" even though the actual next step — sending the scope
+    — was still overdue and needed to happen before that call, not be
+    blocked by it. A genuine "wait until X" commitment only exists when a
+    buyer explicitly said so, which is what a Fathom meeting summary's
+    action-item due_date actually represents (captured at the meeting,
+    not inferred from the mere existence of a future booking)."""
     synthesized = []
     for opp in opportunities:
         if not opp.get("live_commitments_from_calendar"):
             continue
-
-        for e in _matching_calendar_events(opp, calendar_events):
-            d = _parse_date(e.get("date"))
-            if not d:
-                continue
-            synthesized.append({
-                "event_id": f"LIVE-CAL-{opp['opportunity_id']}-{e.get('id', '')}",
-                "opportunity_id": opp["opportunity_id"],
-                "event_type": "Call",
-                "date": e["date"],
-                "commitment_due": e["date"],
-                "summary": e.get("name") or "Scheduled meeting",
-                "material": True,
-                "customer_interaction": True,
-                "commitment_or_decision": None,
-                "creates_action": False,
-            })
 
         for m in _matching_meeting_summaries(opp, meeting_summaries):
             for item in m.get("action_items") or []:
@@ -278,7 +265,13 @@ def _hubspot_crm_signal(opp: dict) -> str | None:
     stage = stage_names.get(match.get("stage_id"), match.get("stage_id") or "an unknown stage")
     owner = match.get("owner_name") or "no owner set"
     close = (match.get("expected_close_date") or "")[:10] or "unknown"
-    return f"{value_str} deal in {stage}, owned by {owner}, expected to close {close}. (Live from HubSpot.)"
+    base = f"{value_str} deal in {stage}, owned by {owner}, expected to close {close}. (Live from HubSpot.)"
+    next_action = match.get("next_step")
+    if next_action:
+        base += f" Next action on file: {next_action}."
+    else:
+        base += " No next action on file."
+    return base
 
 
 def build_live_opportunity(opportunity_id: str, account: str, contact_person: str | None = None) -> dict | None:

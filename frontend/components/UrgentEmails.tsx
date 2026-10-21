@@ -114,9 +114,7 @@ export default function UrgentEmails() {
   const [actions, setActions] = useState<Action[]>([]);
   const [loading, setLoading] = useState(true);
   const [expandedActionId, setExpandedActionId] = useState<string | null>(null);
-  // Defaults to "This Week", not "all" — deals closing next week or later
-  // shouldn't clutter the list before their week actually arrives.
-  const [horizonFilter, setHorizonFilter] = useState<"all" | Horizon>("This Week");
+  const [horizonFilter, setHorizonFilter] = useState<"all" | Horizon>("all");
   const [localStatus, setLocalStatus] = useState<Record<string, LocalStatus>>({});
 
   useEffect(() => {

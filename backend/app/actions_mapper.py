@@ -69,16 +69,23 @@ _LIVE_OPPORTUNITIES = [
 # with first, than any generic sentence could).
 _SUGGESTION_OVERRIDES = {
     "OPP-002": (
-        "The deal was expected to close on 14 October, and the buyer planned to discuss the "
-        "proposal at the partners' meeting that day. Pricing was acceptable, but the final "
-        "decision is unconfirmed, and no future meeting is booked. Check whether the partners' "
-        "meeting took place and what was decided. If the deal is still active, agree on a "
-        "dated next step and update HubSpot with a realistic close date. If the opportunity is "
-        "no longer progressing, requalify it."
+        "The buyer planned to discuss the proposal at the partners' meeting on 14 October, "
+        "and pricing was acceptable, but the final decision is still unconfirmed and no "
+        "future meeting is booked. The close date has since moved to 28 October. Check "
+        "whether the partners' meeting took place and what was decided. If the deal is "
+        "still active, agree on a dated next step. If the opportunity is no longer "
+        "progressing, requalify it."
     ),
     "OPP-006": (
         "Confirm with Alex whether the security answers have been sent. If not, have him "
         "complete and send them immediately, then arrange a follow-up with the buyer."
+    ),
+    "OPP-007": (
+        "The buyer liked the solution, but internal approval from Head of Sales was never "
+        "confirmed, and there has been no response since the proposal follow-up. The close "
+        "date passed on 16 October with nothing resolved. Confirm whether Head of Sales "
+        "approval ever happened; if the deal has gone cold, move it to nurture rather than "
+        "keep chasing."
     ),
 }
 
@@ -89,6 +96,8 @@ _SUGGESTION_OVERRIDES = {
 # reasoning as _SUGGESTION_OVERRIDES, just for the title instead of the body.
 _ACTION_OVERRIDES = {
     "OPP-002": "Check partners' meeting outcome and reset the next step, or requalify",
+    "OPP-006": "Confirm with Alex whether security answers have been sent",
+    "OPP-007": "Confirm Head of Sales approval status or move to nurture",
 }
 
 
