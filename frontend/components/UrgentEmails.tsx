@@ -59,16 +59,16 @@ const STATUS_STYLE: Record<LocalStatus, string> = {
 };
 
 // Overdue / due today -> red (most urgent); due tomorrow / due this week ->
-// amber; further out -> no badge at all, same red/amber scale as the CRM
+// amber; further out -> gray "Later", same red/amber/gray scale as the CRM
 // dashboard's close-date column (CrmDashboard.tsx's closeDateTone). Driven
 // by the CRM's own expected close date, NOT this action's own due date —
 // two independent dates (one is "when the deal should close", the other is
 // "when Friday wants a follow-up") that happen to coincide sometimes.
 //
 // Returns the bucket's sort rank alongside its label/color so the list can
-// be ordered Overdue -> Due today -> Due tomorrow -> Due this week -> (no
-// badge, sorted last) — the same urgency scale the badge itself shows,
-// instead of a separately-maintained priority ranking.
+// be ordered Overdue -> Due today -> Due tomorrow -> Due this week -> Later
+// -> (no close date at all, sorted last) — the same urgency scale the badge
+// itself shows, instead of a separately-maintained priority ranking.
 function closeDateTag(expectedClose: string | null): { label: string; className: string; rank: number } | null {
   if (!expectedClose) return null;
   const today = isoDay(new Date());
@@ -85,10 +85,10 @@ function closeDateTag(expectedClose: string | null): { label: string; className:
   // (the upcoming Sunday), not a fixed day count.
   const daysUntilEndOfWeek = (7 - base.getDay()) % 7;
   if (days <= daysUntilEndOfWeek) return { label: "Due this week", className: "bg-amber-100 text-amber-700", rank: 3 };
-  return null;
+  return { label: "Later", className: "bg-gray-100 text-slate-600", rank: 4 };
 }
 
-const UNRANKED = 4; // no badge (further out, or no close date at all) — sorts last
+const UNRANKED = 5; // no close date at all — sorts last, after "Later"
 
 function isoDay(d: Date): string {
   const m = String(d.getMonth() + 1).padStart(2, "0");
@@ -100,18 +100,18 @@ function isoDay(d: Date): string {
 // due date — see closeDateTag's comment on why those are two independent
 // dates), same field the close-date badge and sort order already use, so
 // the filter and what's actually shown agree with each other. "Today" =
-// closes today; "This Week" = closes within the next 7 days (today through
-// today+6, the same rolling window closeDateTag's "Due this week" bucket
-// uses) — a deal closing next week or later simply doesn't show until that
-// week actually arrives, rather than being visible early under a calendar-
-// week definition.
+// closes today; "This Week" = closes within the current Mon-Sun calendar
+// week (same end-of-week boundary closeDateTag's "Due this week" bucket
+// uses) — a deal closing next week simply doesn't show until that week
+// actually arrives.
 function inHorizon(expectedClose: string | null, h: "all" | Horizon): boolean {
   if (h === "all") return true;
   if (!expectedClose) return false;
   const now = new Date();
   const today = isoDay(now);
   if (h === "Today") return expectedClose === today;
-  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + 6);
+  const daysUntilEndOfWeek = (7 - now.getDay()) % 7;
+  const weekEnd = new Date(now.getFullYear(), now.getMonth(), now.getDate() + daysUntilEndOfWeek);
   return expectedClose >= today && expectedClose <= isoDay(weekEnd);
 }
 
