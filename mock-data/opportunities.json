@@ -52,7 +52,7 @@
     "offer_type": "Service",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent. The scope review call went ahead on 26 October without the pricing having gone out first. Send the fixed-price scope immediately; this is now at real risk of losing credibility with Sophie."
+    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before the scope review call, which went ahead on 26 October without the pricing having been sent first. We later promised to send it shortly in a follow-up email, but it still hasn't gone out. Send the fixed-price scope immediately; this is now at real risk of losing credibility with Sophie."
   },
   {
     "opportunity_id": "OPP-004",
@@ -189,7 +189,7 @@
     "offer_type": "Product",
     "source": "Existing Customer",
     "data_quality": "OK",
-    "suggestion_override": "Tom asked for pricing on 15 additional users plus annual discount options on 16 October, but the expansion pricing still hasn't been sent. It's overdue since 19 October. Send the pricing today; this is an existing, engaged customer, so the fastest path to closing is simply completing what was promised."
+    "suggestion_override": "Tom asked for pricing on 15 additional users plus annual discount options on 16 October, but the expansion pricing still hasn't been sent. It's overdue since 19 October, and a follow-up call is already booked for 3 November. Send the pricing today, well before that call, so the meeting can be used to finalize terms instead of waiting on numbers that still haven't gone out - this is an existing, engaged customer, so the fastest path to closing is simply completing what was promised."
   },
   {
     "opportunity_id": "OPP-011",
