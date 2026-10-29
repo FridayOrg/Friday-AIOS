@@ -19,6 +19,7 @@ deal whose close date was "due today" when the doc was written will show as
 hidden.
 """
 
+import concurrent.futures
 import logging
 from datetime import date, timedelta
 
@@ -351,6 +352,22 @@ def _matching_gmail_emails(opp: dict, limit: int = 5) -> list[dict]:
     return [m for m in results if "no-reply" not in (m.get("sender") or "").lower()]
 
 
+def _prefetch_gmail_evidence(opportunities: list[dict]) -> dict[str, list[dict]]:
+    """Runs _matching_gmail_emails for every email_source=="gmail" opportunity
+    concurrently instead of one search at a time — each Gmail search takes a
+    couple of seconds, and awaiting them sequentially inside the per-
+    opportunity loop (up to 10 on this demo) made /actions take 20-30s.
+    Keyed by account name, the same key _matching_gmail_emails itself uses,
+    so build_actions() can hand each opportunity its own pre-fetched result
+    instead of searching again."""
+    targets = {opp["account"] for opp in opportunities if opp.get("email_source") == "gmail" and opp.get("account")}
+    if not targets:
+        return {}
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(targets)) as pool:
+        futures = {pool.submit(_matching_gmail_emails, {"account": account}): account for account in targets}
+        return {futures[f]: f.result() for f in concurrent.futures.as_completed(futures)}
+
+
 def _mentions(opp: dict, *texts: str | None) -> bool:
     """True if this opportunity's account or contact name appears in any of the
     given free-text fields (case-insensitive substring) — the only join key
@@ -412,7 +429,14 @@ def _calendar_signal(opp: dict, calendar_events: list[dict], today: date) -> str
     return "No future customer meeting booked."
 
 
-def _build_evidence(opp: dict, events: list[dict], today: date, meeting_summaries: list[dict], calendar_events: list[dict]) -> list[dict]:
+def _build_evidence(
+    opp: dict,
+    events: list[dict],
+    today: date,
+    meeting_summaries: list[dict],
+    calendar_events: list[dict],
+    gmail_cache: dict[str, list[dict]] | None = None,
+) -> list[dict]:
     """The full per-source evidence list backing one opportunity's action, for
     the "Why?" panel — CRM, Meeting, Email and Calendar signals, each labeled
     by source so the UI can show the combination that produced the
@@ -440,7 +464,8 @@ def _build_evidence(opp: dict, events: list[dict], today: date, meeting_summarie
 
     if opp.get("email_source") == "gmail":
         if "Email" not in excluded:
-            matches = _matching_gmail_emails(opp)
+            account = (opp.get("account") or "").strip()
+            matches = gmail_cache[account] if gmail_cache is not None and account in gmail_cache else _matching_gmail_emails(opp)
             # Most recent only — one Email line per source, same as every
             # other evidence bucket, not a dump of every matching thread.
             mail = matches[0] if matches else None
@@ -471,6 +496,7 @@ def evaluate_opportunity(
     today: date,
     meeting_summaries: list[dict],
     calendar_events: list[dict],
+    gmail_cache: dict[str, list[dict]] | None = None,
 ) -> list[dict]:
     """Returns the Actions this one opportunity produces (0, 1, or 2 — at most one
     from R-001/002/003/004/005, plus independently R-006). Every action carries
@@ -479,7 +505,7 @@ def evaluate_opportunity(
     rather than coming from whichever single event happened to trigger the rule."""
     actions = []
     value = opp.get("value")
-    evidence = _build_evidence(opp, events, today, meeting_summaries, calendar_events)
+    evidence = _build_evidence(opp, events, today, meeting_summaries, calendar_events, gmail_cache)
     calendar_note = next((e["signal"] for e in evidence if e["source"] == "Calendar"), "")
     no_meeting_booked = "No future" in calendar_note
 
@@ -668,9 +694,15 @@ def build_actions(opportunities: list[dict], events: list[dict], today: date | N
 
     events = events + _synthesize_commitment_events(opportunities, calendar_events, meeting_summaries)
 
+    try:
+        gmail_cache = _prefetch_gmail_evidence(opportunities)
+    except Exception as e:
+        logger.warning("Could not prefetch Gmail evidence for the playbook: %s", e)
+        gmail_cache = {}
+
     actions = []
     for opp in opportunities:
-        actions.extend(evaluate_opportunity(opp, events, today, meeting_summaries, calendar_events))
+        actions.extend(evaluate_opportunity(opp, events, today, meeting_summaries, calendar_events, gmail_cache))
     for i, action in enumerate(actions, start=1):
         action["action_id"] = f"ACT-{i:03d}"
     return actions
