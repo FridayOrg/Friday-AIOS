@@ -97,7 +97,7 @@
     "currency": "GBP",
     "probability": 0.3,
     "created_date": "2026-10-02",
-    "expected_close": "2026-10-20",
+    "expected_close": "2026-12-08",
     "closed_on": null,
     "lost_reason": null,
     "last_interaction": "2026-10-03",
@@ -108,7 +108,7 @@
     "source": "Website",
     "data_quality": "OK",
     "action_override": "Confirm discovery call outcome or requalify",
-    "suggestion_override": "The first discovery call was originally scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. It has since been re-booked for today. Confirm the outcome once today's call happens and set a new dated next step; if it's still inactive afterward, move this to nurture or closed-lost rather than keep chasing. The close date has also passed and should be updated once the outcome is known."
+    "suggestion_override": "The first discovery call was originally scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. It has since been re-booked for today. Confirm the outcome once today's call happens and set a new dated next step; if it's still inactive afterward, move this to nurture or closed-lost rather than keep chasing."
   },
   {
     "opportunity_id": "OPP-008",
