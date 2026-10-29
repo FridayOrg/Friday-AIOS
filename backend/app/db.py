@@ -217,6 +217,16 @@ def update_action_item_due_date(recording_id: str, index: int, due_date: str | N
         return True
 
 
+def delete_meeting_summary(recording_id: str) -> bool:
+    """Permanently removes one meeting summary row. Returns False if no row
+    with that recording_id exists. Used to clean up a demo/test note that
+    was inserted by mistake — upsert_meeting_summary can overwrite a row's
+    content but can't remove it from the dashboard's list entirely."""
+    with _connect() as conn, conn.cursor() as cur:
+        cur.execute("DELETE FROM meeting_summaries WHERE recording_id = %(recording_id)s", {"recording_id": recording_id})
+        return cur.rowcount > 0
+
+
 def list_meeting_summaries(limit: int = 20) -> list[dict]:
     """Meeting summaries for the dashboard, most recent first."""
     with _connect() as conn, conn.cursor(cursor_factory=psycopg2.extras.RealDictCursor) as cur:
