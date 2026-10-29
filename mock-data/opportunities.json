@@ -108,7 +108,7 @@
     "source": "Website",
     "data_quality": "OK",
     "action_override": "Confirm discovery call outcome or requalify",
-    "suggestion_override": "The first discovery call was scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. The close date has now passed with nothing confirmed. Confirm whether the call happened; if not, get it re-booked or requalify the deal."
+    "suggestion_override": "The first discovery call was originally scheduled for 7 October, but no outcome was logged, so it's unclear whether it actually took place. It has since been re-booked for today. Confirm the outcome once today's call happens and set a new dated next step; if it's still inactive afterward, move this to nurture or closed-lost rather than keep chasing. The close date has also passed and should be updated once the outcome is known."
   },
   {
     "opportunity_id": "OPP-008",
