@@ -25,7 +25,7 @@
     "source": "Referral",
     "data_quality": "Missing next action",
     "action_override": "Send a check-in referencing the phased UK-then-US rollout plan",
-    "suggestion_override": "Maya liked the phased rollout approach, Phase 1 for the UK team then a US rollout once the first 60 days hit the adoption target, but there has been no response since the proposal follow-up on 24 September, and no next action is on file. Send a short check-in referencing the phased plan she liked; if there is still no response within a week, requalify or move this to nurture."
+    "suggestion_override": "Maya liked the phased rollout approach, Phase 1 for the UK team then a US rollout once the first 60 days hit the adoption target, but there has been no response since the proposal follow-up on 20 October, and no next action is on file. With the close date only days away, send a short check-in referencing the phased plan she liked; if there is still no response within a few days, requalify or move this to nurture."
   },
   {
     "opportunity_id": "OPP-003",
@@ -80,7 +80,7 @@
     "source": "Partner",
     "data_quality": "Missing next action",
     "action_override": "Send customer references and exit clause to procurement",
-    "suggestion_override": "Procurement asked for two customer references and a clearer exit clause before progressing, but neither has been sent and there's no next action on file. Prepare the references and exit clause language and send this week. This is a high-value deal stalling on a solvable procurement request, not a lost cause."
+    "suggestion_override": "Procurement asked for two customer references and a clearer exit clause before progressing, and neither has been sent yet even though the deal is set to close tomorrow. Send the references and exit clause language today - this is a high-value deal that's down to the wire on a solvable procurement request, not a lost cause."
   },
   {
     "opportunity_id": "OPP-005",
