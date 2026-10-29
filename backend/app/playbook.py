@@ -677,28 +677,43 @@ def evaluate_opportunity(
 def build_actions(opportunities: list[dict], events: list[dict], today: date | None = None) -> list[dict]:
     today = today or now().date()
 
-    try:
-        meeting_summaries = db.list_meeting_summaries(limit=100)
-    except Exception as e:
-        logger.warning("Could not read meeting summaries for the playbook: %s", e)
-        meeting_summaries = []
+    def _fetch_meeting_summaries() -> list[dict]:
+        try:
+            return db.list_meeting_summaries(limit=100)
+        except Exception as e:
+            logger.warning("Could not read meeting summaries for the playbook: %s", e)
+            return []
 
-    try:
-        # Past 2 weeks + future 2 weeks — wide enough to catch a recently
-        # completed meeting ("technical review completed") as well as
-        # anything upcoming, without pulling in stale history.
-        calendar_events = calendar_client.fetch_meetings_window(now(), days_back=14, days_forward=14)
-    except Exception as e:
-        logger.warning("Could not read calendar events for the playbook: %s", e)
-        calendar_events = []
+    def _fetch_calendar_events() -> list[dict]:
+        try:
+            # Past 2 weeks + future 2 weeks — wide enough to catch a recently
+            # completed meeting ("technical review completed") as well as
+            # anything upcoming, without pulling in stale history.
+            return calendar_client.fetch_meetings_window(now(), days_back=14, days_forward=14)
+        except Exception as e:
+            logger.warning("Could not read calendar events for the playbook: %s", e)
+            return []
+
+    def _fetch_gmail_cache() -> dict[str, list[dict]]:
+        try:
+            return _prefetch_gmail_evidence(opportunities)
+        except Exception as e:
+            logger.warning("Could not prefetch Gmail evidence for the playbook: %s", e)
+            return {}
+
+    # These three are independent of each other (gmail_cache only needs
+    # `opportunities`, not meeting_summaries/calendar_events) — run them
+    # concurrently rather than one after another, since each is its own
+    # few-second network round trip.
+    with concurrent.futures.ThreadPoolExecutor(max_workers=3) as pool:
+        f_meetings = pool.submit(_fetch_meeting_summaries)
+        f_calendar = pool.submit(_fetch_calendar_events)
+        f_gmail = pool.submit(_fetch_gmail_cache)
+        meeting_summaries = f_meetings.result()
+        calendar_events = f_calendar.result()
+        gmail_cache = f_gmail.result()
 
     events = events + _synthesize_commitment_events(opportunities, calendar_events, meeting_summaries)
-
-    try:
-        gmail_cache = _prefetch_gmail_evidence(opportunities)
-    except Exception as e:
-        logger.warning("Could not prefetch Gmail evidence for the playbook: %s", e)
-        gmail_cache = {}
 
     actions = []
     for opp in opportunities:
