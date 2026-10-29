@@ -162,7 +162,7 @@
     "offer_type": "Product",
     "source": "Partner",
     "data_quality": "OK",
-    "suggestion_override": "Rachel said internal budget approval would be discussed at the ops review on 26 October, and asked us not to chase before then. That review has now passed, the close date has also passed on 27 October, and there's still no confirmed word on a decision. A follow-up call is now booked for 2 November - requalify this deal today and use that call to get a confirmed decision or a new dated next step; if it's still inactive afterward, move it to nurture or closed-lost rather than keep chasing."
+    "suggestion_override": "Rachel said internal budget approval would be discussed at the ops review on 26 October, and asked us not to chase before then. That review has now passed, the close date has also passed on 27 October, and there's still no confirmed decision - a follow-up call being booked for 2 November doesn't change that, since a scheduled call is not the same as a confirmed outcome. Requalify this deal today, and use the 2 November call to actually confirm whether budget was approved and get a new dated next step; if it's still inactive afterward, move it to nurture or closed-lost rather than keep chasing."
   },
   {
     "opportunity_id": "OPP-010",
