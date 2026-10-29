@@ -52,7 +52,7 @@
     "offer_type": "Service",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent. A scope review call is booked for 26 October, so the pricing needs to go out before then. Send the fixed-price scope today; if there's no response within a few days, deprioritize this one."
+    "suggestion_override": "Sophie asked for a fixed-price audit scope to review before Monday, but the scope and price were never sent. The scope review call went ahead on 26 October without the pricing having gone out first. Send the fixed-price scope immediately; this is now at real risk of losing credibility with Sophie."
   },
   {
     "opportunity_id": "OPP-004",
@@ -135,7 +135,7 @@
     "offer_type": "Service",
     "source": "Website",
     "data_quality": "OK",
-    "suggestion_override": "The solution workshop was overdue since 9 October, but it has now been booked for 23 October. Prepare the agenda and confirm attendees before then so the session is productive, not just scheduled."
+    "suggestion_override": "The solution workshop was overdue since 9 October, but it went ahead on 23 October. The buyer engaged well, but no firm next proposal step was agreed before the session ended. Send a recap and lock in the next step now, rather than letting this go quiet again."
   },
   {
     "opportunity_id": "OPP-009",
@@ -162,7 +162,7 @@
     "offer_type": "Product",
     "source": "Partner",
     "data_quality": "OK",
-    "suggestion_override": "Rachel confirmed internal budget approval will be discussed at their ops review on 24 October, and asked us not to chase before then unless something changes. No action needed today. Follow up on 25 October if no decision is received."
+    "suggestion_override": "Rachel said internal budget approval would be discussed at the ops review on 24 October, and asked us not to chase before then. That review has now passed, the close date has also passed on 25 October, and there's still no word on a decision. Requalify this deal today, or get a new dated next step directly from Rachel if it's still genuinely active."
   },
   {
     "opportunity_id": "OPP-010",
