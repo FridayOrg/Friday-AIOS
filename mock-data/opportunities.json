@@ -80,7 +80,7 @@
     "source": "Partner",
     "data_quality": "Missing next action",
     "action_override": "Send customer references and exit clause to procurement",
-    "suggestion_override": "Procurement asked for two customer references and a clearer exit clause before progressing, and neither has been sent yet even though the deal is set to close tomorrow. Send the references and exit clause language today - this is a high-value deal that's down to the wire on a solvable procurement request, not a lost cause."
+    "suggestion_override": "Procurement asked for two customer references and a clearer exit clause before progressing. We promised them today in a follow-up email, but they still haven't actually been sent, and the deal closes tomorrow. Finish and send the references and exit clause language before end of day to keep that promise - this is a high-value deal that's down to the wire on a solvable procurement request, not a lost cause."
   },
   {
     "opportunity_id": "OPP-005",
