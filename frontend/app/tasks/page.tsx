@@ -41,7 +41,12 @@ function closeDateTag(expectedClose: string | null): { label: string; className:
   if (days < 0) return { label: "Overdue", className: "bg-red-200 text-red-800", rank: 0 };
   if (days === 0) return { label: "Due today", className: "bg-red-100 text-red-700", rank: 1 };
   if (days === 1) return { label: "Due tomorrow", className: "bg-amber-100 text-amber-700", rank: 2 };
-  if (days <= 7) return { label: "Due this week", className: "bg-amber-100 text-amber-700", rank: 3 };
+  // "This week" means the current Mon-Sun calendar week, not just "within 7
+  // rolling days" — a date 5 days out can still be NEXT week if today is
+  // already Thursday or later, so this is bounded by the real end-of-week
+  // (the upcoming Sunday), not a fixed day count.
+  const daysUntilEndOfWeek = (7 - base.getDay()) % 7;
+  if (days <= daysUntilEndOfWeek) return { label: "Due this week", className: "bg-amber-100 text-amber-700", rank: 3 };
   return { label: "Later", className: "bg-gray-100 text-slate-600", rank: 4 };
 }
 
