@@ -70,11 +70,18 @@ def _credentials() -> Credentials | None:
 
 
 def _access_token() -> str | None:
+    """Reuses the cached access token while it's still valid (Credentials.valid
+    already accounts for expiry) instead of refreshing on every single call —
+    an unconditional refresh() here meant every Gmail request paid for a full
+    extra OAuth round trip, and running several of these concurrently (see
+    playbook._prefetch_gmail_evidence) serialized on that redundant refresh
+    rather than actually running in parallel."""
     creds = _credentials()
     if creds is None:
         return None
     try:
-        creds.refresh(GoogleAuthRequest())
+        if not creds.valid:
+            creds.refresh(GoogleAuthRequest())
         return creds.token
     except Exception as e:  # noqa: BLE001 - expired/revoked token, network issue, etc.
         logger.warning("Gmail authentication failed: %s", e)
@@ -294,7 +301,8 @@ def _send_access_token() -> str | None:
     if creds is None:
         return None
     try:
-        creds.refresh(GoogleAuthRequest())
+        if not creds.valid:
+            creds.refresh(GoogleAuthRequest())
         return creds.token
     except Exception as e:  # noqa: BLE001 - any auth failure just disables sending
         logger.warning("Gmail send authentication failed: %s", e)

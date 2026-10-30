@@ -94,11 +94,16 @@ def _credentials() -> Credentials | None:
 
 
 def _access_token() -> str | None:
+    """Reuses the cached access token while it's still valid instead of
+    refreshing on every call — see gmail_client._access_token's docstring for
+    why an unconditional refresh() here was both wasteful and a source of
+    contention between concurrent calls."""
     creds = _credentials()
     if creds is None:
         return None
     try:
-        creds.refresh(GoogleAuthRequest())
+        if not creds.valid:
+            creds.refresh(GoogleAuthRequest())
         return creds.token
     except Exception as e:  # noqa: BLE001 - any auth failure just disables live calendar
         logger.warning("Google Calendar authentication failed: %s", e)
@@ -297,7 +302,8 @@ def _write_access_token() -> str | None:
     if creds is None:
         return None
     try:
-        creds.refresh(GoogleAuthRequest())
+        if not creds.valid:
+            creds.refresh(GoogleAuthRequest())
         return creds.token
     except Exception as e:  # noqa: BLE001 - any auth failure just disables event creation
         logger.warning("Google Calendar write authentication failed: %s", e)

@@ -1,10 +1,10 @@
 """Loads company context (context/*.md), mock operational data (mock-data/*.json),
 and live connector data (Google Calendar, Pipedrive CRM, Fathom meeting summaries,
 Industry Updates, Gmail urgent emails, Goals from strategy.md) into system prompts
-for Friday's two agents: Daily Update and Analyst/Advisor. See _live_data_blob()
-below for the live sources; each is fetched fresh per request and fails safe
-(returns empty/"unavailable" rather than raising) so one connector being down never
-breaks the prompt for the rest.
+for Friday's two agents: Daily Update and Analyst/Advisor. See _mock_data_blob()
+below for the live sources; each is fetched fresh per request (concurrently, via a
+thread pool) and fails safe (returns empty/"unavailable" rather than raising) so one
+connector being down never breaks the prompt for the rest.
 
 Deliberately no chunking, embeddings, or vector store — stuffing it all into one
 prompt every time is simpler and good enough for the MVP. Revisit (tool-calling
@@ -17,13 +17,14 @@ the date/time header and the mock-data date-shift are recomputed) so a long-runn
 server always reasons against the real current clock — see config.now().
 """
 
+import concurrent.futures
 import json
 import logging
 import re
 from datetime import date, timedelta
 from functools import lru_cache
 
-from . import actions_mapper, calendar_client, crm_metrics, db, gmail_client, industry_client
+from . import actions_mapper, calendar_client, crm_metrics, db, gmail_client
 from .config import CONTEXT_DIR, MOCK_DATA_DIR, now
 from .timeline import schedule_digest
 
@@ -375,24 +376,52 @@ def _mock_data_raw() -> tuple[tuple[str, str], ...]:
     )
 
 
+def _calendar_json_section() -> str:
+    return (
+        "## MOCK DATA FILE: calendar.json (JSON, live from Google Calendar)\n\n"
+        + json.dumps(calendar_client.fetch_calendar_document(now()), indent=2)
+    )
+
+
 def _mock_data_blob() -> str:
     """Operational data: static mock files with dates slid onto the real current
     week, plus live data fetched fresh on every call (calendar, CRM/Pipedrive,
-    meeting summaries, industry updates, urgent emails, goals — see
-    _live_data_blob). Both agents call this via _load_files(mock_data=True), so
-    both get the same live sources; only which company-background *.md files
-    each agent also sees (via md=True/False) differs between them."""
+    meeting summaries, industry updates, urgent emails, goals). Both agents call
+    this via _load_files(mock_data=True), so both get the same live sources;
+    only which company-background *.md files each agent also sees (via
+    md=True/False) differs between them.
+
+    The live sections (actions, calendar, CRM, meeting summaries, industry
+    updates, urgent emails, goals) are each their own network/DB round trip
+    and don't depend on each other — fetched concurrently via a thread pool
+    rather than one after another, since sequentially this was the main
+    reason an Ask Friday reply took 15-20+ seconds."""
     sections = {
         name: f"## MOCK DATA FILE: {name} (JSON)\n\n{text}"
         for name, text in _mock_data_raw()
     }
-    sections["actions (live)"] = _actions_section()
-    sections["calendar.json"] = (
-        "## MOCK DATA FILE: calendar.json (JSON, live from Google Calendar)\n\n"
-        + json.dumps(calendar_client.fetch_calendar_document(now()), indent=2)
-    )
+
+    live_builders = {
+        "actions (live)": _actions_section,
+        "calendar.json": _calendar_json_section,
+        "crm": _crm_section,
+        "meeting_summaries": _meeting_summaries_section,
+        "industry_updates": _industry_updates_section,
+        "urgent_emails": _urgent_emails_section,
+        "goals": _goals_section,
+    }
+    with concurrent.futures.ThreadPoolExecutor(max_workers=len(live_builders)) as pool:
+        futures = {pool.submit(fn): key for key, fn in live_builders.items()}
+        live_results = {futures[f]: f.result() for f in concurrent.futures.as_completed(futures)}
+
+    sections["actions (live)"] = live_results["actions (live)"]
+    sections["calendar.json"] = live_results["calendar.json"]
     blob = "\n\n---\n\n".join(sections[name] for name in sorted(sections))
-    return blob + "\n\n---\n\n" + _live_data_blob()
+
+    live_data_blob = "\n\n---\n\n".join(
+        live_results[key] for key in ("crm", "meeting_summaries", "industry_updates", "urgent_emails", "goals")
+    )
+    return blob + "\n\n---\n\n" + live_data_blob
 
 
 # ---------------------------------------------------------------------------
@@ -433,16 +462,22 @@ def _meeting_summaries_section() -> str:
 
 
 def _industry_updates_section() -> str:
-    """Live, today-scoped Industry Updates — the same LLM-relevance-filtered
-    Tavily results the dashboard's Industry Updates card shows, not a new
-    source; see industry_client.py / industry_relevance.py."""
+    """Live Industry Updates — the same LLM-relevance-filtered Tavily results
+    the dashboard's Industry Updates card shows (db.list_top_industry_updates:
+    top items per category, no date cutoff), not a new source; see
+    industry_client.py / industry_relevance.py.
+
+    Previously called a industry_client.day_bounds() that never existed (an
+    AttributeError silently caught below), so this section always came back
+    empty — fixed to call the same function GET /industry-updates itself
+    uses, instead of a nonexistent one."""
     try:
-        day_start, day_end = industry_client.day_bounds(now())
-        updates = db.list_industry_updates(day_start, day_end)
+        by_category = db.list_top_industry_updates(per_category=2)
+        updates = by_category.get("industry", []) + by_category.get("competitor", [])
     except Exception as e:  # noqa: BLE001
         logger.warning("Could not load industry updates for the agent prompt: %s", e)
         updates = []
-    return "## LIVE DATA: Industry Updates, today (JSON)\n\n" + json.dumps(updates, indent=2, default=str)
+    return "## LIVE DATA: Industry Updates (JSON)\n\n" + json.dumps(updates, indent=2, default=str)
 
 
 def _urgent_emails_section() -> str:
@@ -478,18 +513,6 @@ def _goals_section() -> str:
             if item:
                 goals.append(item.group(1).strip())
     return "## LIVE DATA: Goals (from Context/strategy.md)\n\n" + json.dumps(goals, indent=2)
-
-
-def _live_data_blob() -> str:
-    return "\n\n---\n\n".join(
-        [
-            _crm_section(),
-            _meeting_summaries_section(),
-            _industry_updates_section(),
-            _urgent_emails_section(),
-            _goals_section(),
-        ]
-    )
 
 
 def _live_actions() -> list[dict]:
