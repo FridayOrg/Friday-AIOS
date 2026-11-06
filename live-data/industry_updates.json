@@ -98,5 +98,15 @@
     "published_at": null,
     "relevance_reason": "B2B lead data decays at an average rate of 22.5 percent annually, requiring regular testing and verification for accuracy",
     "fetched_at": "2026-11-06T08:08:53.953671+00:00"
+  },
+  {
+    "url": "https://www.cleverly.co/blog/ai-sequencing",
+    "title": "AI Sequencing Logic Distinction",
+    "topic": "Cleverly",
+    "category": "competitor",
+    "content": "True AI sales sequencing infers rules from data patterns rather than relying on static conditional logic written by users",
+    "published_at": null,
+    "relevance_reason": "True AI sales sequencing infers rules from data patterns rather than relying on static conditional logic written by users",
+    "fetched_at": "2026-11-06T08:08:56.489008+00:00"
   }
 ]
