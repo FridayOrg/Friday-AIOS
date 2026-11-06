@@ -1,1 +1,11 @@
-[]
+[
+  {
+    "url": "https://example.com/test-news-item",
+    "title": "TEST ITEM - safe to delete",
+    "topic": "Test Topic",
+    "category": "industry",
+    "content": "This is a test write to confirm the live-data branch flow works.",
+    "published_at": "2026-11-06T10:00:00+00:00",
+    "fetched_at": "2026-11-06T07:43:13.462204+00:00"
+  }
+]
