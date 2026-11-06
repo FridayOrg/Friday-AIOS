@@ -138,5 +138,15 @@
     "published_at": null,
     "relevance_reason": "Moving AI pilots to production requires focusing on evidence-based case studies rather than feature depth and preparing for security reviews",
     "fetched_at": "2026-11-06T08:09:05.023174+00:00"
+  },
+  {
+    "url": "https://saleshive.com/case-studies/workplace-injury-management-1440-meetings-case-study",
+    "title": "Fleet Software Meeting Results",
+    "topic": "SalesHive",
+    "category": "competitor",
+    "content": "A fleet management software company booked 564 meetings with fleet leaders over three years using phone and email outreach",
+    "published_at": null,
+    "relevance_reason": "A fleet management software company booked 564 meetings with fleet leaders over three years using phone and email outreach",
+    "fetched_at": "2026-11-06T08:09:07.830546+00:00"
   }
 ]
