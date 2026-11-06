@@ -1,0 +1,191 @@
+[
+  {
+    "recording_id": "demo-lumina-solution-workshop",
+    "title": "Lumina Education - Solution Workshop",
+    "meeting_url": null,
+    "started_at": "2026-10-23T13:00:00+00:00",
+    "participants": [
+      "Lumina Education"
+    ],
+    "summary_markdown": "Workshop held covering the automation roadmap. Buyer engaged well, but no firm next step was agreed before the session ended.",
+    "action_items": [
+      {
+        "text": "Send workshop recap and confirm next proposal step",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-10-26"
+      }
+    ],
+    "received_at": "2026-10-29T09:23:41.734403+00:00"
+  },
+  {
+    "recording_id": "demo-northstar-pricing",
+    "title": "Northstar Legal - Pricing Discussion",
+    "meeting_url": null,
+    "started_at": "2026-10-20T14:00:00+00:00",
+    "participants": [
+      "Northstar Legal"
+    ],
+    "summary_markdown": "Buyer confirmed pricing is acceptable. Proposal will be discussed at the partners meeting on 3 November. Buyer asked us not to chase before then unless something changes.",
+    "action_items": [
+      {
+        "text": "Wait until after the partners meeting before following up",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-11-03"
+      }
+    ],
+    "received_at": "2026-10-29T09:12:29.925399+00:00"
+  },
+  {
+    "recording_id": "demo-beacon-proposal-followup",
+    "title": "Beacon Manufacturing - Proposal Follow-up",
+    "meeting_url": null,
+    "started_at": "2026-10-20T10:00:00+00:00",
+    "participants": [
+      "Beacon Manufacturing"
+    ],
+    "summary_markdown": "Maya liked the phased rollout approach - Phase 1 for the UK team, then a US rollout once the first 60 days hit the adoption target.",
+    "action_items": [],
+    "received_at": "2026-10-29T09:23:38.150768+00:00"
+  },
+  {
+    "recording_id": "demo-silverline-expansion-pricing",
+    "title": "Silverline Media - Expansion Pricing Request",
+    "meeting_url": null,
+    "started_at": "2026-10-16T15:00:00+00:00",
+    "participants": [
+      "Silverline Media"
+    ],
+    "summary_markdown": "Tom asked for pricing on 15 additional users plus annual discount options.",
+    "action_items": [
+      {
+        "text": "Send expansion pricing",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-10-19"
+      }
+    ],
+    "received_at": "2026-10-29T09:23:44.509071+00:00"
+  },
+  {
+    "recording_id": "demo-oakbridge-solution-review",
+    "title": "OakBridge Consulting - Solution Review",
+    "meeting_url": null,
+    "started_at": "2026-10-15T11:00:00+00:00",
+    "participants": [
+      "OakBridge Consulting"
+    ],
+    "summary_markdown": "Buyer is positive about the solution and commercial approach. Security review is the main blocker. Alex committed to sending completed security answers by 22 October.",
+    "action_items": [
+      {
+        "text": "Send completed security answers",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-10-22"
+      }
+    ],
+    "received_at": "2026-10-29T09:12:31.311427+00:00"
+  },
+  {
+    "recording_id": "demo-greengrid-scope-call",
+    "title": "GreenGrid Energy - Scope Discussion",
+    "meeting_url": null,
+    "started_at": "2026-10-13T09:00:00+00:00",
+    "participants": [
+      "GreenGrid Energy"
+    ],
+    "summary_markdown": "Sophie asked for a fixed-price audit scope to review ahead of the scope review call.",
+    "action_items": [
+      {
+        "text": "Send fixed-price audit scope and pricing",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-10-26"
+      }
+    ],
+    "received_at": "2026-10-29T09:23:39.327927+00:00"
+  },
+  {
+    "recording_id": "183970137",
+    "title": "Board Meeting",
+    "meeting_url": "https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM",
+    "started_at": "2026-10-07T10:12:02+00:00",
+    "participants": [
+      "Paval S"
+    ],
+    "summary_markdown": "## Meeting Purpose\n\n[Introduce the AI solution's reference section and its value.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=21.0)\n\n## Key Takeaways\n\n  - [**Goal:** Use AI to automate repetitive manual work, speeding up processes and improving efficiency.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=42.0)\n  - [**Mechanism:** A simple UI takes user input, which an AI processes to generate a relevant response or action.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=52.0)\n  - [**Value Prop:** Reduces manual work, improves response time, and enhances user experience by making information more accessible.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n  - [**Status:** A core functionality demo is ready, proving AI can be integrated into workflows, not just used as a chatbot.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n\n## Topics\n\n### AI Solution Overview\n\n  - [**Objective:** Use AI to simplify tasks requiring manual effort \u2192 faster, more efficient processes.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=42.0)\n  - [**Mechanism:**](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=52.0)\n      - [Simple user interface for input.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=52.0)\n      - [AI processes input to generate a relevant response or action.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=52.0)\n      - [Example: System understands a request about \"number system\" and provides a corresponding response.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=76.0)\n  - [**Business Value:**](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n      - [Reduce repetitive manual work.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n      - [Improve response times.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n      - [Increase information accessibility.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n      - [Create a smoother end-user experience.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=95.0)\n\n### Current Status & Path Forward\n\n  - [**Current State:** A core functionality demo is ready.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n      - [**Significance:** Proves AI can be integrated into workflows, not just used as a chatbot.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n  - [**Areas for Improvement:**](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n      - [Accuracy](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n      - [Speed](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n      - [Overall User Experience](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=118.0)\n\n## Next Steps\n\n  - [**Alex:** Present the project budget in the next session.](https://fathom.video/share/j2LU-yVfEstxX8BxTv7z9isYCmiTS2iM?tab=summary&timestamp=140.0)\n",
+    "action_items": [
+      {
+        "text": "Present project budget in next session",
+        "owner": null,
+        "owner_email": null,
+        "due_date": null
+      }
+    ],
+    "received_at": "2026-10-08T07:04:31.471133+00:00"
+  },
+  {
+    "recording_id": "183926706",
+    "title": "Fathom Demo",
+    "meeting_url": "https://fathom.video/share/YMYxKkoDuhsBJ_X4TqE_WVMugdzunQ--",
+    "started_at": "2026-10-01T20:42:47+00:00",
+    "participants": [
+      "Susannah DuRant",
+      "Paval S"
+    ],
+    "summary_markdown": null,
+    "action_items": [],
+    "received_at": "2026-10-08T07:04:32.563918+00:00"
+  },
+  {
+    "recording_id": "demo-quarryworks-budget-review",
+    "title": "QuarryWorks - Budget Approval Discussion",
+    "meeting_url": null,
+    "started_at": "2026-10-01T11:00:00+00:00",
+    "participants": [
+      "QuarryWorks"
+    ],
+    "summary_markdown": "Rachel confirmed internal budget approval would be discussed at the 26 October ops review, and asked us not to chase before then.",
+    "action_items": [
+      {
+        "text": "Wait until after the ops review before following up",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-10-26"
+      }
+    ],
+    "received_at": "2026-10-29T09:23:42.887694+00:00"
+  },
+  {
+    "recording_id": "demo-atlas-procurement-review",
+    "title": "Atlas Logistics - Procurement Review",
+    "meeting_url": null,
+    "started_at": "2026-09-23T14:00:00+00:00",
+    "participants": [
+      "Atlas Logistics"
+    ],
+    "summary_markdown": "Procurement asked for two customer references and a clearer exit clause before progressing.",
+    "action_items": [
+      {
+        "text": "Send customer references and exit clause",
+        "owner": null,
+        "owner_email": null,
+        "due_date": "2026-09-30"
+      }
+    ],
+    "received_at": "2026-10-29T09:23:40.477781+00:00"
+  },
+  {
+    "recording_id": "demo-stonegate-proposal-review",
+    "title": "Stonegate Software - Proposal Review",
+    "meeting_url": null,
+    "started_at": "2026-09-21T15:00:00+00:00",
+    "participants": [
+      "Stonegate Software"
+    ],
+    "summary_markdown": "Buyer liked the solution. Internal approval from Head of Sales was still needed. Buyer agreed to review internally.",
+    "action_items": [],
+    "received_at": "2026-10-29T09:12:32.548062+00:00"
+  }
+]
