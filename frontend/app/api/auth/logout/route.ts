@@ -1,6 +1,5 @@
 import { NextResponse } from "next/server";
-
-const AUTH_COOKIE = "friday_demo_auth";
+import { AUTH_COOKIE } from "@/lib/auth";
 
 export async function POST() {
   const res = NextResponse.json({ status: "ok" });

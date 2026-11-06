@@ -43,7 +43,12 @@ from .config import (
 
 logger = logging.getLogger(__name__)
 
-_SCOPES = ["https://www.googleapis.com/auth/calendar.readonly"]
+# Must match the scope GOOGLE_REFRESH_TOKEN was actually granted with (the
+# google-calendar-mcp CLI auth flow issues full "calendar" scope, not
+# "calendar.readonly") — requesting a narrower/different scope on refresh gets
+# a flat "invalid_scope" rejection from Google's token endpoint rather than a
+# graceful downgrade, so this must stay in sync with however the token was minted.
+_SCOPES = ["https://www.googleapis.com/auth/calendar"]
 _WRITE_SCOPES = ["https://www.googleapis.com/auth/calendar.events"]
 _EVENTS_URL = "https://www.googleapis.com/calendar/v3/calendars/{calendar_id}/events"
 _TIMEOUT_SECONDS = 8

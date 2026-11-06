@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_SESSION, AUTH_COOKIE, GUEST_SESSION, isGuestBlocked } from "@/lib/auth";
 
 // Demo-only login gate for presenting the app (e.g. at BNI) without exposing
 // it unauthenticated. NOT real security: see app/api/auth/login/route.ts —
@@ -6,7 +7,11 @@ import { NextRequest, NextResponse } from "next/server";
 // hashing, no rate-limiting, no password reset. Fine for a controlled demo
 // in front of an audience; replace with NextAuth.js (or similar) before this
 // ever holds real customer data or is left publicly reachable long-term.
-const AUTH_COOKIE = "friday_demo_auth";
+//
+// Two roles: admin (full app) and guest (full app except the Proposal
+// Generator, still in testing — see lib/auth.ts). A guest hitting /proposals
+// or its API is redirected to "/", same as a page that doesn't exist for them;
+// there's no locked placeholder to tell them it's there.
 
 // Paths that must stay reachable without the cookie, or nobody could ever
 // log in (the login page itself, its API route, and Next's own internals).
@@ -26,11 +31,18 @@ export function middleware(request: NextRequest) {
     return NextResponse.next();
   }
 
-  const authed = request.cookies.get(AUTH_COOKIE)?.value === "1";
-  if (!authed) {
+  const session = request.cookies.get(AUTH_COOKIE)?.value;
+  if (session !== ADMIN_SESSION && session !== GUEST_SESSION) {
     const loginUrl = new URL("/login", request.url);
     loginUrl.searchParams.set("next", pathname);
     return NextResponse.redirect(loginUrl);
+  }
+
+  if (session === GUEST_SESSION && isGuestBlocked(pathname)) {
+    if (pathname.startsWith("/api/")) {
+      return NextResponse.json({ error: "Not available." }, { status: 404 });
+    }
+    return NextResponse.redirect(new URL("/", request.url));
   }
 
   return NextResponse.next();

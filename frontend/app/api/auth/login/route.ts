@@ -1,4 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
+import { ADMIN_SESSION, AUTH_COOKIE, COOKIE_MAX_AGE_SECONDS } from "@/lib/auth";
 
 // Demo-only credential check — see middleware.ts's module docstring for why
 // this is intentionally not real auth. Credentials come from DEMO_USERS, a
@@ -14,9 +15,6 @@ function loadDemoUsers(): Record<string, string> {
   return users;
 }
 
-const AUTH_COOKIE = "friday_demo_auth";
-const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 12; // 12h — long enough to cover a demo day
-
 export async function POST(request: NextRequest) {
   const { email, password } = await request.json();
   const users = loadDemoUsers();
@@ -27,7 +25,7 @@ export async function POST(request: NextRequest) {
   }
 
   const res = NextResponse.json({ status: "ok" });
-  res.cookies.set(AUTH_COOKIE, "1", {
+  res.cookies.set(AUTH_COOKIE, ADMIN_SESSION, {
     httpOnly: true,
     sameSite: "lax",
     path: "/",

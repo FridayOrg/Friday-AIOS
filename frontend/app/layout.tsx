@@ -1,7 +1,9 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
+import { cookies } from "next/headers";
 import "./globals.css";
 import AppShell from "@/components/AppShell";
+import { AUTH_COOKIE, GUEST_SESSION } from "@/lib/auth";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -18,7 +20,11 @@ export const metadata: Metadata = {
   description: "AI Chief of Staff for founder-led SMBs",
 };
 
-export default function RootLayout({ children }: LayoutProps<"/">) {
+export default async function RootLayout({ children }: LayoutProps<"/">) {
+  // Read on the server so locked tabs render correctly on first paint. Access itself
+  // is enforced in middleware.ts; this only decides what the shell shows.
+  const isGuest = (await cookies()).get(AUTH_COOKIE)?.value === GUEST_SESSION;
+
   return (
     <html
       lang="en"
@@ -26,7 +32,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       suppressHydrationWarning
     >
       <body className="h-full bg-[#F5F6F8] text-slate-900" suppressHydrationWarning>
-        <AppShell>{children}</AppShell>
+        <AppShell isGuest={isGuest}>{children}</AppShell>
       </body>
     </html>
   );

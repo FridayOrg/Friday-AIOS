@@ -12,6 +12,9 @@ from dotenv import load_dotenv
 ROOT_DIR = Path(__file__).resolve().parents[2]  # c:\AIOS
 CONTEXT_DIR = ROOT_DIR / "Context"
 MOCK_DATA_DIR = ROOT_DIR / "mock-data"
+# Inside backend/ (not the repo root like Context/) because the frontend reads Context/
+# directly; the proposal brain must stay server-only.
+PROPOSAL_BRAIN_DIR = ROOT_DIR / "backend" / "proposal_brain"
 
 load_dotenv(ROOT_DIR / ".env")
 
@@ -89,10 +92,12 @@ GOOGLE_REFRESH_TOKEN = os.environ.get("GOOGLE_REFRESH_TOKEN")
 # disabled, scheduling proposals can be drafted but not confirmed.
 GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN = os.environ.get("GOOGLE_CALENDAR_WRITE_REFRESH_TOKEN")
 
-# Persisted storage (see db.py) — currently only Fathom meeting summaries. A real
-# Postgres database (e.g. Render's Postgres add-on) rather than a local file:
-# Render's web service disk is ephemeral and wiped on every deploy, which a
-# feature meant to accumulate data over time can't tolerate.
+# Persisted storage (see db.py) — currently only app settings (e.g. the monthly
+# revenue target). A real Postgres database (e.g. Render's Postgres add-on)
+# rather than a local file: Render's web service disk is ephemeral and wiped
+# on every deploy, which a feature meant to accumulate data over time can't
+# tolerate. Meeting summaries and industry updates moved off this to
+# GitHub-file storage instead — see meeting_store.py / industry_store.py.
 DATABASE_URL = os.environ.get("DATABASE_URL")
 
 # Fathom (fathom.video) meeting-notes integration (see fathom_client.py).
@@ -135,6 +140,14 @@ INDUSTRY_UPDATES_REFRESH_SECRET = os.environ.get("INDUSTRY_UPDATES_REFRESH_SECRE
 # rather than crashing the dashboard.
 PIPEDRIVE_API_TOKEN = os.environ.get("PIPEDRIVE_API_TOKEN")
 PIPEDRIVE_DOMAIN = os.environ.get("PIPEDRIVE_DOMAIN")
+
+# Fine-grained GitHub PAT (Contents: Read & write, scoped to this one repo only) —
+# see industry_store.py. Lets any machine running this backend (laptop, Render, a
+# teammate's machine) read/write live-data/industry_updates.json via GitHub's API
+# directly, with no local git folder/clone needed anywhere.
+LIVE_DATA_GITHUB_TOKEN = os.environ.get("LIVE_DATA_GITHUB_TOKEN")
+LIVE_DATA_GITHUB_REPO = os.environ.get("LIVE_DATA_GITHUB_REPO", "FridayOrg/Friday-AIOS")
+LIVE_DATA_GITHUB_BRANCH = os.environ.get("LIVE_DATA_GITHUB_BRANCH", "live-data")
 
 # HubSpot (see hubspot_client.py) — replaced Pipedrive as the CEO/CRM
 # dashboard's data source. HUBSPOT_ACCESS_TOKEN: a Service Key / Private App

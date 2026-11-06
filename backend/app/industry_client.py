@@ -1,7 +1,8 @@
 """Industry Updates — fetches recent tech-industry news via Tavily's search
 API (tavily.com), filters it down to genuinely significant items with an LLM
-relevance pass (industry_relevance.py), and persists the result in Postgres
-(db.py) so a scheduled background refresh (see main.py's
+relevance pass (industry_relevance.py), and persists the result as a JSON
+file on the `live-data` git branch (industry_store.py) so a scheduled
+background refresh (see main.py's
 POST /industry-updates/refresh, triggered by a GitHub Actions cron — this app
 has no in-process scheduler) keeps the dashboard fresh independent of anyone
 actually viewing it.
@@ -12,7 +13,7 @@ needed anywhere in this module.
 
 Each topic is tagged "competitor" or "industry" (see COMPETITOR_TOPICS /
 INDUSTRY_TOPICS below); main.py stores that category alongside each item and
-displays the 2 most recent per category (see db.list_top_industry_updates),
+displays the 2 most recent per category (see industry_store.list_top_industry_updates),
 rather than a single pooled list — old items are only replaced once something
 newer for that same category turns up, so a quiet week/month leaves the
 existing 2 in place instead of the section going empty.

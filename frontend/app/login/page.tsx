@@ -4,6 +4,7 @@ import { Suspense, useEffect, useState } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import { Eye, EyeOff, Lock, Mail, TrendingUp, User, UserRound, ArrowRight } from "lucide-react";
 import { setFounderName } from "@/lib/founderName";
+import { GUEST_HOME } from "@/lib/auth";
 
 function LoginForm() {
   const router = useRouter();
@@ -60,7 +61,11 @@ function LoginForm() {
     // "Guest" is handled specially by CeoDashboard.tsx's greetingFor(),
     // which shows "Welcome Guest" instead of the usual time-of-day greeting.
     setFounderName("Guest");
-    router.push(next);
+    // Guests land on the dashboard, same as an admin (see lib/auth.ts for the one
+    // area — Proposal Generator — a guest doesn't get). A full page load, not
+    // router.push: the root layout reads the role cookie to build the right nav,
+    // and a client-side navigation would keep its old render.
+    window.location.href = GUEST_HOME;
   }
 
   return (

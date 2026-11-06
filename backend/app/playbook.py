@@ -23,7 +23,7 @@ import concurrent.futures
 import logging
 from datetime import date, timedelta
 
-from . import calendar_client, db, gmail_client, hubspot_client
+from . import calendar_client, db, gmail_client, hubspot_client, meeting_store
 from .config import now
 
 logger = logging.getLogger(__name__)
@@ -380,7 +380,7 @@ def _mentions(opp: dict, *texts: str | None) -> bool:
 
 
 def _matching_meeting_summaries(opp: dict, summaries: list[dict]) -> list[dict]:
-    """Real Fathom meeting summaries (db.list_meeting_summaries()) that belong
+    """Real Fathom meeting summaries (meeting_store.list_meeting_summaries()) that belong
     to this opportunity, matched by account/contact name against the title or
     participant list — oldest first, matching events.json's ordering elsewhere."""
     matched = [
@@ -679,7 +679,7 @@ def build_actions(opportunities: list[dict], events: list[dict], today: date | N
 
     def _fetch_meeting_summaries() -> list[dict]:
         try:
-            return db.list_meeting_summaries(limit=100)
+            return meeting_store.list_meeting_summaries(limit=100)
         except Exception as e:
             logger.warning("Could not read meeting summaries for the playbook: %s", e)
             return []

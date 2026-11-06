@@ -18,7 +18,10 @@ const MIN_PANEL_VW = 24;
 const MAX_PANEL_VW = 80;
 const DEFAULT_PANEL_VW = 26;
 
-export default function AppShell({ children }: { children: React.ReactNode }) {
+// Guests (see lib/auth.ts) get the real app — same as an admin, minus the Proposal
+// Generator tab — but no Ask Friday panel, since it reads across the full company
+// data and isn't part of what's being shown in a guest demo.
+export default function AppShell({ children, isGuest = false }: { children: React.ReactNode; isGuest?: boolean }) {
   const pathname = usePathname();
   const [panelWidth, setPanelWidth] = useState(DEFAULT_PANEL_VW);
   const draggingRef = useRef(false);
@@ -60,32 +63,36 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
   return (
     <HighlightProvider>
       <div className="flex flex-col h-screen w-full overflow-hidden">
-        <TopNav />
+        <TopNav isGuest={isGuest} />
 
         <div className="flex flex-1 min-h-0 w-full overflow-hidden bg-[#F5F6F8]">
           <div className="flex-1 min-w-0 flex flex-col overflow-hidden">
             <main className="main-scroll flex-1 min-w-0 overflow-y-auto bg-[#F5F6F8]">{children}</main>
           </div>
 
-          {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
-          <div
-            onPointerDown={startDragging}
-            role="separator"
-            aria-orientation="vertical"
-            aria-label="Resize Ask Friday panel"
-            className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-[#F5F6F8] hover:bg-blue-200 active:bg-blue-300 transition-colors"
-          />
+          {!isGuest && (
+            <>
+              {/* Drag handle — hover/drag anywhere on this thin strip to resize the panel */}
+              <div
+                onPointerDown={startDragging}
+                role="separator"
+                aria-orientation="vertical"
+                aria-label="Resize Ask Friday panel"
+                className="hidden lg:block w-1.5 shrink-0 h-full cursor-col-resize bg-[#F5F6F8] hover:bg-blue-200 active:bg-blue-300 transition-colors"
+              />
 
-          <div
-            className="hidden lg:block shrink-0 h-full bg-[#F5F6F8] py-3 pr-3"
-            style={{ width: `${panelWidth}vw` }}
-          >
-            <AskFriday />
-          </div>
+              <div
+                className="hidden lg:block shrink-0 h-full bg-[#F5F6F8] py-3 pr-3"
+                style={{ width: `${panelWidth}vw` }}
+              >
+                <AskFriday />
+              </div>
+            </>
+          )}
         </div>
 
         {/* Mobile floating "Ask Friday" button */}
-        {!mobileChatOpen && (
+        {!isGuest && !mobileChatOpen && (
           <button
             onClick={() => setMobileChatOpen(true)}
             aria-label="Talk to Friday"
@@ -98,7 +105,7 @@ export default function AppShell({ children }: { children: React.ReactNode }) {
         )}
 
         {/* Mobile Ask Friday overlay */}
-        {mobileChatOpen && (
+        {!isGuest && mobileChatOpen && (
           <div className="lg:hidden fixed inset-0 z-50 bg-black/40">
             <div className="absolute inset-x-0 bottom-0 h-[88vh] bg-[#0F172A] rounded-t-2xl overflow-hidden shadow-xl">
               <AskFriday onClose={() => setMobileChatOpen(false)} />

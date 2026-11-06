@@ -24,7 +24,7 @@ import re
 from datetime import date, timedelta
 from functools import lru_cache
 
-from . import actions_mapper, calendar_client, crm_metrics, db, gmail_client
+from . import actions_mapper, calendar_client, crm_metrics, db, gmail_client, industry_store, meeting_store
 from .config import CONTEXT_DIR, MOCK_DATA_DIR, now
 from .timeline import schedule_digest
 
@@ -454,8 +454,8 @@ def _meeting_summaries_section() -> str:
     items) — most recent first, same data the Meeting Summary dashboard card
     shows."""
     try:
-        summaries = db.list_meeting_summaries(limit=20)
-    except Exception as e:  # noqa: BLE001 - e.g. DATABASE_URL unset
+        summaries = meeting_store.list_meeting_summaries(limit=20)
+    except Exception as e:  # noqa: BLE001 - e.g. the live-data file is unreachable
         logger.warning("Could not load meeting summaries for the agent prompt: %s", e)
         summaries = []
     return "## LIVE DATA: Meeting Summaries, from Fathom (JSON)\n\n" + json.dumps(summaries, indent=2, default=str)
@@ -463,7 +463,7 @@ def _meeting_summaries_section() -> str:
 
 def _industry_updates_section() -> str:
     """Live Industry Updates — the same LLM-relevance-filtered Tavily results
-    the dashboard's Industry Updates card shows (db.list_top_industry_updates:
+    the dashboard's Industry Updates card shows (industry_store.list_top_industry_updates:
     top items per category, no date cutoff), not a new source; see
     industry_client.py / industry_relevance.py.
 
@@ -472,7 +472,7 @@ def _industry_updates_section() -> str:
     empty — fixed to call the same function GET /industry-updates itself
     uses, instead of a nonexistent one."""
     try:
-        by_category = db.list_top_industry_updates(per_category=2)
+        by_category = industry_store.list_top_industry_updates(per_category=2)
         updates = by_category.get("industry", []) + by_category.get("competitor", [])
     except Exception as e:  # noqa: BLE001
         logger.warning("Could not load industry updates for the agent prompt: %s", e)

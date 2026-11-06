@@ -8,6 +8,7 @@ import {
   Building2,
   CheckSquare,
   User,
+  FileText,
   Briefcase,
   Target,
   Bell,
@@ -23,7 +24,14 @@ const NAV_ITEMS = [
   { href: "/company", label: "Company", icon: Building2 },
   { href: "/tasks", label: "Tasks", icon: CheckSquare },
   { href: "/profile", label: "Profile", icon: User },
+  // Admin only — still in testing, so it's left out of a guest's nav entirely
+  // rather than shown locked (see navItemsFor() below and lib/auth.ts).
+  { href: "/proposals", label: "Proposal Generator", icon: FileText, adminOnly: true },
 ];
+
+function navItemsFor(isGuest: boolean) {
+  return isGuest ? NAV_ITEMS.filter((item) => !item.adminOnly) : NAV_ITEMS;
+}
 
 // Flat, very mild ash background shared by the bar and the mobile dropdown.
 const NAV_BG = "#EAF2FF";
@@ -51,9 +59,13 @@ function NavWaves() {
 // so it stays stable while the page content scrolls beneath it. On small
 // screens the nav items collapse behind a hamburger that opens a full-width
 // dropdown panel (not a side drawer) directly under the bar.
-export default function TopNav() {
+// Guests see the real, working app, same as an admin, except the Proposal
+// Generator tab — left out of their nav entirely while it's still in testing
+// (see middleware.ts and lib/auth.ts).
+export default function TopNav({ isGuest = false }: { isGuest?: boolean }) {
   const pathname = usePathname();
   const [mobileOpen, setMobileOpen] = useState(false);
+  const navItems = navItemsFor(isGuest);
 
   async function handleLogout() {
     await fetch("/api/auth/logout", { method: "POST" });
@@ -72,7 +84,7 @@ export default function TopNav() {
 
         {/* Desktop nav */}
         <nav className="hidden md:flex items-center gap-1 flex-1 justify-center">
-          {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+          {navItems.map(({ href, label, icon: Icon }) => {
             const active = pathname === href;
             return (
               <Link
@@ -123,7 +135,7 @@ export default function TopNav() {
       {mobileOpen && (
         <div className="md:hidden border-t border-[#2563EB]/30 px-4 py-3">
           <nav className="flex flex-col gap-1">
-            {NAV_ITEMS.map(({ href, label, icon: Icon }) => {
+            {navItems.map(({ href, label, icon: Icon }) => {
               const active = pathname === href;
               return (
                 <Link

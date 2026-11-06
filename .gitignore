@@ -4,3 +4,10 @@ __pycache__/
 *.pyc
 node_modules/
 .next/
+
+# Google OAuth client credential file (used to mint a fresh GOOGLE_REFRESH_TOKEN
+# when it expires) — keep it locally, never commit it.
+gcp-oauth.keys.json
+
+# Dev-server log output — regenerated locally, shouldn't be committed.
+*.log

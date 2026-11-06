@@ -12,7 +12,7 @@ Endpoints:
   GET  /actions         — Today's Priorities / Tasks, computed fresh on every call from
                            the Playbook rules (see actions_mapper.py / playbook.py)
   POST /webhooks/fathom  — Fathom's "new-meeting-content-ready" event; verifies the
-                           signature, stores the meeting summary (see db.py)
+                           signature, stores the meeting summary (see meeting_store.py)
   GET  /meeting-summaries — stored Fathom meeting summaries, most recent first
   POST /meeting-summaries/refresh — backfill/refresh via Fathom's REST API directly
                            (see fathom_client.py), separate from the webhook path
@@ -25,7 +25,7 @@ Endpoints:
   GET  /industry-updates — top 2 most recent stored, LLM-filtered items for
                            each of "industry" and "competitor" (see
                            industry_client.py / industry_relevance.py /
-                           db.list_top_industry_updates)
+                           industry_store.list_top_industry_updates)
   POST /industry-updates/refresh — fetches from Tavily + classifies + stores;
                            guarded by INDUSTRY_UPDATES_REFRESH_SECRET since a
                            scheduled GitHub Actions cron calls this, not a user
@@ -72,6 +72,7 @@ request after being told the tradeoff (a wrong date/time/attendee goes out as a 
 invite with nothing to catch it first). See _execute_schedule_proposal below.
 """
 
+import base64
 import json
 import logging
 import re
@@ -83,7 +84,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import StreamingResponse
 from pydantic import BaseModel
 
-from . import actions_mapper, calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client
+from . import actions_mapper, calendar_client, crm_metrics, db, fathom_client, gmail_client, industry_client, industry_store, meeting_store
 from .config import GOOGLE_CALENDAR_ID, INDUSTRY_UPDATES_REFRESH_SECRET, now
 from .industry_relevance import classify_updates
 from .context_loader import (
@@ -93,6 +94,9 @@ from .context_loader import (
     build_system_prompt,
 )
 from .llm_client import ask_friday, ask_friday_stream, classify_intent
+from . import proposal_ai, proposal_brain
+from .proposal_brain import TBD
+from .proposal_docx import build_proposal_docx
 from .voice import synthesize_stream
 
 logger = logging.getLogger(__name__)
@@ -289,12 +293,12 @@ async def fathom_webhook(request: Request):
         return {"status": "ignored"}
 
     try:
-        db.upsert_meeting_summary(meeting)
+        meeting_store.upsert_meeting_summary(meeting)
     except Exception as e:
         logger.warning("Failed to store Fathom meeting summary: %s", e)
         raise HTTPException(status_code=502, detail="failed to store meeting summary")
 
-    # recording_id is the de-dup key (see db.upsert_meeting_summary's ON CONFLICT),
+    # recording_id is the de-dup key (see meeting_store.upsert_meeting_summary),
     # so Fathom retrying the same event just re-applies the same row harmlessly.
     return {"status": "ok"}
 
@@ -302,7 +306,7 @@ async def fathom_webhook(request: Request):
 @app.get("/meeting-summaries")
 def meeting_summaries():
     try:
-        return {"meetings": db.list_meeting_summaries()}
+        return {"meetings": meeting_store.list_meeting_summaries()}
     except Exception as e:
         logger.warning("Could not read meeting summaries: %s", e)
         return {"meetings": []}
@@ -317,7 +321,7 @@ def refresh_meeting_summaries():
     stored = 0
     for m in meetings:
         try:
-            db.upsert_meeting_summary(m)
+            meeting_store.upsert_meeting_summary(m)
             stored += 1
         except Exception as e:
             logger.warning("Failed to store meeting %s: %s", m.get("recording_id"), e)
@@ -333,8 +337,8 @@ def set_action_item_due_date(recording_id: str, index: int, req: ActionItemDueDa
     """Sets (or clears) the CEO's own manually-tracked due date for one
     action item. Fathom never provides a due date itself (see
     fathom_client.py) - this is the only source of truth for it, and it
-    survives future Fathom re-syncs (see db.py's upsert_meeting_summary)."""
-    ok = db.update_action_item_due_date(recording_id, index, req.due_date)
+    survives future Fathom re-syncs (see meeting_store.upsert_meeting_summary)."""
+    ok = meeting_store.update_action_item_due_date(recording_id, index, req.due_date)
     if not ok:
         raise HTTPException(status_code=404, detail="Action item not found.")
     return {"status": "ok"}
@@ -360,7 +364,7 @@ def gmail_refresh():
 @app.get("/industry-updates")
 def industry_updates():
     try:
-        by_category = db.list_top_industry_updates(per_category=2)
+        by_category = industry_store.list_top_industry_updates(per_category=2)
         return {
             "industry_updates": by_category.get("industry", []),
             "competitor_moves": by_category.get("competitor", []),
@@ -383,13 +387,7 @@ def refresh_industry_updates(request: Request):
     raw_items = industry_client.fetch_recent_updates(today)
     relevant = classify_updates(raw_items)
 
-    stored = 0
-    for item in relevant:
-        try:
-            db.upsert_industry_update(item)
-            stored += 1
-        except Exception as e:
-            logger.warning("Failed to store industry update %s: %s", item.get("url"), e)
+    stored = industry_store.upsert_industry_updates_batch(relevant)
 
     return {"status": "ok", "fetched": len(raw_items), "relevant": len(relevant), "stored": stored}
 
@@ -760,3 +758,125 @@ def daily_brief():
     except Exception as e:
         raise HTTPException(status_code=502, detail=f"LLM call failed: {e}")
     return AskResponse(answer=answer, agent="analyst")
+
+
+# ---------------------------------------------------------------------------
+# Proposal generator. /proposals/analyse picks which optional sections apply
+# (proposal_ai.select_sections); /proposals/generate sorts the notes into scope
+# decisions, drafts every confirmed section, then runs it through two internal
+# review -> fix rounds (proposal_ai.generate_sections). "terms" is inserted word
+# for word from the brain (proposal_brain.terms_and_conditions_text) and never
+# passed through the AI. See backend/proposal_brain/ for the company knowledge
+# the AI reads, and proposal_docx.py for the Word layout, which the AI never
+# touches.
+# ---------------------------------------------------------------------------
+
+
+class ProposalInput(BaseModel):
+    client_name: str
+    client_contact: str
+    meeting_notes: str
+    # Optional extra context beyond the meeting notes (e.g. a price already agreed,
+    # a detail from a separate call) — same brain/notes/additional-info inputs feed
+    # both the section-check step and the writing step.
+    additional_info: str | None = None
+
+
+class ProposalSection(BaseModel):
+    key: str
+    title: str
+    custom: bool = False
+
+
+class ProposalGenerateRequest(ProposalInput):
+    sections: list[ProposalSection]
+
+
+def _require_proposal_inputs(req: ProposalInput) -> None:
+    if not (req.client_name.strip() and req.client_contact.strip() and req.meeting_notes.strip()):
+        raise HTTPException(status_code=400, detail="Client name, client contact and meeting notes are all required.")
+
+
+@app.post("/proposals/analyse")
+def proposals_analyse(req: ProposalInput):
+    _require_proposal_inputs(req)
+    try:
+        included_optional = set(
+            proposal_ai.select_sections(
+                req.client_name.strip(), req.client_contact.strip(), req.meeting_notes.strip(),
+                (req.additional_info or "").strip(),
+            )
+        )
+    except Exception as e:
+        raise HTTPException(status_code=502, detail=f"Could not analyse the meeting notes: {e}")
+
+    sections = [
+        {"key": row["key"], "title": row["title"], "custom": False}
+        for row in proposal_brain.load_sections()
+        # "cover" isn't a pickable section — proposal_docx.py always builds it.
+        if row["key"] != "cover" and (row["core"] or row["key"] in included_optional)
+    ]
+    return {"sections": sections}
+
+
+@app.post("/proposals/generate")
+def proposals_generate(req: ProposalGenerateRequest):
+    _require_proposal_inputs(req)
+    if not req.sections:
+        raise HTTPException(status_code=400, detail="Select at least one section.")
+
+    client_name = req.client_name.strip()
+    client_contact = req.client_contact.strip()
+    meeting_notes = req.meeting_notes.strip()
+    additional_info = (req.additional_info or "").strip()
+
+    # "terms" and "signatures" are built deterministically (never through the AI —
+    # see proposal_brain.terms_and_conditions_text and proposal_docx._add_signature_block).
+    # "project_team" still needs the AI (names/roles come from the notes), but as
+    # structured rows for a real table, not prose — see proposal_ai.generate_sections.
+    is_terms = lambda s: s.key == "terms" and not s.custom  # noqa: E731
+    is_signatures = lambda s: s.key == "signatures" and not s.custom  # noqa: E731
+    is_team = lambda s: s.key == "project_team" and not s.custom  # noqa: E731
+    ai_sections = [s.model_dump() for s in req.sections if not is_terms(s) and not is_signatures(s)]
+
+    written: dict[str, str] = {}
+    team_rows: list[dict] = []
+    if ai_sections:
+        try:
+            written, team_rows = proposal_ai.generate_sections(
+                client_name, client_contact, meeting_notes, additional_info, ai_sections
+            )
+        except Exception as e:
+            raise HTTPException(status_code=502, detail=f"Could not generate the proposal content: {e}")
+
+    content, needs_input = [], []
+    for s in req.sections:
+        if is_terms(s):
+            body = proposal_brain.terms_and_conditions_text(client_name)
+            if TBD in body:
+                needs_input.append(s.title)
+            content.append({"title": s.title, "body": body})
+        elif is_signatures(s):
+            content.append({"title": s.title, "signature_block": True})
+        elif is_team(s) and team_rows:
+            content.append({
+                "title": s.title,
+                "table": {
+                    "header": ["Name", "Role", "Responsibility"],
+                    "rows": [[r.get("name", ""), r.get("role", ""), r.get("responsibility", "")] for r in team_rows],
+                },
+            })
+        else:
+            body = written.get(s.key, TBD)
+            if TBD in body:
+                needs_input.append(s.title)
+            content.append({"title": s.title, "body": body})
+
+    today = now().date()
+    docx_bytes = build_proposal_docx(client_name, client_contact, content, today)
+    safe_client = re.sub(r"[^A-Za-z0-9 _-]+", "", client_name).strip() or "Client"
+    return {
+        "filename": f"Proposal - {safe_client} - {today.isoformat()}.docx",
+        "needs_input": needs_input,
+        "docx_base64": base64.b64encode(docx_bytes).decode("ascii"),
+    }
