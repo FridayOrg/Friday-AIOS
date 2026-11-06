@@ -188,5 +188,15 @@
     "published_at": null,
     "relevance_reason": "A startup reduced recruitment costs by 50 percent by outsourcing the build of a full AI and ML team",
     "fetched_at": "2026-11-06T08:09:18.878866+00:00"
+  },
+  {
+    "url": "https://www.openpr.com/news/4681500/growmeorganic-gives-sales-teams-unlimited-b2b-lead-search-on",
+    "title": "AI Detector Accuracy Benchmark",
+    "topic": "Sales Development Trends",
+    "category": "industry",
+    "content": "Testing shows significant variance in false positive rates among AI detectors, complicating the verification of AI-generated sales content",
+    "published_at": null,
+    "relevance_reason": "Testing shows significant variance in false positive rates among AI detectors, complicating the verification of AI-generated sales content",
+    "fetched_at": "2026-11-06T08:09:21.595658+00:00"
   }
 ]
