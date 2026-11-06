@@ -88,5 +88,15 @@
     "published_at": null,
     "relevance_reason": "Combining outbound and inbound channels creates a more effective lead generation engine by capturing both active and passive buyers",
     "fetched_at": "2026-11-06T08:08:50.856009+00:00"
+  },
+  {
+    "url": "https://martal.ca/lead-databases-lb",
+    "title": "Lead Database Decay Analysis",
+    "topic": "Martal Group",
+    "category": "competitor",
+    "content": "B2B lead data decays at an average rate of 22.5 percent annually, requiring regular testing and verification for accuracy",
+    "published_at": null,
+    "relevance_reason": "B2B lead data decays at an average rate of 22.5 percent annually, requiring regular testing and verification for accuracy",
+    "fetched_at": "2026-11-06T08:08:53.953671+00:00"
   }
 ]
