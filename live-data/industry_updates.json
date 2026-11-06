@@ -128,5 +128,15 @@
     "published_at": null,
     "relevance_reason": "Mid-market cold email agencies typically charge between 4,100 and 10,500 dollars per month for managed outbound services",
     "fetched_at": "2026-11-06T08:09:02.151788+00:00"
+  },
+  {
+    "url": "https://www.cleverly.co/blog/ai-in-finance",
+    "title": "AI Pilot Implementation Advice",
+    "topic": "Cleverly",
+    "category": "competitor",
+    "content": "Moving AI pilots to production requires focusing on evidence-based case studies rather than feature depth and preparing for security reviews",
+    "published_at": null,
+    "relevance_reason": "Moving AI pilots to production requires focusing on evidence-based case studies rather than feature depth and preparing for security reviews",
+    "fetched_at": "2026-11-06T08:09:05.023174+00:00"
   }
 ]
