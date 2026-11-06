@@ -168,5 +168,15 @@
     "published_at": null,
     "relevance_reason": "Implementing AI in sales processes helped a health and wellness brand achieve a 17 percent sales increase and fewer escalations",
     "fetched_at": "2026-11-06T08:09:13.365744+00:00"
+  },
+  {
+    "url": "https://vsynergize.com/case-studies/the-empathy-gap-why-76-of-customers-feel-unheard-by-ai-and-how-vsynergize-closed-it-with-angel",
+    "title": "AI Empathy Gap Research",
+    "topic": "Vsynergize",
+    "category": "competitor",
+    "content": "Research indicates 76 percent of customers feel unheard by AI, highlighting the need for human-centric AI support strategies",
+    "published_at": null,
+    "relevance_reason": "Research indicates 76 percent of customers feel unheard by AI, highlighting the need for human-centric AI support strategies",
+    "fetched_at": "2026-11-06T08:09:16.158674+00:00"
   }
 ]
